@@ -14,7 +14,7 @@ class AuthController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('auth:api-member', except: ['login']),
+            new Middleware('auth:member', except: ['login']),
         ];
     }
 
@@ -31,7 +31,7 @@ class AuthController extends Controller implements HasMiddleware
 
         $credentials = $request->only('user_name', 'password');
 
-        if (! $token = auth('api-member')->attempt($credentials)) {
+        if (! $token = auth('member')->attempt($credentials)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
@@ -40,19 +40,19 @@ class AuthController extends Controller implements HasMiddleware
 
     public function me()
     {
-        return response()->json(auth('api-member')->user());
+        return response()->json(auth('member')->user());
     }
 
     public function logout()
     {
-        auth('api-member')->logout();
+        auth('member')->logout();
 
         return response()->json(['message' => 'Successfully logged out']);
     }
 
     public function refresh()
     {
-        return $this->respondWithToken(auth('api-member')->refresh());
+        return $this->respondWithToken(auth('member')->refresh());
     }
 
     protected function respondWithToken($token)
@@ -60,7 +60,7 @@ class AuthController extends Controller implements HasMiddleware
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('api-member')->factory()->getTTL() * 60
+            'expires_in' => auth('member')->factory()->getTTL() * 60
         ]);
     }
 }
