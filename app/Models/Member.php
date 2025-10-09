@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;  // ⬅️ এটা পরিবর্তন করুন
 
-class Member extends Model
+class Member extends Authenticatable implements JWTSubject
 {
     use HasFactory, SoftDeletes;
 
@@ -34,6 +35,16 @@ class Member extends Model
         'status' => 'string',
         'member_created_by' => 'string',
     ];
+
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 
     // Relationship
     public function merchant()
