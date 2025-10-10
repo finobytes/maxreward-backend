@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\Member\AuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 
@@ -29,4 +30,11 @@ Route::prefix('merchant')->group(function () {
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
     });
+});
+
+Route::prefix('admin')->group(function () {
+    Route::post('login', [AdminAuthController::class, 'login']);
+    Route::post('logout', [AdminAuthController::class, 'logout']);
+    Route::post('refresh', [AdminAuthController::class, 'refresh']);
+    Route::post('me', [AdminAuthController::class, 'me']);
 });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Member;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -13,14 +13,12 @@ class AuthController extends Controller implements HasMiddleware
     public static function middleware(): array
     {
         return [
-            new Middleware('auth:member', except: ['login']),
+            new Middleware('auth:admin', except: ['login']),
         ];
     }
 
     public function login(Request $request)
     {
-       
-
         $validator = Validator::make($request->all(), [
             'user_name' => 'required|string',
             'password' => 'required|string',
@@ -32,7 +30,7 @@ class AuthController extends Controller implements HasMiddleware
 
         $credentials = $request->only('user_name', 'password');
 
-        if (! $token = auth('member')->attempt($credentials)) {
+        if (! $token = auth('admin')->attempt($credentials)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
@@ -41,19 +39,19 @@ class AuthController extends Controller implements HasMiddleware
 
     public function me()
     {
-        return response()->json(auth('member')->user());
+        return response()->json(auth('admin')->user());
     }
 
     public function logout()
     {
-        auth('member')->logout();
+        auth('admin')->logout();
 
         return response()->json(['message' => 'Successfully logged out']);
     }
 
     public function refresh()
     {
-        return $this->respondWithToken(auth('member')->refresh());
+        return $this->respondWithToken(auth('admin')->refresh());
     }
 
     protected function respondWithToken($token)
@@ -61,7 +59,7 @@ class AuthController extends Controller implements HasMiddleware
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('member')->factory()->getTTL() * 60
+            'expires_in' => auth('admin')->factory()->getTTL() * 60
         ]);
     }
 }
