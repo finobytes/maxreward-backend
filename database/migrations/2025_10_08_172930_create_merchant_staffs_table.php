@@ -19,7 +19,9 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('password');
+            $table->enum('type', ['merchant', 'staff']);
             $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('gender_type', ['male', 'female', 'others']);
             $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
             $table->softDeletes();
             $table->timestamps();
