@@ -87,6 +87,8 @@ return [
         'merchants' => [
             'driver' => 'eloquent',
             'model' => App\Models\MerchantStaff::class,
+        ],
+        
         'admins' => [
             'driver' => 'eloquent',
             'model' => App\Models\Admin::class,
