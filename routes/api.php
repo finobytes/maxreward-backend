@@ -26,7 +26,7 @@ Route::prefix('merchant')->group(function () {
     
     // Protected routes - require JWT authentication
     Route::middleware('auth:merchant')->group(function () {
-        Route::get('me', [MerchantAuthController::class, 'me']);
+        Route::post('me', [MerchantAuthController::class, 'me']);
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
     });

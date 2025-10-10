@@ -29,6 +29,14 @@ class MerchantStaff extends Authenticatable implements JWTSubject
         'password',
     ];
 
+      /**
+     * Get the merchant that this staff belongs to.
+     */
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class, 'merchant_id');
+    }
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      */

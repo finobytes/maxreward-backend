@@ -41,7 +41,13 @@ class AuthController extends Controller implements HasMiddleware
 
     public function me()
     {
-        return response()->json(auth('merchant')->user());
+        // return response()->json(auth('merchant')->user());
+        $user = auth('merchant')->user();
+    
+        // Load merchant relationship (full data)
+        $user->load('merchant');
+        
+        return response()->json($user);
     }
 
     public function logout()
