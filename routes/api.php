@@ -3,15 +3,15 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
-use App\Http\Controllers\Api\Member\AuthController;
+use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 
 
 Route::prefix('member')->group(function () {
-    Route::post('login', [AuthController::class, 'login']);
-    Route::post('logout', [AuthController::class, 'logout']);
-    Route::post('refresh', [AuthController::class, 'refresh']);
-    Route::post('me', [AuthController::class, 'me']);
+    Route::post('login', [MemberAuthController::class, 'login']);
+    Route::post('logout', [MemberAuthController::class, 'logout']);
+    Route::post('refresh', [MemberAuthController::class, 'refresh']);
+    Route::post('me', [MemberAuthController::class, 'me']);
 });
 
 
