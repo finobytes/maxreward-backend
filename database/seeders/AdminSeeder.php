@@ -25,7 +25,7 @@ class AdminSeeder extends Seeder
             'address' => 'Dhaka, Bangladesh',
             'designation' => 'System Administrator',
             'email' => 'admin@example.com',
-            'password' => Hash::make('password'), // Must use Hash::make()
+            'password' => Hash::make('password'), 
             'type' => 'admin',
             'status' => 'active',
             'gender' => 'male',
@@ -39,7 +39,7 @@ class AdminSeeder extends Seeder
             'address' => 'Chittagong, Bangladesh',
             'designation' => 'Assistant',
             'email' => 'staff@example.com',
-            'password' => Hash::make('password'), // Must use Hash::make()
+            'password' => Hash::make('password'), 
             'type' => 'staff',
             'status' => 'active',
             'gender' => 'female',
@@ -53,7 +53,7 @@ class AdminSeeder extends Seeder
             'address' => 'Sylhet, Bangladesh',
             'designation' => 'Manager',
             'email' => 'manager@example.com',
-            'password' => Hash::make('password'), // Must use Hash::make()
+            'password' => Hash::make('password'), 
             'type' => 'admin',
             'status' => 'active',
             'gender' => 'male',
@@ -67,7 +67,7 @@ class AdminSeeder extends Seeder
             'address' => 'Rajshahi, Bangladesh',
             'designation' => 'Support Staff',
             'email' => 'inactive@example.com',
-            'password' => Hash::make('password'), // Must use Hash::make()
+            'password' => Hash::make('password'), 
             'type' => 'staff',
             'status' => 'inactive',
             'gender' => 'others',

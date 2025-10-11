@@ -46,9 +46,19 @@ class Member extends Authenticatable implements JWTSubject
         return [];
     }
 
-    // Relationship
+        /**
+     * Get the merchant that this member belongs to (for corporate members)
+     */
     public function merchant()
     {
-        return $this->belongsTo(Merchant::class);
+        return $this->belongsTo(Merchant::class, 'merchant_id');
+    }
+
+    /**
+     * Get the wallet for this member
+     */
+    public function wallet()
+    {
+        return $this->hasOne(MemberWallet::class, 'member_id');
     }
 }

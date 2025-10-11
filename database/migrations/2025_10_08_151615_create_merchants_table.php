@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('merchants', function (Blueprint $table) {
             $table->id();
+            $table->string("unique_number")->unique();
             $table->string('business_name');
             $table->string('business_type')->nullable();
             $table->text('business_description')->nullable();
@@ -45,6 +46,7 @@ return new class extends Migration
             $table->string('verification_documents')->nullable();
             $table->string('verification_docs_url')->nullable();
             $table->string('verification_cloudinary_id')->nullable();
+            $table->enum('merchant_created_by', ['general_member', 'admin'])->default('admin')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

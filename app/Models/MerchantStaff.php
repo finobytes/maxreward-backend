@@ -53,13 +53,4 @@ class MerchantStaff extends Authenticatable implements JWTSubject
         return [];
     }
 
-    /**
-     * Get the attributes that should be cast.
-     */
-    protected function casts(): array
-    {
-        return [
-            'password' => 'hashed',
-        ];
-    }
 }

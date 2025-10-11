@@ -45,11 +45,30 @@ class Merchant extends Model
     protected $casts = [
         'status' => 'string',
         'gender' => 'string',
+        'commission_rate' => 'decimal:2'
     ];
 
+    /**
+     * Get all staff members for this merchant
+     */
+    public function staffs()
+    {
+        return $this->hasMany(MerchantStaff::class, 'merchant_id');
+    }
 
-    public function corporateMember(): BelongsTo
+    /**
+     * Get the corporate member account for this merchant
+     */
+    public function corporateMember()
     {
         return $this->belongsTo(Member::class, 'corporate_member_id');
+    }
+
+    /**
+     * Get the wallet for this merchant
+     */
+    public function wallet()
+    {
+        return $this->hasOne(MerchantWallet::class, 'merchant_id');
     }
 }
