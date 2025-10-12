@@ -11,7 +11,20 @@ class GitWebhookController extends Controller
 {
     public function handle(Request $request)
     {
-        // Only POST allowed
+        // GET method - show deployment interface or info
+        if ($request->isMethod('get')) {
+            // If requesting info only
+            if ($request->has('info')) {
+                return response()->json([
+                    'deploy_path' => env('DEPLOY_PATH'),
+                    'deploy_branch' => env('DEPLOY_BRANCH'),
+                ]);
+            }
+            
+            return $this->showDeploymentPage();
+        }
+
+        // Only POST allowed for actual deployment
         if (!$request->isMethod('post')) {
             Log::warning('Git webhook: Method not allowed', ['method' => $request->method()]);
             return response()->json(['error' => 'Method Not Allowed'], 405);
@@ -207,5 +220,263 @@ class GitWebhookController extends Controller
                 'error' => $e->getMessage(),
             ];
         }
+    }
+
+    /**
+     * Show deployment page with button
+     * 
+     * @return \Illuminate\Http\Response
+     */
+    private function showDeploymentPage()
+    {
+        $html = <<<'HTML'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Auto Deploy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .info-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+            border-radius: 8px;
+        }
+        .info-box strong {
+            color: #667eea;
+            display: block;
+            margin-bottom: 8px;
+        }
+        .info-box div {
+            color: #555;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        #deployBtn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            margin: 20px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #deployBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        #deployBtn:active {
+            transform: translateY(0);
+        }
+        #deployBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        #output {
+            margin-top: 30px;
+            padding: 20px;
+            background: #1e1e1e;
+            color: #00ff00;
+            border-radius: 12px;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #output.show {
+            display: block;
+        }
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .success {
+            color: #00ff00 !important;
+        }
+        .error {
+            color: #ff4444 !important;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .footer {
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Git Auto Deploy</h1>
+        <p class="subtitle">Deploy your latest code changes</p>
+        
+        <div class="info-box">
+            <strong>📋 Deployment Info</strong>
+            <div>🌿 Branch: <code id="branch">main</code></div>
+            <div>📁 Path: <code id="path">/home/solaimanbd.com/public_html</code></div>
+        </div>
+
+        <button id="deployBtn" onclick="deploy()">
+            <span id="btnText">Deploy Now</span>
+        </button>
+
+        <div id="output"></div>
+
+        <div class="footer">
+            MaxReward Backend | Auto Deployment System
+        </div>
+    </div>
+
+    <script>
+        const secretToken = prompt('Enter deployment token:');
+        
+        if (!secretToken) {
+            document.getElementById('deployBtn').disabled = true;
+            document.getElementById('btnText').textContent = 'Token Required';
+        }
+
+        async function deploy() {
+            const btn = document.getElementById('deployBtn');
+            const output = document.getElementById('output');
+            const btnText = document.getElementById('btnText');
+            
+            // Disable button
+            btn.disabled = true;
+            btnText.innerHTML = '<span class="spinner"></span> Deploying...';
+            
+            // Show output
+            output.classList.add('show');
+            output.innerHTML = '⏳ Starting deployment...\n\n';
+
+            try {
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Webhook-Token': secretToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ref: 'refs/heads/main',
+                        manual_deploy: true
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    output.innerHTML += '<span class="success">✅ Deployment Successful!</span>\n\n';
+                    output.innerHTML += data.output || 'Deployment completed successfully.';
+                    btnText.innerHTML = '✅ Deployed!';
+                    
+                    setTimeout(() => {
+                        btnText.textContent = 'Deploy Again';
+                        btn.disabled = false;
+                    }, 3000);
+                } else {
+                    output.innerHTML += '<span class="error">❌ Deployment Failed!</span>\n\n';
+                    output.innerHTML += 'Error: ' + (data.error || data.message || 'Unknown error');
+                    if (data.output) {
+                        output.innerHTML += '\n\nOutput:\n' + data.output;
+                    }
+                    btnText.textContent = 'Try Again';
+                    btn.disabled = false;
+                }
+            } catch (error) {
+                output.innerHTML += '<span class="error">❌ Request Failed!</span>\n\n';
+                output.innerHTML += 'Error: ' + error.message;
+                btnText.textContent = 'Try Again';
+                btn.disabled = false;
+            }
+        }
+
+        // Update info from env
+        fetch(window.location.href + '?info=1')
+            .then(r => r.json())
+            .then(data => {
+                if (data.deploy_branch) {
+                    document.getElementById('branch').textContent = data.deploy_branch;
+                }
+                if (data.deploy_path) {
+                    document.getElementById('path').textContent = data.deploy_path;
+                }
+            })
+            .catch(() => {});
+    </script>
+</body>
+</html>
+HTML;
+
+        return response($html, 200)->header('Content-Type', 'text/html');
     }
 }

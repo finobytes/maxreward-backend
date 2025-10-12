@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
-use App\Http\Controllers\GitWebhookController;
+// use App\Http\Controllers\GitWebhookController;
+use App\Http\Controllers\Api\Merchant\MerchantController;
 
 
 Route::prefix('member')->group(function () {
@@ -30,8 +31,6 @@ Route::prefix('merchant')->group(function () {
         Route::post('me', [MerchantAuthController::class, 'me']);
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
-
-        Route::get("merchants", [MerchantAuthController::class, 'index']);
     });
 });
 
@@ -67,5 +66,5 @@ Route::prefix('admin')->group(function () {
 | Git Webhook Route (No CSRF, No Auth)
 |--------------------------------------------------------------------------
 */
-Route::post('webhook/git-deploy', [GitWebhookController::class, 'handle'])
-    ->name('webhook.git-deploy');
+// Route::get('webhook/git-deploy', [GitWebhookController::class, 'handle'])
+//     ->name('webhook.git-deploy');
