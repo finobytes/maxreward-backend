@@ -18,6 +18,7 @@ class Merchant extends Model
         'logo_cloudinary_id',
         'docs_url',
         'docs_cloudinary_id',
+        'unique_number',
         'bank_name',
         'account_holder_name',
         'account_number',
