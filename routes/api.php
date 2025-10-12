@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 // use App\Http\Controllers\GitWebhookController;
 use App\Http\Controllers\Api\Merchant\MerchantController;
+use App\Http\Controllers\Api\Member\MemberController;
 
 
 Route::prefix('member')->group(function () {
@@ -49,6 +50,32 @@ Route::prefix('merchants')->group(function () {
     
     // Get merchant by unique number
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Member Data Routes (Public)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('members')->group(function () {
+    // Get all members (with optional filters)
+    Route::get('/', [App\Http\Controllers\Api\Member\MemberController::class, 'index']);
+    
+    // Get only general members
+    Route::get('/general', [App\Http\Controllers\Api\Member\MemberController::class, 'getGeneralMembers']);
+    
+    // Get only corporate members
+    Route::get('/corporate', [App\Http\Controllers\Api\Member\MemberController::class, 'getCorporateMembers']);
+    
+    // Get single member by ID
+    Route::get('/{id}', [App\Http\Controllers\Api\Member\MemberController::class, 'show']);
+    
+    // Get member by username
+    Route::get('/username/{username}', [App\Http\Controllers\Api\Member\MemberController::class, 'getByUsername']);
+    
+    // Get member by referral code
+    Route::get('/referral/{referralCode}', [App\Http\Controllers\Api\Member\MemberController::class, 'getByReferralCode']);
 });
 
 
