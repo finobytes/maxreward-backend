@@ -42,12 +42,15 @@ Route::prefix('merchant')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('merchants')->group(function () {
+    // Create new merchant with corporate member, wallets, and staffs
+    Route::post('/', [MerchantController::class, 'store']);
+
     // Get all merchants (with optional filters)
     Route::get('/', [MerchantController::class, 'index']);
-    
+
     // Get single merchant by ID
     Route::get('/{id}', [MerchantController::class, 'show']);
-    
+
     // Get merchant by unique number
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber']);
 });
