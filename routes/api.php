@@ -29,8 +29,29 @@ Route::prefix('merchant')->group(function () {
         Route::post('me', [MerchantAuthController::class, 'me']);
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
+
+        Route::get("merchants", [MerchantAuthController::class, 'index']);
     });
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Merchant Data Routes (Public)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('merchants')->group(function () {
+    // Get all merchants (with optional filters)
+    Route::get('/', [MerchantController::class, 'index']);
+    
+    // Get single merchant by ID
+    Route::get('/{id}', [MerchantController::class, 'show']);
+    
+    // Get merchant by unique number
+    Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber']);
+});
+
+
 
 Route::prefix('admin')->group(function () {
     Route::post('login', [AdminAuthController::class, 'login']);
@@ -38,3 +59,12 @@ Route::prefix('admin')->group(function () {
     Route::post('refresh', [AdminAuthController::class, 'refresh']);
     Route::post('me', [AdminAuthController::class, 'me']);
 });
+
+
+/*
+|--------------------------------------------------------------------------
+| Git Webhook Route (No CSRF, No Auth)
+|--------------------------------------------------------------------------
+*/
+Route::post('webhook/git-deploy', [GitWebhookController::class, 'handle'])
+    ->name('webhook.git-deploy');
