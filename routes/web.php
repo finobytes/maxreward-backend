@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\GitWebhookController;
 
 Route::get('/', function () {
     return view('welcome');
