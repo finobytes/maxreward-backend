@@ -51,6 +51,12 @@ Route::prefix('merchants')->group(function () {
     // Get single merchant by ID
     Route::get('/{id}', [MerchantController::class, 'show']);
 
+    // Update merchant and staff information (partial update)
+    Route::patch('/{id}', [MerchantController::class, 'update']);
+
+    // Delete merchant and all related data
+    Route::delete('/{id}', [MerchantController::class, 'destroy']);
+
     // Get merchant by unique number
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber']);
 });
