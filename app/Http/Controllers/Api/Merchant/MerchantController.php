@@ -74,31 +74,34 @@ class MerchantController extends Controller
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'required|string|max:255',
-            'account_holder_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50',
-            'preferred_payment_method' => 'nullable|string',
-            'routing_number' => 'nullable|string|max:50',
-            'swift_code' => 'nullable|string|max:50',
+            // 'bank_name' => 'required|string|max:255',
+            // 'account_holder_name' => 'required|string|max:255',
+            // 'account_number' => 'required|string|max:50',
+            // 'preferred_payment_method' => 'nullable|string',
+            // 'routing_number' => 'nullable|string|max:50',
+            // 'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:merchants,phone',
-            'gender' => 'required|in:male,female,other',
-            'address' => 'required|string',
-            'email' => 'required|email|max:255|unique:merchants,email',
+            // 'owner_name' => 'required|string|max:255',
+            // 'phone' => 'required|string|max:20|unique:merchants,phone',
+            // 'gender' => 'required|in:male,female,other',
+            // 'address' => 'required|string',
+            // 'email' => 'required|email|max:255|unique:merchants,email',
 
             // Business Details
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'settlement_period' => 'nullable|in:daily,weekly,monthly',
-            'state' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'products_services' => 'nullable|string',
+            // 'commission_rate' => 'nullable|numeric|min:0|max:100',
+            // 'settlement_period' => 'nullable|in:daily,weekly,monthly',
+            // 'state' => 'nullable|string|max:255',
+            // 'country' => 'nullable|string|max:255',
+            // 'products_services' => 'nullable|string',
 
             // Corporate Member Password
             'corporate_password' => 'nullable|string|min:6',
 
-            // Staff Members (optional)
+            // Merchant Staff Password (for merchant type staff)
+            'merchant_password' => 'nullable|string|min:6',
+
+            // Additional Staff Members (optional)
             'staffs' => 'nullable|array',
             'staffs.*.name' => 'required|string|max:255',
             'staffs.*.phone' => 'required|string|max:20',
@@ -198,7 +201,22 @@ class MerchantController extends Controller
                 'total_cp' => 0.00,
             ]);
 
-            // Create Staff Members (if provided)
+            // Create Merchant Staff (automatically from merchant data)
+            $merchantStaffUsername = $this->generateMerchantStaffUsername();
+
+            $merchantStaff = MerchantStaff::create([
+                'merchant_id' => $merchant->id,
+                'user_name' => $merchantStaffUsername,
+                'name' => $request->owner_name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'password' => Hash::make($request->merchant_password),
+                'type' => 'merchant',
+                'status' => 'active',
+                'gender_type' => $request->gender,
+            ]);
+
+            // Create Additional Staff Members (if provided)
             $createdStaffs = [];
             if ($request->has('staffs') && is_array($request->staffs)) {
                 foreach ($request->staffs as $staffData) {
@@ -243,11 +261,20 @@ class MerchantController extends Controller
                         'name' => $corporateMember->name,
                         'email' => $corporateMember->email,
                     ],
-                    'staffs' => $createdStaffs,
+                    'merchant_staff' => [
+                        'id' => $merchantStaff->id,
+                        'user_name' => $merchantStaff->user_name,
+                        'name' => $merchantStaff->name,
+                        'email' => $merchantStaff->email,
+                        'type' => $merchantStaff->type,
+                    ],
+                    'additional_staffs' => $createdStaffs,
                     'credentials' => [
                         'merchant_unique_number' => $uniqueNumber,
                         'corporate_username' => $corporateUsername,
                         'corporate_password' => $request->corporate_password ?? 'password123',
+                        'merchant_staff_username' => $merchantStaffUsername,
+                        'merchant_staff_password' => $request->merchant_password ?? 'merchant123',
                     ]
                 ]
             ], 201);
