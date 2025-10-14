@@ -161,6 +161,7 @@ class MerchantController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->corporate_password ?? 'password123'),
+                'address' => $request->address,
                 'member_type' => 'corporate',
                 'gender_type' => $request->gender,
                 'status' => 'active',

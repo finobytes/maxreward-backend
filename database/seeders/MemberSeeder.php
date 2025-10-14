@@ -50,41 +50,42 @@ class MemberSeeder extends Seeder
         // Malaysian phone numbers (10-11 digits, starting with 01)
         $members = [
             // Members 1-10
-            ['user_name' => '0123456789', 'name' => 'Ahmad bin Abdullah', 'phone' => '0123456789', 'email' => 'ahmad@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0167891234', 'name' => 'Siti Nurhaliza', 'phone' => '0167891234', 'email' => 'siti@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0198765432', 'name' => 'Lee Wei Ming', 'phone' => '0198765432', 'email' => 'lee@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0134567890', 'name' => 'Priya Devi', 'phone' => '0134567890', 'email' => 'priya@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0112233445', 'name' => 'Muhammad Hafiz', 'phone' => '0112233445', 'email' => 'hafiz@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0145678901', 'name' => 'Nurul Ain', 'phone' => '0145678901', 'email' => 'nurul@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0176543210', 'name' => 'Raj Kumar', 'phone' => '0176543210', 'email' => 'raj@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0189012345', 'name' => 'Fatimah Zahra', 'phone' => '0189012345', 'email' => 'fatimah@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0123334455', 'name' => 'Chen Wei Liang', 'phone' => '0123334455', 'email' => 'chen@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0165554444', 'name' => 'Aisha Binti Ali', 'phone' => '0165554444', 'email' => 'aisha@example.com', 'gender_type' => 'female'],
-            
+            ['user_name' => '0123456789', 'name' => 'Ahmad bin Abdullah', 'phone' => '0123456789', 'email' => 'ahmad@example.com', 'gender_type' => 'male', 'address' => 'Kajang, Selangor'],
+            ['user_name' => '0167891234', 'name' => 'Siti Nurhaliza', 'phone' => '0167891234', 'email' => 'siti@example.com', 'gender_type' => 'female', 'address' => 'Johor Bahru, Johor'],
+            ['user_name' => '0198765432', 'name' => 'Lee Wei Ming', 'phone' => '0198765432', 'email' => 'lee@example.com', 'gender_type' => 'male', 'address' => 'George Town, Penang'],
+            ['user_name' => '0134567890', 'name' => 'Priya Devi', 'phone' => '0134567890', 'email' => 'priya@example.com', 'gender_type' => 'female', 'address' => 'Shah Alam, Selangor'],
+            ['user_name' => '0112233445', 'name' => 'Muhammad Hafiz', 'phone' => '0112233445', 'email' => 'hafiz@example.com', 'gender_type' => 'male', 'address' => 'Kota Bharu, Kelantan'],
+            ['user_name' => '0145678901', 'name' => 'Nurul Ain', 'phone' => '0145678901', 'email' => 'nurul@example.com', 'gender_type' => 'female', 'address' => 'Ipoh, Perak'],
+            ['user_name' => '0176543210', 'name' => 'Raj Kumar', 'phone' => '0176543210', 'email' => 'raj@example.com', 'gender_type' => 'male', 'address' => 'Melaka City, Melaka'],
+            ['user_name' => '0189012345', 'name' => 'Fatimah Zahra', 'phone' => '0189012345', 'email' => 'fatimah@example.com', 'gender_type' => 'female', 'address' => 'Kota Kinabalu, Sabah'],
+            ['user_name' => '0123334455', 'name' => 'Chen Wei Liang', 'phone' => '0123334455', 'email' => 'chen@example.com', 'gender_type' => 'male', 'address' => 'Kuching, Sarawak'],
+            ['user_name' => '0165554444', 'name' => 'Aisha Binti Ali', 'phone' => '0165554444', 'email' => 'aisha@example.com', 'gender_type' => 'female', 'address' => 'Seremban, Negeri Sembilan'],
+        
             // Members 11-20
-            ['user_name' => '0128889999', 'name' => 'Aziz bin Hassan', 'phone' => '0128889999', 'email' => 'aziz@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0167778888', 'name' => 'Nadia binti Ahmad', 'phone' => '0167778888', 'email' => 'nadia@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0191112222', 'name' => 'Tan Ah Kow', 'phone' => '0191112222', 'email' => 'tan@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0133334444', 'name' => 'Kavitha Murugan', 'phone' => '0133334444', 'email' => 'kavitha@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0115556666', 'name' => 'Iskandar Shah', 'phone' => '0115556666', 'email' => 'iskandar@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0147778888', 'name' => 'Zainab Mohd', 'phone' => '0147778888', 'email' => 'zainab@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0172223333', 'name' => 'Wong Chee Meng', 'phone' => '0172223333', 'email' => 'wong@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0184445555', 'name' => 'Salmah Ibrahim', 'phone' => '0184445555', 'email' => 'salmah@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0126667777', 'name' => 'Kumar Rajan', 'phone' => '0126667777', 'email' => 'kumar@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0168889999', 'name' => 'Mariam Zainal', 'phone' => '0168889999', 'email' => 'mariam@example.com', 'gender_type' => 'female'],
-            
+            ['user_name' => '0128889999', 'name' => 'Aziz bin Hassan', 'phone' => '0128889999', 'email' => 'aziz@example.com', 'gender_type' => 'male', 'address' => 'Alor Setar, Kedah'],
+            ['user_name' => '0167778888', 'name' => 'Nadia binti Ahmad', 'phone' => '0167778888', 'email' => 'nadia@example.com', 'gender_type' => 'female', 'address' => 'Petaling Jaya, Selangor'],
+            ['user_name' => '0191112222', 'name' => 'Tan Ah Kow', 'phone' => '0191112222', 'email' => 'tan@example.com', 'gender_type' => 'male', 'address' => 'Miri, Sarawak'],
+            ['user_name' => '0133334444', 'name' => 'Kavitha Murugan', 'phone' => '0133334444', 'email' => 'kavitha@example.com', 'gender_type' => 'female', 'address' => 'Batu Pahat, Johor'],
+            ['user_name' => '0115556666', 'name' => 'Iskandar Shah', 'phone' => '0115556666', 'email' => 'iskandar@example.com', 'gender_type' => 'male', 'address' => 'Sungai Petani, Kedah'],
+            ['user_name' => '0147778888', 'name' => 'Zainab Mohd', 'phone' => '0147778888', 'email' => 'zainab@example.com', 'gender_type' => 'female', 'address' => 'Kuantan, Pahang'],
+            ['user_name' => '0172223333', 'name' => 'Wong Chee Meng', 'phone' => '0172223333', 'email' => 'wong@example.com', 'gender_type' => 'male', 'address' => 'Sandakan, Sabah'],
+            ['user_name' => '0184445555', 'name' => 'Salmah Ibrahim', 'phone' => '0184445555', 'email' => 'salmah@example.com', 'gender_type' => 'female', 'address' => 'Putrajaya'],
+            ['user_name' => '0126667777', 'name' => 'Kumar Rajan', 'phone' => '0126667777', 'email' => 'kumar@example.com', 'gender_type' => 'male', 'address' => 'Johor Bahru, Johor'],
+            ['user_name' => '0168889999', 'name' => 'Mariam Zainal', 'phone' => '0168889999', 'email' => 'mariam@example.com', 'gender_type' => 'female', 'address' => 'Cyberjaya, Selangor'],
+        
             // Members 21-30
-            ['user_name' => '0197771111', 'name' => 'Ali bin Osman', 'phone' => '0197771111', 'email' => 'ali@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0132223333', 'name' => 'Farah Hana', 'phone' => '0132223333', 'email' => 'farah@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0114445555', 'name' => 'Lim Teck Soon', 'phone' => '0114445555', 'email' => 'lim@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0146667777', 'name' => 'Indrani Nair', 'phone' => '0146667777', 'email' => 'indrani@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0178889999', 'name' => 'Hakim Rashid', 'phone' => '0178889999', 'email' => 'hakim@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0181112222', 'name' => 'Aisyah Roslan', 'phone' => '0181112222', 'email' => 'aisyah@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0125556666', 'name' => 'Chong Wai Kit', 'phone' => '0125556666', 'email' => 'chong@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0163334444', 'name' => 'Laila Ahmad', 'phone' => '0163334444', 'email' => 'laila@example.com', 'gender_type' => 'female'],
-            ['user_name' => '0199998888', 'name' => 'Muthu Selvam', 'phone' => '0199998888', 'email' => 'muthu@example.com', 'gender_type' => 'male'],
-            ['user_name' => '0137776666', 'name' => 'Hana Safiya', 'phone' => '0137776666', 'email' => 'hana@example.com', 'gender_type' => 'female'],
+            ['user_name' => '0197771111', 'name' => 'Ali bin Osman', 'phone' => '0197771111', 'email' => 'ali@example.com', 'gender_type' => 'male', 'address' => 'Kangar, Perlis'],
+            ['user_name' => '0132223333', 'name' => 'Farah Hana', 'phone' => '0132223333', 'email' => 'farah@example.com', 'gender_type' => 'female', 'address' => 'Nilai, Negeri Sembilan'],
+            ['user_name' => '0114445555', 'name' => 'Lim Teck Soon', 'phone' => '0114445555', 'email' => 'lim@example.com', 'gender_type' => 'male', 'address' => 'Taiping, Perak'],
+            ['user_name' => '0146667777', 'name' => 'Indrani Nair', 'phone' => '0146667777', 'email' => 'indrani@example.com', 'gender_type' => 'female', 'address' => 'Labuan'],
+            ['user_name' => '0178889999', 'name' => 'Hakim Rashid', 'phone' => '0178889999', 'email' => 'hakim@example.com', 'gender_type' => 'male', 'address' => 'Kuala Terengganu, Terengganu'],
+            ['user_name' => '0181112222', 'name' => 'Aisyah Roslan', 'phone' => '0181112222', 'email' => 'aisyah@example.com', 'gender_type' => 'female', 'address' => 'Cheras, Kuala Lumpur'],
+            ['user_name' => '0125556666', 'name' => 'Chong Wai Kit', 'phone' => '0125556666', 'email' => 'chong@example.com', 'gender_type' => 'male', 'address' => 'Manjung, Perak'],
+            ['user_name' => '0163334444', 'name' => 'Laila Ahmad', 'phone' => '0163334444', 'email' => 'laila@example.com', 'gender_type' => 'female', 'address' => 'Bintulu, Sarawak'],
+            ['user_name' => '0199998888', 'name' => 'Muthu Selvam', 'phone' => '0199998888', 'email' => 'muthu@example.com', 'gender_type' => 'male', 'address' => 'Bukit Mertajam, Penang'],
+            ['user_name' => '0137776666', 'name' => 'Hana Safiya', 'phone' => '0137776666', 'email' => 'hana@example.com', 'gender_type' => 'female', 'address' => 'Setia Alam, Selangor'],
         ];
+        
 
         // Add common fields to all members
         $members = array_map(function($member) use ($now) {

@@ -18,7 +18,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone')->unique()->nullable();
             $table->string('email')->unique()->nullable();
+            $table->string("image")->nullable()->comment('Cloudinary base URL');
+            $table->string("image_cloudinary_id")->nullable();
             $table->string('password');
+            $table->text('address')->nullable();
             $table->enum('type', ['merchant', 'staff']);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('gender_type', ['male', 'female', 'others']);

@@ -23,6 +23,8 @@ class Member extends Authenticatable implements JWTSubject
         'merchant_id',
         'member_created_by',
         'referral_code',
+        'image',
+        'image_cloudinary_id',
     ];
 
     protected $hidden = [
