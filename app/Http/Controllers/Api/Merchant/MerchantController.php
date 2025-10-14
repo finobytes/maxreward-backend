@@ -227,9 +227,7 @@ class MerchantController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant created successfully',
-                'data' => [
-                    'merchant' => $merchant
-                ]
+                'data' => $merchant
             ], 201);
 
         } catch (\Exception $e) {
@@ -521,9 +519,7 @@ class MerchantController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant updated successfully',
-                'data' => [
-                    'merchant' => $merchant
-                ]
+                'data' => $merchant
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
