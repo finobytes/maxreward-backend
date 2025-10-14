@@ -28,6 +28,7 @@ return new class extends Migration
             $table->double('total_cp', 15, 2)->default(0)->comment('Community points');
             
             $table->timestamps();
+            $table->softDeletes();
             
             // Foreign Key
             $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
