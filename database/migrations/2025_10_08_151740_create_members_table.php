@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone')->unique()->nullable();
             $table->string('email')->unique()->nullable();
             $table->string('password');
+            $table->text('address')->nullable();
             $table->string('image')->nullable()->comment('Cloudinary base URL');
             $table->string("image_cloudinary_id")->nullable();
             $table->enum('member_type', ['general', 'corporate'])->default('general');
