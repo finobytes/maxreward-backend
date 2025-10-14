@@ -124,21 +124,24 @@ Route::prefix('staffs')->group(function () {
 Route::prefix('members')->group(function () {
     // Get all members (with optional filters)
     Route::get('/', [MemberController::class, 'index']);
-    
+
     // Get only general members
     Route::get('/general', [MemberController::class, 'getGeneralMembers']);
-    
+
     // Get only corporate members
     Route::get('/corporate', [MemberController::class, 'getCorporateMembers']);
-    
+
     // Get single member by ID
     Route::get('/{id}', [MemberController::class, 'show']);
-    
+
     // Get member by username
     Route::get('/username/{username}', [MemberController::class, 'getByUsername']);
-    
+
     // Get member by referral code
     Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode']);
+
+    // Update member information
+    Route::patch('/{id}', [MemberController::class, 'update']);
 });
 
 /*

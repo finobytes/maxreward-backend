@@ -212,7 +212,7 @@ class MemberController extends Controller
 
     /**
      * Get corporate members only
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -236,6 +236,60 @@ class MemberController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve corporate members',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update member information
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        try {
+            // Find the member
+            $member = Member::findOrFail($id);
+
+            // Validate request
+            $validatedData = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'phone' => 'sometimes|string|max:20|unique:members,phone,' . $id,
+                'address' => 'sometimes|string|max:500',
+                'email' => 'sometimes|email|max:255|unique:members,email,' . $id,
+                'status' => 'sometimes|in:active,inactive,suspended',
+            ]);
+
+            // Update only the fields that are present in the request
+            $member->update($validatedData);
+
+            // Reload member with relationships
+            $member->load(['wallet', 'merchant']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Member updated successfully',
+                'data' => $member
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found'
+            ], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update member',
                 'error' => $e->getMessage()
             ], 500);
         }
