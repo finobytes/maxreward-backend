@@ -74,31 +74,34 @@ class MerchantController extends Controller
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'required|string|max:255',
-            'account_holder_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50',
-            'preferred_payment_method' => 'nullable|string',
-            'routing_number' => 'nullable|string|max:50',
-            'swift_code' => 'nullable|string|max:50',
+            // 'bank_name' => 'required|string|max:255',
+            // 'account_holder_name' => 'required|string|max:255',
+            // 'account_number' => 'required|string|max:50',
+            // 'preferred_payment_method' => 'nullable|string',
+            // 'routing_number' => 'nullable|string|max:50',
+            // 'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:merchants,phone',
-            'gender' => 'required|in:male,female,other',
-            'address' => 'required|string',
-            'email' => 'required|email|max:255|unique:merchants,email',
+            // 'owner_name' => 'required|string|max:255',
+            // 'phone' => 'required|string|max:20|unique:merchants,phone',
+            // 'gender' => 'required|in:male,female,other',
+            // 'address' => 'required|string',
+            // 'email' => 'required|email|max:255|unique:merchants,email',
 
             // Business Details
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'settlement_period' => 'nullable|in:daily,weekly,monthly',
-            'state' => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-            'products_services' => 'nullable|string',
+            // 'commission_rate' => 'nullable|numeric|min:0|max:100',
+            // 'settlement_period' => 'nullable|in:daily,weekly,monthly',
+            // 'state' => 'nullable|string|max:255',
+            // 'country' => 'nullable|string|max:255',
+            // 'products_services' => 'nullable|string',
 
             // Corporate Member Password
             'corporate_password' => 'nullable|string|min:6',
 
-            // Staff Members (optional)
+            // Merchant Staff Password (for merchant type staff)
+            'merchant_password' => 'nullable|string|min:6',
+
+            // Additional Staff Members (optional)
             'staffs' => 'nullable|array',
             'staffs.*.name' => 'required|string|max:255',
             'staffs.*.phone' => 'required|string|max:20',
@@ -161,7 +164,6 @@ class MerchantController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->corporate_password ?? 'password123'),
-                'address' => $request->address,
                 'member_type' => 'corporate',
                 'gender_type' => $request->gender,
                 'status' => 'active',
@@ -174,7 +176,7 @@ class MerchantController extends Controller
             $merchant->update(['corporate_member_id' => $corporateMember->id]);
 
             // Create Member Wallet for Corporate Member
-            MemberWallet::create([
+            $memberWallet = MemberWallet::create([
                 'member_id' => $corporateMember->id,
                 'total_referrals' => 0,
                 'unlocked_level' => 0,
@@ -187,7 +189,7 @@ class MerchantController extends Controller
             ]);
 
             // Create Merchant Wallet
-            MerchantWallet::create([
+            $merchantWallet = MerchantWallet::create([
                 'merchant_id' => $merchant->id,
                 'total_referrals' => 0,
                 'unlocked_level' => 0,
@@ -199,33 +201,20 @@ class MerchantController extends Controller
                 'total_cp' => 0.00,
             ]);
 
-            // Create Staff Members (if provided)
-            $createdStaffs = [];
-            if ($request->has('staffs') && is_array($request->staffs)) {
-                foreach ($request->staffs as $staffData) {
-                    $staffUsername = $this->generateMerchantStaffUsername();
+            // Create Merchant Staff (automatically from merchant data)
+            $merchantStaffUsername = $this->generateMerchantStaffUsername();
 
-                    $staff = MerchantStaff::create([
-                        'merchant_id' => $merchant->id,
-                        'user_name' => $staffUsername,
-                        'name' => $staffData['name'],
-                        'phone' => $staffData['phone'],
-                        'email' => $staffData['email'],
-                        'password' => Hash::make($staffData['password'] ?? 'staff123'),
-                        'type' => $staffData['type'],
-                        'status' => 'active',
-                        'gender_type' => $staffData['gender_type'],
-                    ]);
-
-                    $createdStaffs[] = [
-                        'id' => $staff->id,
-                        'user_name' => $staff->user_name,
-                        'name' => $staff->name,
-                        'email' => $staff->email,
-                        'type' => $staff->type,
-                    ];
-                }
-            }
+            $merchantStaff = MerchantStaff::create([
+                'merchant_id' => $merchant->id,
+                'user_name' => $merchantStaffUsername,
+                'name' => $request->owner_name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'password' => Hash::make($request->merchant_password),
+                'type' => 'merchant',
+                'status' => 'active',
+                'gender_type' => $request->gender,
+            ]);
 
             // Commit transaction
             DB::commit();
@@ -233,23 +222,13 @@ class MerchantController extends Controller
             // Load relationships
             $merchant->load(['wallet', 'corporateMember', 'staffs']);
 
+            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant created successfully',
                 'data' => [
-                    'merchant' => $merchant,
-                    'corporate_member' => [
-                        'id' => $corporateMember->id,
-                        'user_name' => $corporateMember->user_name,
-                        'name' => $corporateMember->name,
-                        'email' => $corporateMember->email,
-                    ],
-                    'staffs' => $createdStaffs,
-                    'credentials' => [
-                        'merchant_unique_number' => $uniqueNumber,
-                        'corporate_username' => $corporateUsername,
-                        'corporate_password' => $request->corporate_password ?? 'password123',
-                    ]
+                    'merchant' => $merchant
                 ]
             ], 201);
 
@@ -520,70 +499,6 @@ class MerchantController extends Controller
                     ->delete();
             }
 
-            // Update or create staff members
-            if ($request->has('staffs') && is_array($request->staffs)) {
-                foreach ($request->staffs as $staffData) {
-                    if (isset($staffData['id']) && $staffData['id']) {
-                        // Update existing staff
-                        $staff = MerchantStaff::where('id', $staffData['id'])
-                            ->where('merchant_id', $merchant->id)
-                            ->first();
-
-                        if ($staff) {
-                            $updateData = [
-                                'name' => $staffData['name'],
-                                'phone' => $staffData['phone'],
-                                'email' => $staffData['email'],
-                                'gender_type' => $staffData['gender_type'],
-                                'type' => $staffData['type'],
-                                'status' => $staffData['status'] ?? 'active',
-                            ];
-
-                            // Update password if provided
-                            if (isset($staffData['password']) && !empty($staffData['password'])) {
-                                $updateData['password'] = Hash::make($staffData['password']);
-                            }
-
-                            $staff->update($updateData);
-
-                            $updatedStaffs[] = [
-                                'id' => $staff->id,
-                                'user_name' => $staff->user_name,
-                                'name' => $staff->name,
-                                'email' => $staff->email,
-                                'type' => $staff->type,
-                                'status' => $staff->status,
-                                'action' => 'updated',
-                            ];
-                        }
-                    } else {
-                        // Create new staff
-                        $staffUsername = $this->generateMerchantStaffUsername();
-
-                        $staff = MerchantStaff::create([
-                            'merchant_id' => $merchant->id,
-                            'user_name' => $staffUsername,
-                            'name' => $staffData['name'],
-                            'phone' => $staffData['phone'],
-                            'email' => $staffData['email'],
-                            'password' => Hash::make($staffData['password'] ?? 'staff123'),
-                            'type' => $staffData['type'],
-                            'status' => $staffData['status'] ?? 'active',
-                            'gender_type' => $staffData['gender_type'],
-                        ]);
-
-                        $updatedStaffs[] = [
-                            'id' => $staff->id,
-                            'user_name' => $staff->user_name,
-                            'name' => $staff->name,
-                            'email' => $staff->email,
-                            'type' => $staff->type,
-                            'status' => $staff->status,
-                            'action' => 'created',
-                        ];
-                    }
-                }
-            }
 
             // Commit transaction
             DB::commit();
