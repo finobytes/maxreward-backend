@@ -11,11 +11,20 @@ use App\Http\Controllers\Api\Merchant\StaffController;
 use App\Http\Controllers\Api\Member\MemberController;
 
 
+/*
+|--------------------------------------------------------------------------
+| Member Authentication Routes
+|--------------------------------------------------------------------------
+*/
 Route::prefix('member')->group(function () {
     Route::post('login', [MemberAuthController::class, 'login']);
-    Route::post('logout', [MemberAuthController::class, 'logout']);
-    Route::post('refresh', [MemberAuthController::class, 'refresh']);
-    Route::post('me', [MemberAuthController::class, 'me']);
+
+    // Protected routes - require JWT authentication
+    Route::middleware('auth:member')->group(function () {
+        Route::post('logout', [MemberAuthController::class, 'logout']);
+        Route::post('refresh', [MemberAuthController::class, 'refresh']);
+        Route::post('me', [MemberAuthController::class, 'me']);
+    });
 });
 
 
@@ -34,6 +43,24 @@ Route::prefix('merchant')->group(function () {
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
     });
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Authentication Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin')->group(function () {
+    // Public route - login for both Admin and Staff
+    Route::post('login', [AdminAuthController::class, 'login']);
+
+    // Protected routes - require JWT authentication
+    Route::middleware('auth:admin')->group(function () {
+        Route::post('logout', [AdminAuthController::class, 'logout']);
+        Route::post('refresh', [AdminAuthController::class, 'refresh']);
+        Route::post('me', [AdminAuthController::class, 'me']);
+    }); 
 });
 
 
@@ -96,33 +123,23 @@ Route::prefix('staffs')->group(function () {
 */
 Route::prefix('members')->group(function () {
     // Get all members (with optional filters)
-    Route::get('/', [App\Http\Controllers\Api\Member\MemberController::class, 'index']);
+    Route::get('/', [MemberController::class, 'index']);
     
     // Get only general members
-    Route::get('/general', [App\Http\Controllers\Api\Member\MemberController::class, 'getGeneralMembers']);
+    Route::get('/general', [MemberController::class, 'getGeneralMembers']);
     
     // Get only corporate members
-    Route::get('/corporate', [App\Http\Controllers\Api\Member\MemberController::class, 'getCorporateMembers']);
+    Route::get('/corporate', [MemberController::class, 'getCorporateMembers']);
     
     // Get single member by ID
-    Route::get('/{id}', [App\Http\Controllers\Api\Member\MemberController::class, 'show']);
+    Route::get('/{id}', [MemberController::class, 'show']);
     
     // Get member by username
-    Route::get('/username/{username}', [App\Http\Controllers\Api\Member\MemberController::class, 'getByUsername']);
+    Route::get('/username/{username}', [MemberController::class, 'getByUsername']);
     
     // Get member by referral code
-    Route::get('/referral/{referralCode}', [App\Http\Controllers\Api\Member\MemberController::class, 'getByReferralCode']);
+    Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode']);
 });
-
-
-
-Route::prefix('admin')->group(function () {
-    Route::post('login', [AdminAuthController::class, 'login']);
-    Route::post('logout', [AdminAuthController::class, 'logout']);
-    Route::post('refresh', [AdminAuthController::class, 'refresh']);
-    Route::post('me', [AdminAuthController::class, 'me']);
-});
-
 
 /*
 |--------------------------------------------------------------------------

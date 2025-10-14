@@ -20,6 +20,7 @@ class MerchantStaff extends Authenticatable implements JWTSubject
         'phone',
         'email',
         'password',
+        'address',
         'type',
         'status',
         'gender_type',

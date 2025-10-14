@@ -17,6 +17,7 @@ class Member extends Authenticatable implements JWTSubject
         'phone',
         'email',
         'password',
+        'address',
         'member_type',
         'gender_type',
         'status',
