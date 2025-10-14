@@ -489,16 +489,28 @@ class MerchantController extends Controller
                 }
             }
 
-            // Handle Staff Updates/Creation/Deletion
-            $updatedStaffs = [];
+            // Update Merchant Staff (type='merchant') if owner details changed
+            $merchantStaff = MerchantStaff::where('merchant_id', $merchant->id)
+                ->where('type', 'merchant')
+                ->first();
 
-            // Delete staff members if requested
-            if ($request->has('delete_staff_ids') && is_array($request->delete_staff_ids)) {
-                MerchantStaff::whereIn('id', $request->delete_staff_ids)
-                    ->where('merchant_id', $merchant->id)
-                    ->delete();
+            if ($merchantStaff && ($request->has('phone') || $request->has('email') || $request->has('gender'))) {
+                $merchantStaffData = [];
+
+                if ($request->has('phone')) {
+                    $merchantStaffData['phone'] = $request->phone;
+                }
+                if ($request->has('email')) {
+                    $merchantStaffData['email'] = $request->email;
+                }
+                if ($request->has('gender')) {
+                    $merchantStaffData['gender_type'] = $request->gender;
+                }
+
+                if (!empty($merchantStaffData)) {
+                    $merchantStaff->update($merchantStaffData);
+                }
             }
-
 
             // Commit transaction
             DB::commit();
@@ -510,8 +522,7 @@ class MerchantController extends Controller
                 'success' => true,
                 'message' => 'Merchant updated successfully',
                 'data' => [
-                    'merchant' => $merchant,
-                    'updated_staffs' => $updatedStaffs,
+                    'merchant' => $merchant
                 ]
             ], 200);
 
