@@ -35,6 +35,8 @@ return new class extends Migration
             $table->enum('gender', ['male', 'female', 'others'])->nullable();
             $table->text('address')->nullable();
             $table->string('email')->unique()->nullable();
+            $table->string("image")->nullable()->comment('Cloudinary base URL');
+            $table->string("image_cloudinary_id")->nullable();
             $table->string('tax_certificate')->nullable();
             $table->decimal('commission_rate')->nullable()->comment('Reward budget percentage');
             $table->string('settlement_period')->nullable();
