@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 use App\Http\Controllers\Api\Merchant\MerchantController;
 use App\Http\Controllers\Api\Merchant\StaffController;
 use App\Http\Controllers\Api\Member\MemberController;
+use App\Http\Controllers\Api\Admin\AdminStaffController;
 
 
 /*
@@ -60,7 +61,33 @@ Route::prefix('admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
         Route::post('refresh', [AdminAuthController::class, 'refresh']);
         Route::post('me', [AdminAuthController::class, 'me']);
-    }); 
+    });
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Admin Staff Routes (Public)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin-staffs')->group(function () {
+    // Create new admin staff
+    Route::post('/', [AdminStaffController::class, 'store']);
+
+    // Get all admin staffs (with optional filters and pagination)
+    Route::get('/', [AdminStaffController::class, 'index']);
+
+    // Get all admin staffs without pagination
+    Route::get('/all', [AdminStaffController::class, 'getAllStaffs']);
+
+    // Get single admin staff by ID
+    Route::get('/{id}', [AdminStaffController::class, 'show']);
+
+    // Update admin staff information
+    Route::patch('/{id}', [AdminStaffController::class, 'update']);
+
+    // Delete admin staff
+    Route::delete('/{id}', [AdminStaffController::class, 'destroy']);
 });
 
 

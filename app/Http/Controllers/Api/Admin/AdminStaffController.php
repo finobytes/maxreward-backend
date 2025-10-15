@@ -1,0 +1,407 @@
+<?php
+
+namespace App\Http\Controllers\Api\Admin;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use App\Models\Admin;
+
+class AdminStaffController extends Controller
+{
+    /**
+     * Generate admin staff username (A1 + 8 digits)
+     */
+    private function generateStaffUsername(): string
+    {
+        do {
+            $username = 'A1' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
+        } while (Admin::where('user_name', $username)->exists());
+
+        return $username;
+    }
+
+    /**
+     * Create a new admin staff member
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:admin,phone',
+            'email' => 'required|email|max:255|unique:admin,email',
+            'password' => 'required|string|min:6',
+            'address' => 'nullable|string|max:500',
+            'designation' => 'nullable|string|max:255',
+            'gender' => 'required|in:male,female,other',
+            'status' => 'nullable|in:active,inactive',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Start database transaction
+            DB::beginTransaction();
+
+            // Generate unique username for staff
+            $staffUsername = $this->generateStaffUsername();
+
+            // Create Admin Staff
+            $staff = Admin::create([
+                'user_name' => $staffUsername,
+                'name' => $request->name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'address' => $request->address,
+                'designation' => $request->designation,
+                'type' => 'staff',
+                'status' => $request->status ?? 'active',
+                'gender' => $request->gender,
+            ]);
+
+            // Commit transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staff created successfully',
+                'data' => [
+                    'staff' => [
+                        'id' => $staff->id,
+                        'user_name' => $staff->user_name,
+                        'name' => $staff->name,
+                        'phone' => $staff->phone,
+                        'email' => $staff->email,
+                        'address' => $staff->address,
+                        'designation' => $staff->designation,
+                        'type' => $staff->type,
+                        'status' => $staff->status,
+                        'gender' => $staff->gender,
+                        'created_at' => $staff->created_at,
+                    ],
+                    'credentials' => [
+                        'username' => $staffUsername,
+                        'password' => $request->password,
+                    ]
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create admin staff',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all admin staff members with pagination
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index(Request $request)
+    {
+        try {
+            // Query builder
+            $query = Admin::query();
+
+            // Filter by type (only staff by default)
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
+            } else {
+                $query->where('type', 'staff');
+            }
+
+            // Filter by status (optional)
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Search by name, email, or username (optional)
+            if ($request->has('search')) {
+                $query->where(function($q) use ($request) {
+                    $q->where('name', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('email', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('user_name', 'LIKE', '%' . $request->search . '%');
+                });
+            }
+
+            // Get pagination limit (default: 10)
+            $perPage = $request->get('per_page', 10);
+
+            // Fetch staffs with pagination
+            $staffs = $query->orderBy('created_at', 'desc')
+                           ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staffs retrieved successfully',
+                'data' => $staffs
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve admin staffs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get single admin staff by ID
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($id)
+    {
+        try {
+            $staff = Admin::findOrFail($id);
+
+            // Check if the admin is a staff member
+            if (!$staff->isStaff()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This admin is not a staff member'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staff retrieved successfully',
+                'data' => $staff
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin staff not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve admin staff',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update admin staff information
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(Request $request, $id)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|required|string|max:255',
+            'phone' => 'sometimes|required|string|max:20|unique:admin,phone,' . $id,
+            'email' => 'sometimes|required|email|max:255|unique:admin,email,' . $id,
+            'password' => 'nullable|string|min:6',
+            'address' => 'nullable|string|max:500',
+            'designation' => 'nullable|string|max:255',
+            'gender' => 'sometimes|required|in:male,female,other',
+            'status' => 'nullable|in:active,inactive',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Start database transaction
+            DB::beginTransaction();
+
+            // Find staff
+            $staff = Admin::findOrFail($id);
+
+            // Check if the admin is a staff member
+            if (!$staff->isStaff()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This admin is not a staff member'
+                ], 400);
+            }
+
+            // Update staff data (only fields that are provided)
+            $staffData = [];
+
+            if ($request->has('name')) {
+                $staffData['name'] = $request->name;
+            }
+            if ($request->has('phone')) {
+                $staffData['phone'] = $request->phone;
+            }
+            if ($request->has('email')) {
+                $staffData['email'] = $request->email;
+            }
+            if ($request->has('address')) {
+                $staffData['address'] = $request->address;
+            }
+            if ($request->has('designation')) {
+                $staffData['designation'] = $request->designation;
+            }
+            if ($request->has('gender')) {
+                $staffData['gender'] = $request->gender;
+            }
+            if ($request->has('status')) {
+                $staffData['status'] = $request->status;
+            }
+            if ($request->has('password') && !empty($request->password)) {
+                $staffData['password'] = Hash::make($request->password);
+            }
+
+            if (!empty($staffData)) {
+                $staff->update($staffData);
+            }
+
+            // Commit transaction
+            DB::commit();
+
+            // Refresh staff data
+            $staff->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staff updated successfully',
+                'data' => $staff
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin staff not found'
+            ], 404);
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update admin staff',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete admin staff member
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function destroy($id)
+    {
+        try {
+            // Start database transaction
+            DB::beginTransaction();
+
+            // Find staff
+            $staff = Admin::findOrFail($id);
+
+            // Check if the admin is a staff member
+            if (!$staff->isStaff()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This admin is not a staff member'
+                ], 400);
+            }
+
+            // Store staff info for response
+            $staffInfo = [
+                'id' => $staff->id,
+                'user_name' => $staff->user_name,
+                'name' => $staff->name,
+                'email' => $staff->email,
+            ];
+
+            // Delete the staff
+            $staff->delete();
+
+            // Commit transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staff deleted successfully',
+                'data' => $staffInfo
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin staff not found'
+            ], 404);
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete admin staff',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all admin staff members (without pagination)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllStaffs()
+    {
+        try {
+            // Get all staffs (only type='staff')
+            $staffs = Admin::where('type', 'staff')
+                          ->orderBy('created_at', 'desc')
+                          ->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin staffs retrieved successfully',
+                'data' => [
+                    'staffs' => $staffs,
+                    'total' => $staffs->count(),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve admin staffs',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+}

@@ -74,26 +74,26 @@ class MerchantController extends Controller
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            // 'bank_name' => 'required|string|max:255',
-            // 'account_holder_name' => 'required|string|max:255',
-            // 'account_number' => 'required|string|max:50',
-            // 'preferred_payment_method' => 'nullable|string',
-            // 'routing_number' => 'nullable|string|max:50',
-            // 'swift_code' => 'nullable|string|max:50',
+            'bank_name' => 'required|string|max:255',
+            'account_holder_name' => 'required|string|max:255',
+            'account_number' => 'required|string|max:50',
+            'preferred_payment_method' => 'nullable|string',
+            'routing_number' => 'nullable|string|max:50',
+            'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            // 'owner_name' => 'required|string|max:255',
-            // 'phone' => 'required|string|max:20|unique:merchants,phone',
-            // 'gender' => 'required|in:male,female,other',
-            // 'address' => 'required|string',
-            // 'email' => 'required|email|max:255|unique:merchants,email',
+            'owner_name' => 'required|string|max:255',
+            'phone' => 'required|string|max:20|unique:merchants,phone',
+            'gender' => 'required|in:male,female,other',
+            'address' => 'required|string',
+            'email' => 'required|email|max:255|unique:merchants,email',
 
             // Business Details
-            // 'commission_rate' => 'nullable|numeric|min:0|max:100',
-            // 'settlement_period' => 'nullable|in:daily,weekly,monthly',
-            // 'state' => 'nullable|string|max:255',
-            // 'country' => 'nullable|string|max:255',
-            // 'products_services' => 'nullable|string',
+            'commission_rate' => 'nullable|numeric|min:0|max:100',
+            'settlement_period' => 'nullable|in:daily,weekly,monthly',
+            'state' => 'nullable|string|max:255',
+            'country' => 'nullable|string|max:255',
+            'products_services' => 'nullable|string',
 
             // Corporate Member Password
             'corporate_password' => 'nullable|string|min:6',
@@ -229,6 +229,51 @@ class MerchantController extends Controller
                 'message' => 'Merchant created successfully',
                 'data' => $merchant
             ], 201);
+
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+
+            // Handle specific database constraint violations
+            if ($e->errorInfo[1] == 1062) { // Duplicate entry error code
+                $errorMessage = $e->getMessage();
+
+                if (strpos($errorMessage, 'merchants_phone_unique') !== false) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation error',
+                        'errors' => [
+                            'phone' => ['The phone number has already been taken.']
+                        ]
+                    ], 422);
+                }
+
+                if (strpos($errorMessage, 'merchants_email_unique') !== false) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation error',
+                        'errors' => [
+                            'email' => ['The email has already been taken.']
+                        ]
+                    ], 422);
+                }
+
+                if (strpos($errorMessage, 'merchants_license_number_unique') !== false) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation error',
+                        'errors' => [
+                            'license_number' => ['The license number has already been taken.']
+                        ]
+                    ], 422);
+                }
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Database error occurred',
+                'error' => $e->getMessage()
+            ], 500);
 
         } catch (\Exception $e) {
             // Rollback transaction on error
