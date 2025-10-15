@@ -66,7 +66,7 @@ Route::prefix('admin')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Merchant Data Routes (Public)
+| Merchant Data Routes
 |--------------------------------------------------------------------------
 */
 Route::prefix('merchants')->group(function () {
@@ -92,7 +92,7 @@ Route::prefix('merchants')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Staff Routes (Public)
+| Merchant Staff Routes
 |--------------------------------------------------------------------------
 */
 Route::prefix('staffs')->group(function () {

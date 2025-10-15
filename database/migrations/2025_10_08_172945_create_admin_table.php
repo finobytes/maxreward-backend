@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('designation')->nullable();
             $table->string('email')->unique();
             $table->string('password');
-            $table->enum('type', ['admin', 'staff'])->default('admin');
+            $table->enum('type', ['admin', 'staff'])->default('staff');
             $table->string('profile_picture')->nullable()->comment('Cloudinary base URL');
             $table->string('profile_cloudinary_id')->nullable();
             $table->json('national_id_card')->nullable()->comment('Cloudinary URLs');
