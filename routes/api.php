@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 // use App\Http\Controllers\GitWebhookController;
 use App\Http\Controllers\Api\Merchant\MerchantController;
-use App\Http\Controllers\Api\Merchant\StaffController;
+use App\Http\Controllers\Api\Merchant\StaffController as MerchantStaffController;
 use App\Http\Controllers\Api\Member\MemberController;
 
 
@@ -97,22 +97,22 @@ Route::prefix('merchants')->group(function () {
 */
 Route::prefix('staffs')->group(function () {
     // Create new staff
-    Route::post('/', [StaffController::class, 'store']);
+    Route::post('/', [MerchantStaffController::class, 'store']);
 
     // Get all staffs (with optional filters)
-    Route::get('/', [StaffController::class, 'index']);
+    Route::get('/', [MerchantStaffController::class, 'index']);
 
     // Get single staff by ID
-    Route::get('/{id}', [StaffController::class, 'show']);
+    Route::get('/{id}', [MerchantStaffController::class, 'show']);
 
     // Update staff information
-    Route::patch('/{id}', [StaffController::class, 'update']);
+    Route::patch('/{id}', [MerchantStaffController::class, 'update']);
 
     // Delete staff
-    Route::delete('/{id}', [StaffController::class, 'destroy']);
+    Route::delete('/{id}', [MerchantStaffController::class, 'destroy']);
 
     // Get all staffs by merchant ID
-    Route::get('/merchant/{merchantId}', [StaffController::class, 'getByMerchant']);
+    Route::get('/merchant/{merchantId}', [MerchantStaffController::class, 'getByMerchant']);
 });
 
 
