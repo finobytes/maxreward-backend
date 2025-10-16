@@ -69,24 +69,24 @@ Route::prefix('admin')->group(function () {
 | Merchant Data Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('merchants')->group(function () {
-    // Create new merchant with corporate member, wallets, and staffs
-    Route::post('/', [MerchantController::class, 'store']);
+Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(function () {
+    // Create new merchant - only admin can create
+    Route::post('/', [MerchantController::class, 'store'])->middleware('role:admin,member');
 
-    // Get all merchants (with optional filters)
-    Route::get('/', [MerchantController::class, 'index']);
+    // Get all merchants - members, merchants, and admins can view
+    Route::get('/', [MerchantController::class, 'index'])->middleware('role:member,merchant,admin');
 
-    // Get single merchant by ID
-    Route::get('/{id}', [MerchantController::class, 'show']);
+    // Get single merchant by ID - members, merchants, and admins can view
+    Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
 
-    // Update merchant and staff information (partial update)
-    Route::patch('/{id}', [MerchantController::class, 'update']);
+    // Update merchant - only admin can update
+    Route::patch('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
 
-    // Delete merchant and all related data
-    Route::delete('/{id}', [MerchantController::class, 'destroy']);
+    // Delete merchant - only admin can delete
+    Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');
 
-    // Get merchant by unique number
-    Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber']);
+    // Get merchant by unique number - members, merchants, and admins can view
+    Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
 });
 
 
@@ -95,24 +95,24 @@ Route::prefix('merchants')->group(function () {
 | Merchant Staff Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('staffs')->group(function () {
+Route::prefix('staffs')->middleware('auth:merchant,admin')->group(function () {
     // Create new staff
-    Route::post('/', [MerchantStaffController::class, 'store']);
+    Route::post('/', [MerchantStaffController::class, 'store'])->middleware('role:merchant');
 
     // Get all staffs (with optional filters)
-    Route::get('/', [MerchantStaffController::class, 'index']);
+    Route::get('/', [MerchantStaffController::class, 'index'])->middleware('role:merchant,admin');
 
     // Get single staff by ID
-    Route::get('/{id}', [MerchantStaffController::class, 'show']);
+    Route::get('/{id}', [MerchantStaffController::class, 'show'])->middleware('role:merchant,admin');
 
     // Update staff information
-    Route::patch('/{id}', [MerchantStaffController::class, 'update']);
+    Route::patch('/{id}', [MerchantStaffController::class, 'update'])->middleware('role:merchant');
 
     // Delete staff
-    Route::delete('/{id}', [MerchantStaffController::class, 'destroy']);
+    Route::delete('/{id}', [MerchantStaffController::class, 'destroy'])->middleware('role:merchant');
 
     // Get all staffs by merchant ID
-    Route::get('/merchant/{merchantId}', [MerchantStaffController::class, 'getByMerchant']);
+    Route::get('/merchant/{merchantId}', [MerchantStaffController::class, 'getByMerchant'])->middleware('role:merchant,admin');
 });
 
 
@@ -121,27 +121,27 @@ Route::prefix('staffs')->group(function () {
 | Member Data Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('members')->group(function () {
+Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     // Get all members (with optional filters)
-    Route::get('/', [MemberController::class, 'index']);
+    Route::get('/', [MemberController::class, 'index'])->middleware('role:admin');
 
     // Get only general members
-    Route::get('/general', [MemberController::class, 'getGeneralMembers']);
+    Route::get('/general', [MemberController::class, 'getGeneralMembers'])->middleware('role:admin');
 
     // Get only corporate members
-    Route::get('/corporate', [MemberController::class, 'getCorporateMembers']);
+    Route::get('/corporate', [MemberController::class, 'getCorporateMembers'])->middleware('role:admin');
 
     // Get single member by ID
-    Route::get('/{id}', [MemberController::class, 'show']);
+    Route::get('/{id}', [MemberController::class, 'show'])->middleware('role:admin,member');
 
     // Get member by username
-    Route::get('/username/{username}', [MemberController::class, 'getByUsername']);
+    Route::get('/username/{username}', [MemberController::class, 'getByUsername'])->middleware('role:admin,member');
 
     // Get member by referral code
-    Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode']);
+    Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode'])->middleware('role:admin,member');
 
     // Update member information
-    Route::patch('/{id}', [MemberController::class, 'update']);
+    Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member');
 });
 
 /*

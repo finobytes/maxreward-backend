@@ -250,6 +250,33 @@ class MerchantController extends Controller
      */
     public function index(Request $request) 
     {
+       
+        // This automatically gets the user from whichever guard authenticated them
+        // $user = $request->user();
+        
+        // dd([
+        //     'user' => $user,
+        //     'user_class' => $user ? get_class($user) : null,
+        //     'user_id' => $user?->id ?? null,
+        //     'user_name' => $user?->user_name ?? null,
+        // ]);
+
+
+        // dd([
+        //     'request_user' => $request->user(),
+        //     'auth_user' => auth()->user(),
+        //     'bearer_token' => $request->bearerToken(),
+        //     'auth_header' => $request->header('Authorization'),
+        //     'admin_check' => auth('admin')->check(),
+        //     'admin_user' => auth('admin')->user(),
+        //     'member_check' => auth('member')->check(),
+        //     'member_user' => auth('member')->user(),
+        //     'merchant_check' => auth('merchant')->check(),
+        //     'merchant_user' => auth('merchant')->user(),
+        //     'guards' => config('auth.guards'),
+        //     'default_guard' => config('auth.defaults.guard'),
+        // ]);
+
         try {
             // Query builder
             $query = Merchant::query();
