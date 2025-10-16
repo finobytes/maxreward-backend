@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\Merchant\MerchantController;
 use App\Http\Controllers\Api\Merchant\StaffController as MerchantStaffController;
 use App\Http\Controllers\Api\Member\MemberController;
 use App\Http\Controllers\Api\Admin\AdminStaffController;
+use App\Http\Controllers\Api\Admin\BusinessTypeController;
+use App\Http\Controllers\Api\Admin\DenominationController;
 
 
 /*
@@ -70,7 +72,7 @@ Route::prefix('admin')->group(function () {
 | Admin Staff Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin-staffs')->group(function () {
+Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     // Create new admin staff
     Route::post('/', [AdminStaffController::class, 'store']);
 
@@ -88,6 +90,36 @@ Route::prefix('admin-staffs')->group(function () {
 
     // Delete admin staff
     Route::delete('/{id}', [AdminStaffController::class, 'destroy']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Business Type Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('business-types')->middleware('auth:admin')->group(function () {
+    Route::post('/', [BusinessTypeController::class, 'store']);
+    Route::get('/', [BusinessTypeController::class, 'index']);
+    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes']);
+    Route::get('/{id}', [BusinessTypeController::class, 'show']);
+    Route::patch('/{id}', [BusinessTypeController::class, 'update']);
+    Route::delete('/{id}', [BusinessTypeController::class, 'destroy']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Denomination Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('denominations')->middleware('auth:admin')->group(function () {
+    Route::post('/', [DenominationController::class, 'store']);
+    Route::get('/', [DenominationController::class, 'index']);
+    Route::get('/all', [DenominationController::class, 'getAllDenominations']);
+    Route::get('/{id}', [DenominationController::class, 'show']);
+    Route::patch('/{id}', [DenominationController::class, 'update']);
+    Route::delete('/{id}', [DenominationController::class, 'destroy']);
 });
 
 
