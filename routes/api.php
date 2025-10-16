@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\Merchant\MerchantController;
 use App\Http\Controllers\Api\Merchant\StaffController as MerchantStaffController;
 use App\Http\Controllers\Api\Member\MemberController;
 use App\Http\Controllers\Api\Admin\AdminStaffController;
+use App\Http\Controllers\Api\Admin\CompanyInfoController;
 
 
 /*
@@ -61,6 +62,15 @@ Route::prefix('admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
         Route::post('refresh', [AdminAuthController::class, 'refresh']);
         Route::post('me', [AdminAuthController::class, 'me']);
+
+        // Company Info Management (Admin only)
+        Route::prefix('company')->group(function () {
+            Route::get('details', [CompanyInfoController::class, 'getFullDetails']);
+            Route::put('update', [CompanyInfoController::class, 'update']);
+            Route::get('cr-points', [CompanyInfoController::class, 'getCrPoints']);
+            Route::post('adjust-cr-points', [CompanyInfoController::class, 'adjustCrPoints']);
+            Route::get('statistics', [CompanyInfoController::class, 'getStatistics']);
+        });
     });
 });
 
@@ -70,7 +80,7 @@ Route::prefix('admin')->group(function () {
 | Admin Staff Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin-staffs')->group(function () {
+Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     // Create new admin staff
     Route::post('/', [AdminStaffController::class, 'store']);
 
@@ -170,6 +180,9 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     // Update member information
     Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member');
 });
+
+
+
 
 /*
 |--------------------------------------------------------------------------
