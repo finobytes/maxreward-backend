@@ -12,7 +12,7 @@ class CompanyInfo extends Model
     /**
      * The table associated with the model.
      */
-    protected $table = 'company_info';
+    protected $table = 'company_infos';
 
     /**
      * The attributes that are mass assignable.
