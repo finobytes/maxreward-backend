@@ -91,7 +91,7 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     Route::get('/', [AdminStaffController::class, 'index']);
 
     // Get all admin staffs without pagination
-    Route::get('/all', [pAdminStaffController::class, 'getAllStaffs']);
+    Route::get('/all', [AdminStaffController::class, 'getAllStaffs']);
 
     // Get single admin staff by ID
     Route::get('/{id}', [AdminStaffController::class, 'show']);
