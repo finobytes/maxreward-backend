@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Admin\AdminStaffController;
 use App\Http\Controllers\Api\Admin\CompanyInfoController;
 use App\Http\Controllers\Api\Admin\BusinessTypeController;
 use App\Http\Controllers\Api\Admin\DenominationController;
+use App\Http\Controllers\Api\Admin\SettingController;
 
 
 /*
@@ -130,6 +131,18 @@ Route::prefix('denominations')->middleware('auth:admin')->group(function () {
     Route::get('/{id}', [DenominationController::class, 'show']);
     Route::patch('/{id}', [DenominationController::class, 'update']);
     Route::delete('/{id}', [DenominationController::class, 'destroy']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Settings Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('settings')->middleware('auth:admin')->group(function () {
+    Route::get('/', [SettingController::class, 'getSetting']);
+    Route::post('/', [SettingController::class, 'upsertSetting']);
+    Route::delete('/', [SettingController::class, 'deleteSetting']);
 });
 
 
