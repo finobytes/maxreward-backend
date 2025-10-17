@@ -91,7 +91,7 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     Route::get('/', [AdminStaffController::class, 'index']);
 
     // Get all admin staffs without pagination
-    Route::get('/all', [AdminStaffController::class, 'getAllStaffs']);
+    Route::get('/all', [pAdminStaffController::class, 'getAllStaffs']);
 
     // Get single admin staff by ID
     Route::get('/{id}', [AdminStaffController::class, 'show']);
@@ -161,7 +161,7 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Get single merchant by ID - members, merchants, and admins can view
     Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
 
-    // Update merchant - only admin can update
+    // Update merchant - only admin or merchant can update
     Route::patch('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
 
     // Delete merchant - only admin can delete
@@ -234,5 +234,5 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 | Git Webhook Route (No CSRF, No Auth)
 |--------------------------------------------------------------------------
 */
-// Route::get('webhook/git-deploy', [GitWebhookController::class, 'handle'])
-//     ->name('webhook.git-deploy');
+Route::get('webhook/git-deploy', [GitWebhookController::class, 'handle'])
+    ->name('webhook.git-deploy');
