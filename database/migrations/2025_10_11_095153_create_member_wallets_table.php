@@ -31,7 +31,7 @@ return new class extends Migration
             $table->softDeletes();
             
             // Foreign Key
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
+            $table->foreign('member_id')->references('id')->on('members');
             
             // Indexes
             $table->index('member_id');

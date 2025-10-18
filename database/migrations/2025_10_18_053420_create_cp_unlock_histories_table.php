@@ -24,7 +24,7 @@ return new class extends Migration
             $table->index('member_id');
             $table->index('created_at');
             
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
+            $table->foreign('member_id')->references('id')->on('members');
             $table->timestamps();
         });
     }

@@ -24,7 +24,7 @@ return new class extends Migration
             $table->enum('member_type', ['general', 'corporate'])->default('general');
             $table->enum('gender_type', ['male', 'female', 'others'])->nullable();
             $table->enum('status', ['active', 'suspended', 'blocked'])->default('active');
-            $table->foreignId('merchant_id')->nullable()->constrained('merchants')->onDelete('set null');
+            $table->foreignId('merchant_id')->nullable()->constrained('merchants');
             $table->enum('member_created_by', ['general', 'corporate', 'merchant','admin'])->default('general')->nullable();
             $table->string('referral_code', 8)->unique()->nullable()->comment('8 character unique code');
             $table->timestamps();

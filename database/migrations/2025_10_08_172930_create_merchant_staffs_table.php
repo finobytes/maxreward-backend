@@ -25,7 +25,7 @@ return new class extends Migration
             $table->enum('type', ['merchant', 'staff']);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('gender_type', ['male', 'female', 'others']);
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
             $table->softDeletes();
             $table->timestamps();
             

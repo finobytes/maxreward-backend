@@ -42,8 +42,8 @@ return new class extends Migration
             $table->index('type');
             $table->index('created_at');
             
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
+            $table->foreign('member_id')->references('id')->on('members');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
         });
     }
 

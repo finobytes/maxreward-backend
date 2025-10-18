@@ -26,7 +26,7 @@ return new class extends Migration
             $table->index('level');
             $table->index('is_locked');
             
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
+            $table->foreign('member_id')->references('id')->on('members');
         });
     }
 

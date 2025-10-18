@@ -32,8 +32,8 @@ return new class extends Migration
             $table->index('status');
             $table->index('level');
             
-            $table->foreign('source_member_id')->references('id')->on('members')->onDelete('cascade');
-            $table->foreign('receiver_member_id')->references('id')->on('members')->onDelete('cascade');
+            $table->foreign('source_member_id')->references('id')->on('members');
+            $table->foreign('receiver_member_id')->references('id')->on('members');
         });
     }
 

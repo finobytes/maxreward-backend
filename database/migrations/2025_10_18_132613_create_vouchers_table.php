@@ -29,8 +29,8 @@ return new class extends Migration
             $table->index('voucher_type');
             $table->index('created_at');
             
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('set null');
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('set null');
+            $table->foreign('member_id')->references('id')->on('members');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
             $table->foreign('denomination_id')->references('id')->on('denomination');
         });
     }

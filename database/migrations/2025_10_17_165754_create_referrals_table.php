@@ -23,8 +23,8 @@ return new class extends Migration
             $table->index('merchant_id');
             
             $table->foreign('parent_member_id')->references('id')->on('members');
-            $table->foreign('child_member_id')->references('id')->on('members')->onDelete('cascade');
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('set null');
+            $table->foreign('child_member_id')->references('id')->on('members');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
         });
     }
 

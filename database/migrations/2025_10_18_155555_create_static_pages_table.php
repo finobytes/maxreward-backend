@@ -21,7 +21,7 @@ return new class extends Migration
             $table->index('terms_title');
             $table->index('updated_by');
             
-            $table->foreign('updated_by')->references('id')->on('admin')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('admin');
         });
     }
 

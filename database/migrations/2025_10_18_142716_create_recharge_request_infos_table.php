@@ -23,8 +23,8 @@ return new class extends Migration
             $table->index('merchant_id');
             $table->index('type');
             
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('set null');
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('set null');
+            $table->foreign('member_id')->references('id')->on('members');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
         });
     }
 
