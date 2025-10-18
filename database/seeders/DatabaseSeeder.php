@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             MemberSeeder::class,
             AdminSeeder::class,
             MerchantSeeder::class,
+            CpLevelConfigSeeder::class,
         ]);
 
         // User::factory()->create([
