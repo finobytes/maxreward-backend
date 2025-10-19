@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AdminSeeder extends Seeder
 {
@@ -14,8 +15,14 @@ class AdminSeeder extends Seeder
      */
     public function run(): void
     {
+         // Disable foreign key checks
+         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         // Clear existing data
         Admin::truncate();
+
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Super Admin (Only admin)
         Admin::create([

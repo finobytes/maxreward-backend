@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\CpLevelConfig;
+use Illuminate\Support\Facades\DB;
 
 class CpLevelConfigSeeder extends Seeder
 {
@@ -13,8 +14,14 @@ class CpLevelConfigSeeder extends Seeder
      */
     public function run(): void
     {
+        // Disable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
         // Clear existing data to prevent duplicates
-        CpLevelConfig::truncate();
+        DB::table('cp_level_configs')->truncate();
+
+        // Re-enable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Insert CP level configuration data
         $configs = [

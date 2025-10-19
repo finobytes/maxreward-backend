@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('recharges', function (Blueprint $table) {
             $table->id();
-            $table->id();
             $table->unsignedBigInteger('member_id')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->enum('voucher_type', ['max', 'refer'])->comment('max=available points, refer=referral points');
@@ -31,12 +30,10 @@ return new class extends Migration
             $table->index('merchant_id');
             $table->index('status');
             $table->index('recharge_type');
-            $table->index('created_at');
             
             $table->foreign('member_id')->references('id')->on('members');
             $table->foreign('merchant_id')->references('id')->on('merchants');
             $table->foreign('approved_by')->references('id')->on('admin');
-            $table->timestamps();
         });
     }
 

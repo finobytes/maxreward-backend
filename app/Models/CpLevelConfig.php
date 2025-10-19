@@ -13,7 +13,7 @@ class CpLevelConfig extends Model
     /**
      * The table associated with the model.
      */
-    protected $table = 'cp_level_config';
+    protected $table = 'cp_level_configs';
 
     /**
      * The attributes that are mass assignable.

@@ -31,7 +31,7 @@ return new class extends Migration
             
             $table->foreign('member_id')->references('id')->on('members');
             $table->foreign('merchant_id')->references('id')->on('merchants');
-            $table->foreign('denomination_id')->references('id')->on('denomination');
+            $table->foreign('denomination_id')->references('id')->on('denominations');
         });
     }
 
