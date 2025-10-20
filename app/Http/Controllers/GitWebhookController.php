@@ -69,12 +69,12 @@ class GitWebhookController extends Controller
             }
 
             // === Step 2: Composer install if needed ===
-            if (file_exists("$deployPath/composer.json")) {
-                $composerCmd = "cd " . escapeshellarg($deployPath) .
-                               " && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader 2>&1";
-                $composerRes = $this->runCommand($composerCmd);
-                $output[] = "=== Composer ===\n" . $composerRes['output'];
-            }
+            // if (file_exists("$deployPath/composer.json")) {
+            //     $composerCmd = "cd " . escapeshellarg($deployPath) .
+            //                    " && composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader 2>&1";
+            //     $composerRes = $this->runCommand($composerCmd);
+            //     $output[] = "=== Composer ===\n" . $composerRes['output'];
+            // }
 
             // === Step 3: Laravel optimizations ===
             $artisanCommands = [
