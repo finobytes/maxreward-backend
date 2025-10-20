@@ -98,22 +98,71 @@ class GitWebhookController extends Controller
                 $output[] = "=== Artisan Migrate ===\n" . $migrateRes['output'];
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Deployment completed successfully',
-                'output'  => implode("\n", $output),
-            ], 200);
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => 'Deployment completed successfully',
+            //     'output'  => implode("\n", $output),
+            // ], 200);
+
+            $htmlOutput = nl2br(e(implode("\n", $output)));
+
+            return response()->make("
+                <html>
+                    <head>
+                        <title>Deployment Result</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 30px; background: #f4f4f9; }
+                            .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+                            .status { font-size: 18px; margin-bottom: 10px; }
+                            .success { color: green; }
+                            .error { color: red; }
+                            pre { background: #1e1e1e; color: #00ff00; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='status success'>✅ Deployment Successful</div>
+                            <pre>{$htmlOutput}</pre>
+                        </div>
+                    </body>
+                </html>
+            ", 200, ['Content-Type' => 'text/html']);
+
 
         } catch (\Throwable $e) {
             Log::error('AutoDeploy Error', [
                 'error' => $e->getMessage(),
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Deployment failed',
-                'error'   => $e->getMessage(),
-                'output'  => implode("\n", $output),
-            ], 500);
+            // return response()->json([
+            //     'success' => false,
+            //     'message' => 'Deployment failed',
+            //     'error'   => $e->getMessage(),
+            //     'output'  => implode("\n", $output),
+            // ], 500);
+
+            $htmlOutput = nl2br(e(implode("\n", $output)));
+
+            return response()->make("
+                <html>
+                    <head>
+                        <title>Deployment Failed</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; padding: 30px; background: #f4f4f9; }
+                            .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+                            .status { font-size: 18px; margin-bottom: 10px; }
+                            .error { color: red; }
+                            pre { background: #1e1e1e; color: #ff4d4d; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class='container'>
+                            <div class='status error'>❌ Deployment Failed</div>
+                            <pre>Error: {$e->getMessage()}\n\n{$htmlOutput}</pre>
+                        </div>
+                    </body>
+                </html>
+            ", 500, ['Content-Type' => 'text/html']);
+
         }
     }
 
