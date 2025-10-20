@@ -231,8 +231,8 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Git Webhook Route (No CSRF, No Auth)
+| Git Webhook Auto Deploy (GET Only)
 |--------------------------------------------------------------------------
 */
-Route::get('webhook/git-deploy', [GitWebhookController::class, 'handle'])
+Route::get('webhook/git-deploy', [GitWebhookController::class, 'autoDeploy'])
     ->name('webhook.git-deploy');
