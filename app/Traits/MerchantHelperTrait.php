@@ -12,7 +12,7 @@ trait MerchantHelperTrait
     /**
      * Generate 8 character unique number for merchant
      */
-    protected function generateUniqueNumber(): string
+    public function generateUniqueNumber(): string
     {
         do {
             $uniqueNumber = strtoupper(Str::random(8));
@@ -24,7 +24,7 @@ trait MerchantHelperTrait
     /**
      * Generate corporate member username (C + 8 digits)
      */
-    protected function generateCorporateMemberUsername(): string
+    public function generateCorporateMemberUsername(): string
     {
         do {
             $username = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
