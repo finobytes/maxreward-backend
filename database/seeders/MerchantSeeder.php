@@ -52,7 +52,7 @@ class MerchantSeeder extends Seeder
         
         $merchant1 = Merchant::create([
             'business_name' => 'Shwapno Super Shop',
-            'business_type' => 'Super Shop',
+            'business_type_id' => 1,
             'business_description' => 'Leading retail supermarket chain offering groceries, fresh produce, and household items',
             'company_address' => 'House 25, Road 8, Dhanmondi, Dhaka-1205',
             'status' => 'approved',
@@ -147,7 +147,7 @@ class MerchantSeeder extends Seeder
         
         $merchant2 = Merchant::create([
             'business_name' => 'TechZone Electronics',
-            'business_type' => 'Electronics Retail',
+            'business_type_id' => 2,
             'business_description' => 'Leading electronics and gadgets retailer with authentic products',
             'company_address' => 'Shop 12, Level 4, Bashundhara City, Panthapath, Dhaka',
             'status' => 'approved',

@@ -52,9 +52,9 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('business_type_id')->references('id')->on(' business_types');
-            $table->foreign('approved_by')->references('id')->on('admin');
-            $table->foreign('corporate_member_id')->references('id')->on('members');
+            // $table->foreign('business_type_id')->references('id')->on('business_types');
+            // $table->foreign('approved_by')->references('id')->on('admin');
+            // $table->foreign('corporate_member_id')->references('id')->on('members');
 
             $table->index('status');
             $table->index('phone');

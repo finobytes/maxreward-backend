@@ -17,7 +17,7 @@ return new class extends Migration
             
             // Referral & Level Info
             $table->integer('total_referrals')->default(0)->comment('Direct referral count');
-            $table->integer('unlocked_level')->default(0)->comment('Max accessible CP level (5,10,15,20,25,30)');
+            $table->integer('unlocked_level')->default(5)->comment('Max accessible CP level (5,10,15,20,25,30)');
             
             // Points Breakdown
             $table->double('onhold_points', 15, 2)->default(0)->comment('Locked points (CP locked levels)');
