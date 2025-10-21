@@ -34,6 +34,7 @@ return new class extends Migration
             
             $table->foreign('source_member_id')->references('id')->on('members');
             $table->foreign('receiver_member_id')->references('id')->on('members');
+            $table->foreign('purchase_id')->references('id')->on('purchases');
         });
     }
 
