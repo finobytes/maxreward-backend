@@ -111,7 +111,7 @@ class MemberSeeder extends Seeder
             MemberWallet::create([
                 'member_id' => $member->id,
                 'total_referrals' => 0,
-                'unlocked_level' => 0,
+                'unlocked_level' => 5,
                 'onhold_points' => 0.00,
                 'total_points' => 0.00,
                 'available_points' => 0.00,
@@ -158,7 +158,7 @@ class MemberSeeder extends Seeder
         MemberWallet::create([
             'member_id' => $corporateMember->id,
             'total_referrals' => 0,
-            'unlocked_level' => 0,
+            'unlocked_level' => 5,
             'onhold_points' => 0.00,
             'total_points' => 0.00,
             'available_points' => 0.00,

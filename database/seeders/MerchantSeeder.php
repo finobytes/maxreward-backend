@@ -105,7 +105,7 @@ class MerchantSeeder extends Seeder
         MemberWallet::create([
             'member_id' => $corporateMember1->id,
             'total_referrals' => 0,
-            'unlocked_level' => 0,
+            'unlocked_level' => 5,
             'onhold_points' => 0.00,
             'total_points' => 0.00,
             'available_points' => 0.00,
@@ -120,7 +120,7 @@ class MerchantSeeder extends Seeder
         MerchantWallet::create([
             'merchant_id' => $merchant1->id,
             'total_referrals' => 0,
-            'unlocked_level' => 0,
+            'unlocked_level' => 5,
             'onhold_points' => 0.00,
             'total_points' => 0.00,
             'available_points' => 0.00,
@@ -200,7 +200,7 @@ class MerchantSeeder extends Seeder
         MemberWallet::create([
             'member_id' => $corporateMember2->id,
             'total_referrals' => 0,
-            'unlocked_level' => 0,
+            'unlocked_level' => 5,
             'onhold_points' => 0.00,
             'total_points' => 0.00,
             'available_points' => 0.00,
@@ -215,7 +215,7 @@ class MerchantSeeder extends Seeder
         MerchantWallet::create([
             'merchant_id' => $merchant2->id,
             'total_referrals' => 0,
-            'unlocked_level' => 0,
+            'unlocked_level' => 5,
             'onhold_points' => 0.00,
             'total_points' => 0.00,
             'available_points' => 0.00,
