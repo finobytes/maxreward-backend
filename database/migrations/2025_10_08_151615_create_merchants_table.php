@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string("unique_number")->unique();
             $table->string('business_name');
-            $table->string('business_type')->nullable();
+            $table->foreignId('business_type_id')->nullable()->constrained('business_types');
             $table->text('business_description')->nullable();
             $table->text('company_address')->nullable();
             $table->enum('status', ['pending', 'approved', 'suspended', 'blocked'])->default('pending');

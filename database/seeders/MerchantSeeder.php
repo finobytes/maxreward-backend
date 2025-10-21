@@ -12,32 +12,11 @@ use App\Models\Member;
 use App\Models\MemberWallet;
 use App\Models\MerchantWallet;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\MerchantHelperTrait;
 
 class MerchantSeeder extends Seeder
 {
-    /**
-     * Generate 8 character unique number
-     */
-    private function generateUniqueNumber(): string
-    {
-        do {
-            $uniqueNumber = strtoupper(Str::random(8));
-        } while (DB::table('merchants')->where('unique_number', $uniqueNumber)->exists());
-        
-        return $uniqueNumber;
-    }
-
-    /**
-     * Generate corporate member username (C + 8 digits)
-     */
-    private function generateCorporateMemberUsername(): string
-    {
-        do {
-            $username = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-        } while (DB::table('members')->where('user_name', $username)->exists());
-        
-        return $username;
-    }
+    use MerchantHelperTrait;
 
     /**
      * Run the database seeds.

@@ -13,32 +13,11 @@ use App\Models\Member;
 use App\Models\MemberWallet;
 use App\Models\MerchantWallet;
 use App\Models\MerchantStaff;
+use App\Traits\MerchantHelperTrait;
 
 class MerchantController extends Controller
 {
-    /**
-     * Generate 8 character unique number for merchant
-     */
-    private function generateUniqueNumber(): string
-    {
-        do {
-            $uniqueNumber = strtoupper(Str::random(8));
-        } while (Merchant::where('unique_number', $uniqueNumber)->exists());
-
-        return $uniqueNumber;
-    }
-
-    /**
-     * Generate corporate member username (C + 8 digits)
-     */
-    private function generateCorporateMemberUsername(): string
-    {
-        do {
-            $username = 'C' . str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
-        } while (Member::where('user_name', $username)->exists());
-
-        return $username;
-    }
+    use MerchantHelperTrait;
 
     /**
      * Generate merchant staff username (M1 + 8 digits)
