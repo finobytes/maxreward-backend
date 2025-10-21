@@ -10,6 +10,8 @@ class MerchantWallet extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'merchant_wallets';
+
     protected $fillable = [
         'merchant_id',
         'total_referrals',

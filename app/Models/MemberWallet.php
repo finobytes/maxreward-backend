@@ -10,6 +10,8 @@ class MemberWallet extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'member_wallets';
+
     protected $fillable = [
         'member_id',
         'total_referrals',
