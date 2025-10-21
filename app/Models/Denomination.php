@@ -12,7 +12,7 @@ class Denomination extends Model
     /**
      * The table associated with the model.
      */
-    protected $table = 'denomination';
+    protected $table = 'denominations';
 
     /**
      * The attributes that are mass assignable.
