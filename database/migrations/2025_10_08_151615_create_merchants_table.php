@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string("unique_number")->unique();
             $table->string('business_name');
-            $table->foreignId('business_type_id')->nullable()->constrained('business_types');
+            $table->unsignedBigInteger('business_type_id')->nullable()->comment('Business type ID');
             $table->text('business_description')->nullable();
             $table->text('company_address')->nullable();
             $table->enum('status', ['pending', 'approved', 'suspended', 'blocked'])->default('pending');
@@ -51,6 +51,10 @@ return new class extends Migration
             $table->enum('merchant_created_by', ['general_member', 'admin'])->default('admin')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('business_type_id')->references('id')->on(' business_types');
+            $table->foreign('approved_by')->references('id')->on('admin');
+            $table->foreign('corporate_member_id')->references('id')->on('members');
 
             $table->index('status');
             $table->index('phone');

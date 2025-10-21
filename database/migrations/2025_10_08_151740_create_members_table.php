@@ -29,6 +29,9 @@ return new class extends Migration
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
+
+            $table->foreign('merchant_id')->references('id')->on('merchants');
+
             // Indexes
             $table->index('name');
             $table->index('user_name');

@@ -11,6 +11,8 @@ class Member extends Authenticatable implements JWTSubject
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'members';
+
     protected $fillable = [
         'user_name',
         'name',

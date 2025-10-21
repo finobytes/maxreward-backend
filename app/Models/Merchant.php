@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Merchant extends Model
 {
     use SoftDeletes;
+
+    protected $table = 'merchants';
     
     protected $fillable = [
         'business_name',
