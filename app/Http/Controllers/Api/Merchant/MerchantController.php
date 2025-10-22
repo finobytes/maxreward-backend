@@ -62,8 +62,8 @@ class MerchantController extends Controller
 
             // Owner Details
             'owner_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:merchants,phone',
-            'gender' => 'required|in:male,female,other',
+            'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone',
+            'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'email' => 'required|email|max:255|unique:merchants,email',
 
@@ -311,13 +311,38 @@ class MerchantController extends Controller
             }
 
             // Filter by business type (optional)
-            if ($request->has('business_type')) {
-                $query->where('business_type', $request->business_type);
+            if ($request->has('business_type_id')) {
+                $query->where('business_type_id', $request->business_type);
             }
 
-            // Search by business name (optional)
+            // Search by merchant_id (optional)
+            if ($request->has('merchant_id')) {
+                $query->where('id', $request->merchant_id);
+            }
+
+            // Search by business_name (optional)
+            if ($request->has('business_name')) {
+                $query->where('business_name', 'LIKE', '%' . $request->business_name . '%');
+            }
+
+            // Search by email (optional)
+            if ($request->has('email')) {
+                $query->where('email', 'LIKE', '%' . $request->email . '%');
+            }
+
+            // Search by phone (optional)
+            if ($request->has('phone')) {
+                $query->where('phone', 'LIKE', '%' . $request->phone . '%');
+            }
+
+            // General search by business name, email, phone (optional)
             if ($request->has('search')) {
-                $query->where('business_name', 'LIKE', '%' . $request->search . '%');
+                $query->where(function($q) use ($request) {
+                    $q->where('business_name', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('email', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('phone', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('business_type', 'LIKE', '%' . $request->search . '%');
+                });
             }
 
             // Get pagination limit (default: 10)
@@ -450,8 +475,8 @@ class MerchantController extends Controller
 
             // Owner Details
             'owner_name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|unique:merchants,phone,' . $id,
-            'gender' => 'sometimes|required|in:male,female,other',
+            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone,' . $id,
+            'gender' => 'sometimes|required|in:male,female,others',
             'address' => 'sometimes|required|string',
             'email' => 'sometimes|required|email|max:255|unique:merchants,email,' . $id,
 

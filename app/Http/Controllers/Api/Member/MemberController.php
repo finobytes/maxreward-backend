@@ -40,14 +40,35 @@ class MemberController extends Controller
                 $query->where('merchant_id', $request->merchant_id);
             }
 
-            // Search by name or phone (optional)
+            // Search by name (optional)
+            if ($request->has('name')) {
+                $query->where('name', 'LIKE', '%' . $request->name . '%');
+            }
+
+            // Search by phone (optional)
+            if ($request->has('phone')) {
+                $query->where('phone', 'LIKE', '%' . $request->phone . '%');
+            }
+
+            // Search by email (optional)
+            if ($request->has('email')) {
+                $query->where('email', 'LIKE', '%' . $request->email . '%');
+            }
+
+            // Search by address (optional)
+            if ($request->has('address')) {
+                $query->where('address', 'LIKE', '%' . $request->address . '%');
+            }
+
+            // General search by name, phone, email, user_name, address (optional)
             if ($request->has('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
                     $q->where('name', 'LIKE', '%' . $search . '%')
                       ->orWhere('phone', 'LIKE', '%' . $search . '%')
                       ->orWhere('user_name', 'LIKE', '%' . $search . '%')
-                      ->orWhere('email', 'LIKE', '%' . $search . '%');
+                      ->orWhere('email', 'LIKE', '%' . $search . '%')
+                      ->orWhere('address', 'LIKE', '%' . $search . '%');
                 });
             }
 
