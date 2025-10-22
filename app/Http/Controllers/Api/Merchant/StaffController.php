@@ -37,7 +37,7 @@ class StaffController extends Controller
         $validator = Validator::make($request->all(), [
             'merchant_id' => 'required|integer|exists:merchants,id',
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:merchant_staffs,phone',
+            'phone' => 'required|string|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone',
             'email' => 'required|email|max:255|unique:merchant_staffs,email',
             'password' => 'required|string|min:6',
             'gender_type' => 'required|in:male,female,other',
@@ -148,11 +148,32 @@ class StaffController extends Controller
                 $query->where('status', $request->status);
             }
 
-            // Search by name or email (optional)
+            // Search by name (optional)
+            if ($request->has('name')) {
+                $query->where('name', 'LIKE', '%' . $request->name . '%');
+            }
+
+            // Search by phone (optional)
+            if ($request->has('phone')) {
+                $query->where('phone', 'LIKE', '%' . $request->phone . '%');
+            }
+
+            // Search by email (optional)
+            if ($request->has('email')) {
+                $query->where('email', 'LIKE', '%' . $request->email . '%');
+            }
+
+            // Search by staff_id (user_name) (optional)
+            if ($request->has('staff_id')) {
+                $query->where('id', 'LIKE', '%' . $request->staff_id . '%');
+            }
+
+            // General search by name, email, phone or user_name (optional)
             if ($request->has('search')) {
                 $query->where(function($q) use ($request) {
                     $q->where('name', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('email', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('phone', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('user_name', 'LIKE', '%' . $request->search . '%');
                 });
             }
@@ -222,7 +243,7 @@ class StaffController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|unique:merchant_staffs,phone,' . $id,
+            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone,' . $id,
             'email' => 'sometimes|required|email|max:255|unique:merchant_staffs,email,' . $id,
             'password' => 'nullable|string|min:6',
             'gender_type' => 'sometimes|required|in:male,female,other',

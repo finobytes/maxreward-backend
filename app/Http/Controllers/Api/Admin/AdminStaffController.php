@@ -34,12 +34,12 @@ class AdminStaffController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:admin,phone',
+            'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone',
             'email' => 'required|email|max:255|unique:admin,email',
             'password' => 'required|string|min:6',
             'address' => 'nullable|string|max:500',
             'designation' => 'nullable|string|max:255',
-            'gender' => 'required|in:male,female,other',
+            'gender' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
         ]);
 
@@ -217,12 +217,12 @@ class AdminStaffController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|unique:admin,phone,' . $id,
+            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone,' . $id,
             'email' => 'sometimes|required|email|max:255|unique:admin,email,' . $id,
             'password' => 'nullable|string|min:6',
             'address' => 'nullable|string|max:500',
             'designation' => 'nullable|string|max:255',
-            'gender' => 'sometimes|required|in:male,female,other',
+            'gender' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
         ]);
 
