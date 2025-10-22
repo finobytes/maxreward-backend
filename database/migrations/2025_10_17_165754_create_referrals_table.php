@@ -11,20 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-                Schema::create('referrals', function (Blueprint $table) {
+        Schema::create('referrals', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('parent_member_id')->nullable()->comment('Referrer member ID');
-            $table->unsignedBigInteger('merchant_id')->nullable()->comment('Merchant who referred (if applicable)');
             $table->unsignedBigInteger('child_member_id')->comment('New member ID');
             $table->timestamps();
             
             $table->index('parent_member_id');
             $table->index('child_member_id');
-            $table->index('merchant_id');
             
             $table->foreign('parent_member_id')->references('id')->on('members');
             $table->foreign('child_member_id')->references('id')->on('members');
-            $table->foreign('merchant_id')->references('id')->on('merchants');
         });
     }
 

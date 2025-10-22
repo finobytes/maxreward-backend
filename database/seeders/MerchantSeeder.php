@@ -119,14 +119,7 @@ class MerchantSeeder extends Seeder
         // Create Merchant Wallet
         MerchantWallet::create([
             'merchant_id' => $merchant1->id,
-            'total_referrals' => 0,
-            'unlocked_level' => 5,
-            'onhold_points' => 0.00,
             'total_points' => 0.00,
-            'available_points' => 0.00,
-            'total_rp' => 0.00,
-            'total_pp' => 0.00,
-            'total_cp' => 0.00,
             'created_at' => $now,
             'updated_at' => $now,
         ]);
@@ -214,14 +207,7 @@ class MerchantSeeder extends Seeder
         // Create Merchant Wallet
         MerchantWallet::create([
             'merchant_id' => $merchant2->id,
-            'total_referrals' => 0,
-            'unlocked_level' => 5,
-            'onhold_points' => 0.00,
             'total_points' => 0.00,
-            'available_points' => 0.00,
-            'total_rp' => 0.00,
-            'total_pp' => 0.00,
-            'total_cp' => 0.00,
             'created_at' => $now,
             'updated_at' => $now,
         ]);

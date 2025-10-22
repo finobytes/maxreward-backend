@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::create('cp_unlock_histories', function (Blueprint $table) {
             $table->id();
-             $table->unsignedBigInteger('member_id');
+            $table->unsignedBigInteger('member_id');
             $table->integer('previous_referrals');
             $table->integer('new_referrals');
             $table->integer('previous_unlocked_level');
             $table->integer('new_unlocked_level');
             $table->double('released_cp_amount')->default(0)->comment('Amount moved from onhold to available');
-            // $table->timestamp('created_at')->useCurrent();
             
             $table->index('member_id');
             $table->index('created_at');

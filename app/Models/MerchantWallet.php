@@ -14,25 +14,11 @@ class MerchantWallet extends Model
 
     protected $fillable = [
         'merchant_id',
-        'total_referrals',
-        'unlocked_level',
-        'onhold_points',
         'total_points',
-        'available_points',
-        'total_rp',
-        'total_pp',
-        'total_cp',
     ];
 
     protected $casts = [
-        'total_referrals' => 'integer',
-        'unlocked_level' => 'integer',
-        'onhold_points' => 'double',
         'total_points' => 'double',
-        'available_points' => 'double',
-        'total_rp' => 'double',
-        'total_pp' => 'double',
-        'total_cp' => 'double',
     ];
 
     /**

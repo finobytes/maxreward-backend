@@ -14,30 +14,13 @@ return new class extends Migration
         Schema::create('merchant_wallets', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('merchant_id')->unique();
-            
-            // Referral & Level Info
-            $table->integer('total_referrals')->default(0)->comment('Direct referral count');
-            $table->integer('unlocked_level')->default(0)->comment('Max accessible CP level (5,10,15,20,25,30)');
-            
-            // Points Breakdown
-            $table->double('onhold_points', 15, 2)->default(0)->comment('Locked points (CP locked levels)');
             $table->double('total_points', 15, 2)->default(0)->comment('Lifetime total points earned');
-            $table->double('available_points', 15, 2)->default(0)->comment('Usable balance');
-            $table->double('total_rp', 15, 2)->default(0)->comment('Referral points');
-            $table->double('total_pp', 15, 2)->default(0)->comment('Personal points');
-            $table->double('total_cp', 15, 2)->default(0)->comment('Community points');
-            
             $table->timestamps();
             $table->softDeletes();
-            
             // Foreign Key
             $table->foreign('merchant_id')->references('id')->on('merchants');
-            
             // Indexes
             $table->index('merchant_id');
-            $table->index('available_points');
-            $table->index('unlocked_level');
-            $table->index('total_referrals');
         });
     }
 
