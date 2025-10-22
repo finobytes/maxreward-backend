@@ -158,7 +158,7 @@ class MerchantController extends Controller
             $memberWallet = MemberWallet::create([
                 'member_id' => $corporateMember->id,
                 'total_referrals' => 0,
-                'unlocked_level' => 0,
+                'unlocked_level' => 5,
                 'onhold_points' => 0.00,
                 'total_points' => 0.00,
                 'available_points' => 0.00,
@@ -170,14 +170,7 @@ class MerchantController extends Controller
             // Create Merchant Wallet
             $merchantWallet = MerchantWallet::create([
                 'merchant_id' => $merchant->id,
-                'total_referrals' => 0,
-                'unlocked_level' => 0,
-                'onhold_points' => 0.00,
                 'total_points' => 0.00,
-                'available_points' => 0.00,
-                'total_rp' => 0.00,
-                'total_pp' => 0.00,
-                'total_cp' => 0.00,
             ]);
 
             // Create Merchant Staff (automatically from merchant data)
