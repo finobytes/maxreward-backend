@@ -135,12 +135,15 @@ class AdminStaffController extends Controller
                 $query->where('status', $request->status);
             }
 
-            // Search by name, email, or username (optional)
+            // Search by name, email, username, phone, designation, or address (optional)
             if ($request->has('search')) {
                 $query->where(function($q) use ($request) {
                     $q->where('name', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('email', 'LIKE', '%' . $request->search . '%')
-                      ->orWhere('user_name', 'LIKE', '%' . $request->search . '%');
+                      ->orWhere('user_name', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('phone', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('designation', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('address', 'LIKE', '%' . $request->search . '%');
                 });
             }
 

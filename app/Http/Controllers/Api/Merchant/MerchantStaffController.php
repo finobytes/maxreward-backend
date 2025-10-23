@@ -10,8 +10,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\MerchantStaff;
 use App\Models\Merchant;
+use App\Helpers\CloudinaryHelper;
 
-class StaffController extends Controller
+class MerchantStaffController extends Controller
 {
     /**
      * Generate merchant staff username (M1 + 8 digits)
@@ -42,6 +43,7 @@ class StaffController extends Controller
             'password' => 'required|string|min:6',
             'gender_type' => 'required|in:male,female,other',
             'status' => 'nullable|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -62,6 +64,19 @@ class StaffController extends Controller
             // Generate unique username for staff
             $staffUsername = $this->generateStaffUsername();
 
+            // Handle staff image upload to Cloudinary
+            $staffImageUrl = null;
+            $imageCloudinaryId = null;
+
+            if ($request->hasFile('image')) {
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('image'),
+                    'maxreward/merchant-staffs/images'
+                );
+                $staffImageUrl = $uploadResult['url'];
+                $imageCloudinaryId = $uploadResult['public_id'];
+            }
+
             // Create Staff
             $staff = MerchantStaff::create([
                 'merchant_id' => $request->merchant_id,
@@ -73,6 +88,8 @@ class StaffController extends Controller
                 'type' => 'staff',
                 'status' => $request->status ?? 'active',
                 'gender_type' => $request->gender_type,
+                'image' => $staffImageUrl,
+                'image_cloudinary_id' => $imageCloudinaryId,
             ]);
 
             // Commit transaction
@@ -92,6 +109,8 @@ class StaffController extends Controller
                         'type' => $staff->type,
                         'status' => $staff->status,
                         'gender_type' => $staff->gender_type,
+                        'image' => $staff->image,
+                        'image_cloudinary_id' => $staff->image_cloudinary_id,
                         'created_at' => $staff->created_at,
                     ],
                     'credentials' => [
@@ -248,6 +267,7 @@ class StaffController extends Controller
             'password' => 'nullable|string|min:6',
             'gender_type' => 'sometimes|required|in:male,female,other',
             'status' => 'nullable|in:active,inactive',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -264,6 +284,25 @@ class StaffController extends Controller
 
             // Find staff
             $staff = MerchantStaff::findOrFail($id);
+
+            // Handle staff image upload to Cloudinary
+            if ($request->hasFile('image')) {
+                // Delete old image from Cloudinary if exists
+                if ($staff->image_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($staff->image_cloudinary_id);
+                }
+
+                // Upload new image
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('image'),
+                    'maxreward/merchant-staffs/images'
+                );
+
+                // Update staff with new image data
+                $staff->image = $uploadResult['url'];
+                $staff->image_cloudinary_id = $uploadResult['public_id'];
+                $staff->save();
+            }
 
             // Update staff data (only fields that are provided)
             $staffData = [];
