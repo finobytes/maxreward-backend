@@ -16,16 +16,18 @@ return new class extends Migration
             $table->unsignedBigInteger('member_id')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->enum('type', [
-                'referral_invite',
+                'referral_points_earned',
+                'community_points_earned',
                 'point_approval',
+                'purchase_approved',
+                'purchase_rejected',
+                'cp_unlock',
+                'referral_invite', // so far applied
                 'redemption',
                 'milestone',
                 'voucher_purchase',
-                'cp_unlock',
-                'purchase_approved',
-                'purchase_rejected',
                 'level_unlocked',
-                'system_alert'
+                'system_alert',
             ])->comment('Notification type');
             $table->string('title', 200)->nullable()->comment('Notification title');
             $table->text('message')->comment('Notification message');

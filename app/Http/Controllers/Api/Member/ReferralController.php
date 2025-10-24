@@ -12,6 +12,7 @@ use App\Models\MemberCommunityPoint;
 use App\Models\CompanyInfo;
 use App\Models\CpLevelConfig;
 use App\Models\Notification;
+use App\Models\CpUnlockHistory;
 use App\Services\CommunityTreeService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
@@ -19,16 +20,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Traits\MemberHelperTrait;
+use Illuminate\Support\Facades\Log;
 
 class ReferralController extends Controller
 {
+    use MemberHelperTrait;
+
     protected $treeService;
     protected $whatsappService;
 
-    public function __construct(
-        CommunityTreeService $treeService,
-        WhatsAppService $whatsappService
-    ) {
+    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
     }
@@ -46,9 +48,9 @@ class ReferralController extends Controller
         // Validation
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|unique:members,phone',
+            'phone' => 'required|string|max:11|unique:members,phone',
             'email' => 'nullable|email|unique:members,email',
-            'gender_type' => 'required|in:male,female,other',
+            'gender_type' => 'required|in:male,female,others',
             'address' => 'nullable|string|max:500',
         ]);
 
@@ -67,6 +69,9 @@ class ReferralController extends Controller
             $referrer = auth()->user(); // Can be general or corporate member
             $referrerWallet = $referrer->wallet;
 
+            // $this->command->info('test...................');
+            Log::info('Referrer ID: ' . $referrer->id);
+
             // ✅ Step 1: Check if referrer has sufficient referral balance (>= 100)
             if ($referrerWallet->total_rp < 100) {
                 return response()->json([
@@ -79,7 +84,7 @@ class ReferralController extends Controller
 
             // ✅ Step 2: Generate credentials for new member
             $password = Str::random(8); // Random password
-            $referralCode = $this->generateUniqueReferralCode();
+            $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             $userName = $this->formatPhoneNumber($request->phone);
 
             // ✅ Step 3: Create new member
@@ -146,7 +151,7 @@ class ReferralController extends Controller
                 'name' => $newMember->name,
                 'phone' => $newMember->phone,
                 'user_name' => $userName,
-                'password' => $password,
+                'password' => Hash::make($password),
                 'login_url' => env('APP_URL') . '/login',
             ]);
 
@@ -399,7 +404,7 @@ class ReferralController extends Controller
                 $wallet->save();
 
                 // Create unlock history
-                \App\Models\CpUnlockHistory::createUnlockRecord([
+                CpUnlockHistory::createUnlockRecord([
                     'member_id' => $memberId,
                     'previous_referrals' => $totalReferrals - 1,
                     'new_referrals' => $totalReferrals,
@@ -418,17 +423,17 @@ class ReferralController extends Controller
         }
     }
 
-    /**
-     * Generate unique 8-character referral code
-     */
-    private function generateUniqueReferralCode()
-    {
-        do {
-            $code = strtoupper(Str::random(8));
-        } while (Member::where('referral_code', $code)->exists());
+    // /**
+    //  * Generate unique 8-character referral code
+    //  */
+    // private function generateUniqueReferralCode()
+    // {
+    //     do {
+    //         $code = strtoupper(Str::random(8));
+    //     } while (Member::where('referral_code', $code)->exists());
 
-        return $code;
-    }
+    //     return $code;
+    // }
 
     /**
      * Format phone number as user_name

@@ -9,20 +9,11 @@ use Carbon\Carbon;
 use App\Models\Member;
 use App\Models\MemberWallet;
 use Illuminate\Support\Facades\Hash;
+use App\Traits\MemberHelperTrait;
 
 class MemberSeeder extends Seeder
 {
-    /**
-     * Generate unique 8 character referral code
-     */
-    private function generateReferralCode(): string
-    {
-        do {
-            $code = strtoupper(Str::random(8));
-        } while (DB::table('members')->where('referral_code', $code)->exists());
-        
-        return $code;
-    }
+    use MemberHelperTrait;
 
     /**
      * Run the database seeds.
@@ -95,7 +86,7 @@ class MemberSeeder extends Seeder
                 'status' => 'active',
                 'merchant_id' => null,
                 'member_created_by' => 'admin',
-                'referral_code' => $this->generateReferralCode(),
+                'referral_code' => $this->generateUniqueReferralCode(),
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -149,7 +140,7 @@ class MemberSeeder extends Seeder
             'status' => 'active',
             'merchant_id' => null,  // ✅ Not linked to any merchant
             'member_created_by' => 'admin',
-            'referral_code' => $this->generateReferralCode(),
+            'referral_code' => $this->generateUniqueReferralCode(), // this function coming from MemberHelperTrait
             'created_at' => $now,
             'updated_at' => $now,
         ]);

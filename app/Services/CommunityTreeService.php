@@ -28,7 +28,6 @@ class CommunityTreeService
             $referral = Referral::create([
                 'parent_member_id' => $placementPosition['parent_id'],
                 'child_member_id' => $newMemberId,
-                'merchant_id' => null, // Set if referred by merchant
             ]);
 
             DB::commit();
