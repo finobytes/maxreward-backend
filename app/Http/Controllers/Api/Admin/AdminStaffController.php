@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin;
+use App\Helpers\CloudinaryHelper;
 
 class AdminStaffController extends Controller
 {
@@ -41,6 +42,8 @@ class AdminStaffController extends Controller
             'designation' => 'nullable|string|max:255',
             'gender' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
+            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'national_id_card' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -58,6 +61,32 @@ class AdminStaffController extends Controller
             // Generate unique username for staff
             $staffUsername = $this->generateStaffUsername();
 
+            // Handle profile picture upload to Cloudinary
+            $profilePictureUrl = null;
+            $profileCloudinaryId = null;
+
+            if ($request->hasFile('profile_picture')) {
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('profile_picture'),
+                    'maxreward/admin/profile_pictures'
+                );
+                $profilePictureUrl = $uploadResult['url'];
+                $profileCloudinaryId = $uploadResult['public_id'];
+            }
+
+            // Handle national ID card upload to Cloudinary
+            $nationalIdCardUrl = null;
+            $nationalIdCardCloudinaryId = null;
+
+            if ($request->hasFile('national_id_card')) {
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('national_id_card'),
+                    'maxreward/admin/national_id_cards'
+                );
+                $nationalIdCardUrl = $uploadResult['url'];
+                $nationalIdCardCloudinaryId = $uploadResult['public_id'];
+            }
+
             // Create Admin Staff
             $staff = Admin::create([
                 'user_name' => $staffUsername,
@@ -70,6 +99,10 @@ class AdminStaffController extends Controller
                 'type' => 'staff',
                 'status' => $request->status ?? 'active',
                 'gender' => $request->gender,
+                'profile_picture' => $profilePictureUrl,
+                'profile_cloudinary_id' => $profileCloudinaryId,
+                'national_id_card' => $nationalIdCardUrl,
+                'national_id_card_cloudinary_id' => $nationalIdCardCloudinaryId,
             ]);
 
             // Commit transaction
@@ -90,6 +123,8 @@ class AdminStaffController extends Controller
                         'type' => $staff->type,
                         'status' => $staff->status,
                         'gender' => $staff->gender,
+                        'profile_picture' => $staff->profile_picture,
+                        'national_id_card' => $staff->national_id_card,
                         'created_at' => $staff->created_at,
                     ],
                     'credentials' => [
@@ -227,6 +262,8 @@ class AdminStaffController extends Controller
             'designation' => 'nullable|string|max:255',
             'gender' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
+            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'national_id_card' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -251,6 +288,44 @@ class AdminStaffController extends Controller
                     'success' => false,
                     'message' => 'This admin is not a staff member'
                 ], 400);
+            }
+
+            // Handle profile picture upload to Cloudinary
+            if ($request->hasFile('profile_picture')) {
+                // Delete old profile picture from Cloudinary if exists
+                if ($staff->profile_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($staff->profile_cloudinary_id);
+                }
+
+                // Upload new profile picture
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('profile_picture'),
+                    'maxreward/admin/profile_pictures'
+                );
+
+                // Update staff with new profile picture data
+                $staff->profile_picture = $uploadResult['url'];
+                $staff->profile_cloudinary_id = $uploadResult['public_id'];
+                $staff->save();
+            }
+
+            // Handle national ID card upload to Cloudinary
+            if ($request->hasFile('national_id_card')) {
+                // Delete old national ID card from Cloudinary if exists
+                if ($staff->national_id_card_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($staff->national_id_card_cloudinary_id);
+                }
+
+                // Upload new national ID card
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('national_id_card'),
+                    'maxreward/admin/national_id_cards'
+                );
+
+                // Update staff with new national ID card data
+                $staff->national_id_card = $uploadResult['url'];
+                $staff->national_id_card_cloudinary_id = $uploadResult['public_id'];
+                $staff->save();
             }
 
             // Update staff data (only fields that are provided)
@@ -346,6 +421,16 @@ class AdminStaffController extends Controller
                 'name' => $staff->name,
                 'email' => $staff->email,
             ];
+
+            // Delete profile picture from Cloudinary if exists
+            if ($staff->profile_cloudinary_id) {
+                CloudinaryHelper::deleteImage($staff->profile_cloudinary_id);
+            }
+
+            // Delete national ID card from Cloudinary if exists
+            if ($staff->national_id_card_cloudinary_id) {
+                CloudinaryHelper::deleteImage($staff->national_id_card_cloudinary_id);
+            }
 
             // Delete the staff
             $staff->delete();

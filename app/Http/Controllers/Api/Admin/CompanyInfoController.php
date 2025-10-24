@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Member;
 use App\Models\Merchant;
+use App\Helpers\CloudinaryHelper;
+use Illuminate\Support\Facades\DB;
 // use App\Models\Transaction;
 
 class CompanyInfoController extends Controller
@@ -23,7 +25,7 @@ class CompanyInfoController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
-            'logo' => 'nullable|string|max:500',
+            'logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -33,16 +35,71 @@ class CompanyInfoController extends Controller
             ], 422);
         }
 
-        // Update or create company info
-        $company = CompanyInfo::updateCompanyInfo($validator->validated());
+        try {
+            // Start database transaction
+            DB::beginTransaction();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Company information updated successfully',
-            'data' => [
-                'company' => $company
-            ]
-        ]);
+            // Get existing company info
+            $company = CompanyInfo::first();
+
+            // Handle logo upload to Cloudinary
+            $logoUrl = null;
+            $logoCloudinaryId = null;
+
+            if ($request->hasFile('logo')) {
+                // Delete old logo from Cloudinary if exists
+                if ($company && $company->logo_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($company->logo_cloudinary_id);
+                }
+
+                // Upload new logo
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('logo'),
+                    'maxreward/company/logos'
+                );
+
+                $logoUrl = $uploadResult['url'];
+                $logoCloudinaryId = $uploadResult['public_id'];
+            }
+
+            // Prepare data for update
+            $data = [
+                'name' => $request->name,
+                'address' => $request->address,
+                'phone' => $request->phone,
+                'email' => $request->email,
+            ];
+
+            // Add logo data if uploaded
+            if ($logoUrl) {
+                $data['logo'] = $logoUrl;
+                $data['logo_cloudinary_id'] = $logoCloudinaryId;
+            }
+
+            // Update or create company info
+            $company = CompanyInfo::updateCompanyInfo($data);
+
+            // Commit transaction
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Company information updated successfully',
+                'data' => [
+                    'company' => $company
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update company information',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
