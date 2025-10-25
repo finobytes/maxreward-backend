@@ -4,7 +4,13 @@ namespace App\Http\Controllers\Api\Member;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use App\Models\Member;
+use App\Models\MemberWallet;
+use App\Helpers\CloudinaryHelper;
 
 class MemberController extends Controller
 {
@@ -272,6 +278,9 @@ class MemberController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            // Start database transaction
+            DB::beginTransaction();
+
             // Find the member
             $member = Member::findOrFail($id);
 
@@ -282,10 +291,33 @@ class MemberController extends Controller
                 'address' => 'sometimes|string|max:500',
                 'email' => 'sometimes|email|max:255|unique:members,email,' . $id,
                 'status' => 'sometimes|in:active,inactive,suspended',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
             ]);
+
+            // Handle image upload to Cloudinary
+            if ($request->hasFile('image')) {
+                // Delete old image from Cloudinary if exists
+                if ($member->image_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($member->image_cloudinary_id);
+                }
+
+                // Upload new image
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('image'),
+                    'maxreward/members/images'
+                );
+
+                // Update member with new image data
+                $member->image = $uploadResult['url'];
+                $member->image_cloudinary_id = $uploadResult['public_id'];
+                $member->save();
+            }
 
             // Update only the fields that are present in the request
             $member->update($validatedData);
+
+            // Commit transaction
+            DB::commit();
 
             // Reload member with relationships
             $member->load(['wallet', 'merchant']);
@@ -297,17 +329,20 @@ class MemberController extends Controller
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Member not found'
             ], 404);
         } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update member',
