@@ -25,6 +25,8 @@ class Voucher extends Model
         'quantity',
         'payment_method',
         'total_amount',
+        'manual_payment_docs_url',
+        'manual_payment_docs_cloudinary_id',
         'status',
     ];
 

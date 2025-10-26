@@ -21,6 +21,8 @@ return new class extends Migration
             $table->enum('payment_method', ['online', 'manual']);
             $table->decimal('total_amount', 10, 2);
             $table->enum('status', ['success', 'failed', 'pending'])->default('pending');
+            $table->string('manual_payment_docs_url', 500)->nullable();
+            $table->string('manual_payment_docs_cloudinary_id')->nullable();
             $table->timestamps();
             
             $table->index('member_id');

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Admin\BusinessTypeController;
 use App\Http\Controllers\Api\Admin\DenominationController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
+use App\Http\Controllers\Api\Member\VoucherController;
 
 
 /*
@@ -230,16 +231,19 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
 
 Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(function () {
-    
+
     // Refer new member (Both General & Corporate Members)
     Route::post('/refer-new-member', [ReferralController::class, 'referNewMember']);
-    
+
     // Get referral tree
     Route::get('/referral-tree', [ReferralController::class, 'getReferralTree'])->middleware('role:admin,member');
-    
+
     // Get directly referred members
     Route::get('/referred-members', [ReferralController::class, 'getReferredMembers'])->middleware('role:admin,member');
-    
+
+    // Voucher routes
+    Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
+
 });
 
 
