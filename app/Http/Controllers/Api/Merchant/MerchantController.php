@@ -14,6 +14,7 @@ use App\Models\MemberWallet;
 use App\Models\MerchantWallet;
 use App\Models\MerchantStaff;
 use App\Traits\MerchantHelperTrait;
+use App\Helpers\CloudinaryHelper;
 
 class MerchantController extends Controller
 {
@@ -80,6 +81,9 @@ class MerchantController extends Controller
             // Merchant Staff Password (for merchant type staff)
             'merchant_password' => 'nullable|string|min:6',
 
+            // Business Logo
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+
             // Additional Staff Members (optional)
             'staffs' => 'nullable|array',
             'staffs.*.name' => 'required|string|max:255',
@@ -104,6 +108,19 @@ class MerchantController extends Controller
 
             // Generate unique number for merchant
             $uniqueNumber = $this->generateUniqueNumber();
+
+            // Handle business logo upload to Cloudinary
+            $businessLogoUrl = null;
+            $logoCloudinaryId = null;
+
+            if ($request->hasFile('business_logo')) {
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('business_logo'),
+                    'maxreward/merchants/logos'
+                );
+                $businessLogoUrl = $uploadResult['url'];
+                $logoCloudinaryId = $uploadResult['public_id'];
+            }
 
             // Create Merchant
             $merchant = Merchant::create([
@@ -131,6 +148,8 @@ class MerchantController extends Controller
                 'country' => $request->country ?? 'Bangladesh',
                 'products_services' => $request->products_services,
                 'merchant_created_by' => 'api', // or auth()->user()->id if authenticated
+                'business_logo' => $businessLogoUrl,
+                'logo_cloudinary_id' => $logoCloudinaryId,
             ]);
 
             // Generate corporate member username
@@ -480,6 +499,9 @@ class MerchantController extends Controller
             'country' => 'nullable|string|max:255',
             'products_services' => 'nullable|string',
 
+            // Business Logo
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+
             // Staff Members (optional) - can update existing or add new
             'staffs' => 'nullable|array',
             'staffs.*.id' => 'nullable|integer|exists:merchant_staffs,id', // If ID exists, update; otherwise create
@@ -510,6 +532,25 @@ class MerchantController extends Controller
 
             // Find merchant
             $merchant = Merchant::findOrFail($id);
+
+            // Handle business logo upload to Cloudinary
+            if ($request->hasFile('business_logo')) {
+                // Delete old logo from Cloudinary if exists
+                if ($merchant->logo_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($merchant->logo_cloudinary_id);
+                }
+
+                // Upload new logo
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('business_logo'),
+                    'maxreward/merchants/logos'
+                );
+
+                // Update merchant with new logo data
+                $merchant->business_logo = $uploadResult['url'];
+                $merchant->logo_cloudinary_id = $uploadResult['public_id'];
+                $merchant->save();
+            }
 
             // Update merchant data (only fields that are provided)
             $merchantData = [];

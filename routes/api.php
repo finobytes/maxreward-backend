@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 use App\Http\Controllers\GitWebhookController;
 use App\Http\Controllers\Api\Merchant\MerchantController;
-use App\Http\Controllers\Api\Merchant\StaffController as MerchantStaffController;
+use App\Http\Controllers\Api\Merchant\MerchantStaffController;
 use App\Http\Controllers\Api\Member\MemberController;
 use App\Http\Controllers\Api\Admin\AdminStaffController;
 use App\Http\Controllers\Api\Admin\CompanyInfoController;
