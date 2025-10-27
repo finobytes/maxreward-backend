@@ -102,7 +102,7 @@ class VoucherController extends Controller
             $totalAmount = $expectedAmount * $rmPoints;
 
 
-            // dd($totalAmount);
+            
 
             // Handle manual payment document upload to Cloudinary
             $manualPaymentDocsUrl = null;
@@ -116,6 +116,9 @@ class VoucherController extends Controller
                 $manualPaymentDocsUrl = $uploadResult['url'];
                 $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
             }
+
+
+            // dd($totalAmount);
 
             // Create voucher
             $voucher = Voucher::create([
@@ -143,11 +146,11 @@ class VoucherController extends Controller
 
             // Update member wallet based on voucher type
             if ($request->voucher_type === 'refer') {
-                $memberWallet->total_rp += $toalAmount;
-                $memberWallet->total_points += $toalAmount;
+                $memberWallet->total_rp += $totalAmount;
+                $memberWallet->total_points += $totalAmount;
             } elseif ($request->voucher_type === 'max') {
-                $memberWallet->available_points += $toalAmount;
-                $memberWallet->total_points += $toalAmount;
+                $memberWallet->available_points += $totalAmount;
+                $memberWallet->total_points += $totalAmount;
             }
 
             $memberWallet->save();
