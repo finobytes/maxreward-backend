@@ -71,7 +71,7 @@ Route::prefix('admin')->group(function () {
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
             Route::get('details', [CompanyInfoController::class, 'getFullDetails']);
-            Route::put('update', [CompanyInfoController::class, 'update']);
+            Route::post('update', [CompanyInfoController::class, 'update']);
             Route::get('cr-points', [CompanyInfoController::class, 'getCrPoints']);
             Route::post('adjust-cr-points', [CompanyInfoController::class, 'adjustCrPoints']);
             Route::get('statistics', [CompanyInfoController::class, 'getStatistics']);
