@@ -164,7 +164,7 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
 
     // Update merchant - only admin or merchant can update
-    Route::patch('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
+    Route::post('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
 
     // Delete merchant - only admin can delete
     Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');
