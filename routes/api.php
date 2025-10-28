@@ -99,7 +99,7 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     Route::get('/{id}', [AdminStaffController::class, 'show']);
 
     // Update admin staff information
-    Route::patch('/{id}', [AdminStaffController::class, 'update']);
+    Route::post('/{id}', [AdminStaffController::class, 'update']);
 
     // Delete admin staff
     Route::delete('/{id}', [AdminStaffController::class, 'destroy']);
