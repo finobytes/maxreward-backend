@@ -72,7 +72,7 @@ Route::prefix('admin')->group(function () {
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
             Route::get('details', [CompanyInfoController::class, 'getFullDetails']);
-            Route::put('update', [CompanyInfoController::class, 'update']);
+            Route::post('update', [CompanyInfoController::class, 'update']);
             Route::get('cr-points', [CompanyInfoController::class, 'getCrPoints']);
             Route::post('adjust-cr-points', [CompanyInfoController::class, 'adjustCrPoints']);
             Route::get('statistics', [CompanyInfoController::class, 'getStatistics']);
@@ -102,7 +102,7 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
     Route::get('/{id}', [AdminStaffController::class, 'show']);
 
     // Update admin staff information
-    Route::patch('/{id}', [AdminStaffController::class, 'update']);
+    Route::post('/{id}', [AdminStaffController::class, 'update']);
 
     // Delete admin staff
     Route::delete('/{id}', [AdminStaffController::class, 'destroy']);
@@ -179,7 +179,7 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
 
     // Update merchant - only admin or merchant can update
-    Route::patch('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
+    Route::post('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
 
     // Delete merchant - only admin can delete
     Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');

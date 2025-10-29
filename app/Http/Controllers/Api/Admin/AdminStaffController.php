@@ -43,7 +43,8 @@ class AdminStaffController extends Controller
             'gender' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
-            'national_id_card' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'national_id_card' => 'nullable|array|min:1|max:2',
+            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -74,17 +75,28 @@ class AdminStaffController extends Controller
                 $profileCloudinaryId = $uploadResult['public_id'];
             }
 
-            // Handle national ID card upload to Cloudinary
-            $nationalIdCardUrl = null;
-            $nationalIdCardCloudinaryId = null;
+            // Handle national ID card upload to Cloudinary (array of 2 images)
+            $nationalIdCardData = null;
 
             if ($request->hasFile('national_id_card')) {
-                $uploadResult = CloudinaryHelper::uploadImage(
-                    $request->file('national_id_card'),
-                    'maxreward/admin/national_id_cards'
-                );
-                $nationalIdCardUrl = $uploadResult['url'];
-                $nationalIdCardCloudinaryId = $uploadResult['public_id'];
+                $files = $request->file('national_id_card');
+                $uploadedImages = [];
+
+                // Upload each file
+                foreach ($files as $index => $file) {
+                    $uploadResult = CloudinaryHelper::uploadImage(
+                        $file,
+                        'maxreward/admin/national_id_cards'
+                    );
+
+                    $key = $index === 0 ? 'front' : 'back';
+                    $uploadedImages[$key] = [
+                        'url' => $uploadResult['url'],
+                        'cloudinary_id' => $uploadResult['public_id'],
+                    ];
+                }
+
+                $nationalIdCardData = $uploadedImages;
             }
 
             // Create Admin Staff
@@ -101,8 +113,8 @@ class AdminStaffController extends Controller
                 'gender' => $request->gender,
                 'profile_picture' => $profilePictureUrl,
                 'profile_cloudinary_id' => $profileCloudinaryId,
-                'national_id_card' => $nationalIdCardUrl,
-                'national_id_card_cloudinary_id' => $nationalIdCardCloudinaryId,
+                'national_id_card' => $nationalIdCardData,
+                'national_id_card_cloudinary_id' => null, // Not used anymore for JSON approach
             ]);
 
             // Commit transaction
@@ -263,7 +275,8 @@ class AdminStaffController extends Controller
             'gender' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
-            'national_id_card' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'national_id_card' => 'nullable|array|min:1|max:2',
+            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -309,22 +322,38 @@ class AdminStaffController extends Controller
                 $staff->save();
             }
 
-            // Handle national ID card upload to Cloudinary
+            // Handle national ID card upload to Cloudinary (array of 2 images)
             if ($request->hasFile('national_id_card')) {
-                // Delete old national ID card from Cloudinary if exists
-                if ($staff->national_id_card_cloudinary_id) {
-                    CloudinaryHelper::deleteImage($staff->national_id_card_cloudinary_id);
+                // Delete old national ID card images from Cloudinary if exists
+                $existingData = $staff->national_id_card;
+                if ($existingData) {
+                    if (isset($existingData['front']['cloudinary_id'])) {
+                        CloudinaryHelper::deleteImage($existingData['front']['cloudinary_id']);
+                    }
+                    if (isset($existingData['back']['cloudinary_id'])) {
+                        CloudinaryHelper::deleteImage($existingData['back']['cloudinary_id']);
+                    }
                 }
 
-                // Upload new national ID card
-                $uploadResult = CloudinaryHelper::uploadImage(
-                    $request->file('national_id_card'),
-                    'maxreward/admin/national_id_cards'
-                );
+                // Upload new images
+                $files = $request->file('national_id_card');
+                $uploadedImages = [];
+
+                foreach ($files as $index => $file) {
+                    $uploadResult = CloudinaryHelper::uploadImage(
+                        $file,
+                        'maxreward/admin/national_id_cards'
+                    );
+
+                    $key = $index === 0 ? 'front' : 'back';
+                    $uploadedImages[$key] = [
+                        'url' => $uploadResult['url'],
+                        'cloudinary_id' => $uploadResult['public_id'],
+                    ];
+                }
 
                 // Update staff with new national ID card data
-                $staff->national_id_card = $uploadResult['url'];
-                $staff->national_id_card_cloudinary_id = $uploadResult['public_id'];
+                $staff->national_id_card = $uploadedImages;
                 $staff->save();
             }
 
@@ -427,9 +456,19 @@ class AdminStaffController extends Controller
                 CloudinaryHelper::deleteImage($staff->profile_cloudinary_id);
             }
 
-            // Delete national ID card from Cloudinary if exists
-            if ($staff->national_id_card_cloudinary_id) {
-                CloudinaryHelper::deleteImage($staff->national_id_card_cloudinary_id);
+            // Delete national ID card images from Cloudinary if exists (JSON format)
+            if ($staff->national_id_card) {
+                $nationalIdData = $staff->national_id_card;
+
+                // Delete front image
+                if (isset($nationalIdData['front']['cloudinary_id'])) {
+                    CloudinaryHelper::deleteImage($nationalIdData['front']['cloudinary_id']);
+                }
+
+                // Delete back image
+                if (isset($nationalIdData['back']['cloudinary_id'])) {
+                    CloudinaryHelper::deleteImage($nationalIdData['back']['cloudinary_id']);
+                }
             }
 
             // Delete the staff
