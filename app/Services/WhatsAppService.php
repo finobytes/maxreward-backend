@@ -8,18 +8,18 @@ use Illuminate\Support\Facades\Log;
 
 class WhatsAppService
 {
-    protected $apiUrl;
-    protected $apiKey;
-    protected $apiSecret;
+    // protected $apiUrl;
+    // protected $apiKey;
+    // protected $apiSecret;
 
-    public function __construct()
-    {
-        // Configure your WhatsApp API credentials
-        // You can use Twilio, WhatsApp Business API, or any other provider
-        $this->apiUrl = env('WHATSAPP_API_URL', 'https://api.whatsapp.com');
-        $this->apiKey = env('WHATSAPP_API_KEY', '');
-        $this->apiSecret = env('WHATSAPP_API_SECRET', '');
-    }
+    // public function __construct()
+    // {
+    //     // Configure your WhatsApp API credentials
+    //     // You can use Twilio, WhatsApp Business API, or any other provider
+    //     $this->apiUrl = env('WHATSAPP_API_URL', 'https://api.whatsapp.com');
+    //     $this->apiKey = env('WHATSAPP_API_KEY', '');
+    //     $this->apiSecret = env('WHATSAPP_API_SECRET', '');
+    // }
 
     /**
      * Send welcome message to new member
@@ -83,29 +83,59 @@ class WhatsAppService
      */
     private function sendMessage($phone, $message)
     {
-        // IMPLEMENTATION DEPENDS ON YOUR WHATSAPP PROVIDER
+        // // IMPLEMENTATION DEPENDS ON YOUR WHATSAPP PROVIDER
         
-        // Example for Twilio:
-        /*
-        $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
-            ->post($this->apiUrl . '/Messages', [
-                'From' => 'whatsapp:+' . env('WHATSAPP_FROM_NUMBER'),
-                'To' => 'whatsapp:+' . $phone,
-                'Body' => $message
-            ]);
+        // // Example for Twilio:
+        // /*
+        // $response = Http::withBasicAuth($this->apiKey, $this->apiSecret)
+        //     ->post($this->apiUrl . '/Messages', [
+        //         'From' => 'whatsapp:+' . env('WHATSAPP_FROM_NUMBER'),
+        //         'To' => 'whatsapp:+' . $phone,
+        //         'Body' => $message
+        //     ]);
 
-        return [
-            'success' => $response->successful(),
-            'error' => $response->failed() ? $response->body() : null
-        ];
-        */
+        // return [
+        //     'success' => $response->successful(),
+        //     'error' => $response->failed() ? $response->body() : null
+        // ];
+        // */
 
-        // For now, simulate success (REPLACE WITH REAL API INTEGRATION)
-        Log::info("WhatsApp Message to {$phone}: {$message}");
+        // // For now, simulate success (REPLACE WITH REAL API INTEGRATION)
+        // Log::info("WhatsApp Message to {$phone}: {$message}");
         
-        return [
-            'success' => true,
-            'error' => null
-        ];
+        // return [
+        //     'success' => true,
+        //     'error' => null
+        // ];
+
+        try {
+            $sid = env('TWILIO_SID');
+            $token = env('TWILIO_AUTH_TOKEN');
+            $from = env('TWILIO_WHATSAPP_FROM');
+    
+            $twilio = new Client($sid, $token);
+    
+            $twilio->messages->create(
+                "whatsapp:+{$phone}",
+                [
+                    "from" => $from,
+                    "body" => $message
+                ]
+            );
+    
+            Log::info("✅ WhatsApp message sent to {$phone}: {$message}");
+    
+            return [
+                'success' => true,
+                'error' => null
+            ];
+    
+        } catch (\Exception $e) {
+            Log::error("❌ WhatsApp send failed: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 }

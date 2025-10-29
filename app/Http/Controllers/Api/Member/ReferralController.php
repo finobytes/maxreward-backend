@@ -441,21 +441,22 @@ class ReferralController extends Controller
     /**
      * Format phone number as user_name
      */
+    /**
+     * Validate and format Malaysian phone number (must start with 01 and be 10–11 digits, no hyphens)
+     */
     private function formatPhoneNumber($phone)
     {
         // Remove any non-digit characters
         $cleaned = preg_replace('/[^0-9]/', '', $phone);
-        
-        // If starts with country code (60 for Malaysia), keep it
-        // Otherwise, add 60 prefix
-        if (!str_starts_with($cleaned, '60')) {
-            // Remove leading 0 if exists
-            $cleaned = ltrim($cleaned, '0');
-            $cleaned = '60' . $cleaned;
+
+        // Validate: must start with 01 and have 10 or 11 digits
+        if (!preg_match('/^01\d{8,9}$/', $cleaned)) {
+            throw new \InvalidArgumentException('Invalid Malaysian phone number. Must start with 01 and be 10–11 digits.');
         }
 
         return $cleaned;
     }
+
 
     /**
      * Get referral tree for authenticated member
