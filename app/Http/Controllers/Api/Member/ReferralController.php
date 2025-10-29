@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Traits\MemberHelperTrait;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
+use App\Helpers\CommonFunctionHelper;
 
 class ReferralController extends Controller
 {
@@ -29,10 +31,12 @@ class ReferralController extends Controller
 
     protected $treeService;
     protected $whatsappService;
+    protected $settingAttributes;
 
-    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService) {
+    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
+        $this->settingAttributes = $commonFunctionHelper->settingAttributes();
     }
 
     /**
@@ -50,7 +54,7 @@ class ReferralController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|max:11|unique:members,phone',
             'email' => 'nullable|email|unique:members,email',
-            'gender_type' => 'required|in:male,female,others',
+            'gender_type' => 'nullable|in:male,female,others',
             'address' => 'nullable|string|max:500',
         ]);
 
@@ -69,16 +73,15 @@ class ReferralController extends Controller
             $referrer = auth()->user(); // Can be general or corporate member
             $referrerWallet = $referrer->wallet;
 
-            // $this->command->info('test...................');
             Log::info('Referrer ID: ' . $referrer->id);
 
             // ✅ Step 1: Check if referrer has sufficient referral balance (>= 100)
-            if ($referrerWallet->total_rp < 100) {
+            if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Insufficient referral balance. You need at least 100 RP to refer a new member.',
                     'current_balance' => $referrerWallet->total_rp,
-                    'required_balance' => 100,
+                    'required_balance' => $this->settingAttributes['deductable_points'],
                 ], 400);
             }
 
@@ -117,7 +120,7 @@ class ReferralController extends Controller
             ]);
 
             // ✅ Step 5: Deduct 100 RP from referrer
-            $referrerWallet->total_rp -= 100;
+            $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
             $referrerWallet->save();
 
             Transaction::createTransaction([
@@ -129,7 +132,7 @@ class ReferralController extends Controller
             ]);
 
             // ✅ Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
-            $this->distributeReferralPoints($referrer, $newMember, 100);
+            $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
 
             // ✅ Step 7: Place new member in community tree
             $placement = $this->treeService->placeInCommunityTree($referrer->id, $newMember->id);
@@ -213,7 +216,7 @@ class ReferralController extends Controller
     private function distributeReferralPoints($referrer, $newMember, $totalPoints = 100)
     {
         // 1️⃣ PP: 10 points to NEW MEMBER
-        $ppAmount = $totalPoints * 0.10; // 10 points
+        $ppAmount = $totalPoints * ($this->settingAttributes['pp_points']/100); // 10 points
         $newMemberWallet = $newMember->wallet;
         $newMemberWallet->total_pp += $ppAmount;
         $newMemberWallet->available_points += $ppAmount;
@@ -229,7 +232,7 @@ class ReferralController extends Controller
         ]);
 
         // 2️⃣ RP: 20 points to REFERRER'S DIRECT UPLINE
-        $rpAmount = $totalPoints * 0.20; // 20 points
+        $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); // 20 points
         $referrerUpline = Referral::where('child_member_id', $referrer->id)->first();
         
         if ($referrerUpline && $referrerUpline->parentMember) {
@@ -257,11 +260,11 @@ class ReferralController extends Controller
         }
 
         // 3️⃣ CP: 50 points distributed across 30-level community tree
-        $cpAmount = $totalPoints * 0.50; // 50 points
+        $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
         $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount);
 
         // 4️⃣ CR: 20 points to Company Reserve
-        $crAmount = $totalPoints * 0.20; // 20 points
+        $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); // 20 points
         $company = CompanyInfo::getCompany();
         $company->incrementCrPoint($crAmount);
 

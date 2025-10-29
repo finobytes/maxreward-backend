@@ -117,7 +117,7 @@ class SettingController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteSetting()
+    public function __deleteSetting()
     {
         try {
             // Start database transaction
