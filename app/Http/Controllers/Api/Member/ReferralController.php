@@ -36,7 +36,7 @@ class ReferralController extends Controller
     public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
-        $this->settingAttributes = $commonFunctionHelper->settingAttributes();
+        $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
     }
 
     /**

@@ -78,14 +78,14 @@ class VoucherController extends Controller
 
             
             
-            if (!isset($settingAttribute['setting_attribute']['rm_points'])) {
+            if (!isset($settingAttribute['maxreward']['rm_points'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'rm_points not configured in settings'
                 ], 500);
             }
 
-            $rmPoints = $settingAttribute['setting_attribute']['rm_points'];
+            $rmPoints = $settingAttribute['maxreward']['rm_points'];
 
             $expectedAmount = $denomination->value * $request->quantity;
 
