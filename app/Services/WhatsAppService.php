@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\WhatsAppMessageLog;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Twilio\Rest\Client;
 
 class WhatsAppService
 {
@@ -116,7 +117,7 @@ class WhatsAppService
             $twilio = new Client($sid, $token);
     
             $twilio->messages->create(
-                "whatsapp:+{$phone}",
+                "whatsapp:+6{$phone}",
                 [
                     "from" => $from,
                     "body" => $message
