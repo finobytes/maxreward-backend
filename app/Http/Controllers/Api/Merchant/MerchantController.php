@@ -147,7 +147,8 @@ class MerchantController extends Controller
                 'state' => $request->state,
                 'country' => $request->country ?? 'Bangladesh',
                 'products_services' => $request->products_services,
-                'merchant_created_by' => 'api', // or auth()->user()->id if authenticated
+                // 'merchant_created_by' => 'api', // or auth()->user()->id if authenticated
+                'merchant_created_by' => $request->merchant_created_by,
                 'business_logo' => $businessLogoUrl,
                 'logo_cloudinary_id' => $logoCloudinaryId,
             ]);
