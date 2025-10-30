@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\DenominationController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
+use App\Http\Controllers\Api\Admin\CpLevelConfigController;
 
 
 /*
@@ -76,6 +77,8 @@ Route::prefix('admin')->group(function () {
             Route::post('adjust-cr-points', [CompanyInfoController::class, 'adjustCrPoints']);
             Route::get('statistics', [CompanyInfoController::class, 'getStatistics']);
         });
+
+
     });
 });
 
@@ -126,13 +129,13 @@ Route::prefix('business-types')->middleware('auth:admin')->group(function () {
 | Denomination Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('denominations')->middleware('auth:admin')->group(function () {
-    Route::post('/', [DenominationController::class, 'store']);
-    Route::get('/', [DenominationController::class, 'index']);
-    Route::get('/all', [DenominationController::class, 'getAllDenominations']);
-    Route::get('/{id}', [DenominationController::class, 'show']);
-    Route::patch('/{id}', [DenominationController::class, 'update']);
-    Route::delete('/{id}', [DenominationController::class, 'destroy']);
+Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::post('/', [DenominationController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [DenominationController::class, 'index'])->middleware('role:admin,merchant,member');
+    Route::get('/all', [DenominationController::class, 'getAllDenominations'])->middleware('role:admin,merchant,member');
+    Route::get('/{id}', [DenominationController::class, 'show'])->middleware('role:admin');
+    Route::patch('/{id}', [DenominationController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [DenominationController::class, 'destroy'])->middleware('role:admin');
 });
 
 
@@ -141,10 +144,22 @@ Route::prefix('denominations')->middleware('auth:admin')->group(function () {
 | Settings Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('settings')->middleware('auth:admin')->group(function () {
-    Route::get('/', [SettingController::class, 'getSetting']);
-    Route::post('/', [SettingController::class, 'upsertSetting']);
-    Route::delete('/', [SettingController::class, 'deleteSetting']);
+Route::prefix('settings')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::get('/', [SettingController::class, 'getSetting'])->middleware('role:admin,merchant,member');
+    Route::post('/', [SettingController::class, 'upsertSetting'])->middleware('role:admin');
+    Route::delete('/', [SettingController::class, 'deleteSetting'])->middleware('role:admin');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Cp Level Config Routes
+|--------------------------------------------------------------------------
+*/ 
+
+Route::prefix('cp-config')->middleware('auth:admin')->group(function () {
+    Route::get('/', [CpLevelConfigController::class, 'index']);           
+    Route::put('/bulk/update', [CpLevelConfigController::class, 'bulkUpdate']);
 });
 
 

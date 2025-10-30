@@ -14,7 +14,7 @@ class Referral extends Model
 
     protected $fillable = [
         'parent_member_id',
-        'merchant_id',
+        // 'merchant_id',
         'child_member_id',
     ];
 
@@ -42,10 +42,10 @@ class Referral extends Model
     /**
      * Get the merchant who referred (if applicable)
      */
-    public function merchant()
-    {
-        return $this->belongsTo(Merchant::class, 'merchant_id');
-    }
+    // public function merchant()
+    // {
+    //     return $this->belongsTo(Merchant::class, 'merchant_id');
+    // }
 
     /**
      * Scope to get referrals by parent member
@@ -66,10 +66,10 @@ class Referral extends Model
     /**
      * Scope to get referrals by merchant
      */
-    public function scopeByMerchant($query, $merchantId)
-    {
-        return $query->where('merchant_id', $merchantId);
-    }
+    // public function scopeByMerchant($query, $merchantId)
+    // {
+    //     return $query->where('merchant_id', $merchantId);
+    // }
 
     /**
      * Get all descendants (referral tree) up to 30 levels

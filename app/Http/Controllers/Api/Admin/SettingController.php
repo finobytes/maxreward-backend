@@ -55,7 +55,7 @@ class SettingController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'setting_attribute' => 'required|array',
+            'settings' => 'required|array',
         ]);
 
         if ($validator->fails()) {
@@ -76,7 +76,7 @@ class SettingController extends Controller
             if ($setting) {
                 // Update existing setting
                 $setting->update([
-                    'setting_attribute' => $request->setting_attribute,
+                    'setting_attribute' => $request->settings,
                 ]);
 
                 $message = 'Settings updated successfully';
@@ -84,7 +84,7 @@ class SettingController extends Controller
             } else {
                 // Create new setting
                 $setting = Setting::create([
-                    'setting_attribute' => $request->setting_attribute,
+                    'setting_attribute' => $request->settings,
                 ]);
 
                 $message = 'Settings created successfully';
@@ -117,7 +117,7 @@ class SettingController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteSetting()
+    public function __deleteSetting()
     {
         try {
             // Start database transaction
