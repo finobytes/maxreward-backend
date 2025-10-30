@@ -259,6 +259,9 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
 
+    // Get all vouchers
+    Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:member');
+
 });
 
 

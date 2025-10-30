@@ -237,14 +237,14 @@ class VoucherController extends Controller
 
             
             
-            if (!isset($settingAttribute['setting_attribute']['rm_points'])) {
+            if (!isset($settingAttribute['maxreward']['rm_points'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'rm_points not configured in settings'
                 ], 500);
             }
 
-            $rmPoints = $settingAttribute['setting_attribute']['rm_points'];
+            $rmPoints = $settingAttribute['maxreward']['rm_points'];
 
             $expectedAmount = $denomination->value * $request->quantity;
 
@@ -288,27 +288,27 @@ class VoucherController extends Controller
                 'status' => 'pending',
             ]);
 
-            // Get member wallet
-            $memberWallet = MemberWallet::where('member_id', $request->member_id)->first();
+            // // Get member wallet
+            // $memberWallet = MemberWallet::where('member_id', $request->member_id)->first();
 
-            if (!$memberWallet) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Member wallet not found'
-                ], 404);
-            }
+            // if (!$memberWallet) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Member wallet not found'
+            //     ], 404);
+            // }
 
-            // Update member wallet based on voucher type
-            if ($request->voucher_type === 'refer') {
-                $memberWallet->total_rp += $totalAmount;
-                $memberWallet->total_points += $totalAmount;
-            } elseif ($request->voucher_type === 'max') {
-                $memberWallet->available_points += $totalAmount;
-                $memberWallet->total_points += $totalAmount;
-            }
+            // // Update member wallet based on voucher type
+            // if ($request->voucher_type === 'refer') {
+            //     $memberWallet->total_rp += $totalAmount;
+            //     $memberWallet->total_points += $totalAmount;
+            // } elseif ($request->voucher_type === 'max') {
+            //     $memberWallet->available_points += $totalAmount;
+            //     $memberWallet->total_points += $totalAmount;
+            // }
 
-            $memberWallet->save();
+            // $memberWallet->save();
 
             DB::commit();
 
@@ -317,7 +317,7 @@ class VoucherController extends Controller
                 'message' => 'Voucher created successfully',
                 'data' => [
                     'voucher' => $voucher->load('denomination'),
-                    'wallet' => $memberWallet
+                    // 'wallet' => $memberWallet
                 ]
             ], 201);
 
@@ -330,5 +330,17 @@ class VoucherController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function index()
+    {
+        $vouchers = Voucher::with('denomination')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'vouchers' => $vouchers
+            ]
+        ], 200);
     }
 }
