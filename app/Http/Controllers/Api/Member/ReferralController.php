@@ -84,11 +84,14 @@ class ReferralController extends Controller
                     'required_balance' => $this->settingAttributes['deductable_points'],
                 ], 400);
             }
+            Log::info('Referrer ID 2: ' . $referrer->id);
 
             // ✅ Step 2: Generate credentials for new member
             $password = Str::random(8); // Random password
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             $userName = $this->formatPhoneNumber($request->phone);
+
+            Log::info('Referrer ID 3: ' . $referrer->id);
 
             // ✅ Step 3: Create new member
             $newMember = Member::create([
@@ -105,6 +108,8 @@ class ReferralController extends Controller
                 'member_created_by' => $referrer->member_type, // 'general' or 'corporate'
                 'referral_code' => $referralCode,
             ]);
+
+            Log::info('Referrer ID 4: ' . $referrer->id);
 
             // ✅ Step 4: Create wallet for new member
             $newMemberWallet = MemberWallet::create([
@@ -123,6 +128,8 @@ class ReferralController extends Controller
             $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
             $referrerWallet->save();
 
+            Log::info('Referrer ID 5: ' . $referrer->id);
+
             Transaction::createTransaction([
                 'member_id' => $referrer->id,
                 'transaction_points' => 100,
@@ -131,15 +138,23 @@ class ReferralController extends Controller
                 'transaction_reason' => "Referred new member: {$newMember->name}",
             ]);
 
+            Log::info('Referrer ID 6: ' . $referrer->id);
+
             // ✅ Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
             $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
+
+            Log::info('Referrer ID 7: ' . $referrer->id);
 
             // ✅ Step 7: Place new member in community tree
             $placement = $this->treeService->placeInCommunityTree($referrer->id, $newMember->id);
 
+            Log::info('Referrer ID 8: ' . $referrer->id);
+
             if (!$placement['success']) {
                 throw new \Exception('Failed to place member in community tree');
             }
+
+            Log::info('Referrer ID 8: ' . $referrer->id);
 
             // ✅ Step 8: Update referrer's referral count
             $referrerWallet->increment('total_referrals');
@@ -223,6 +238,8 @@ class ReferralController extends Controller
         $newMemberWallet->total_points += $ppAmount;
         $newMemberWallet->save();
 
+        Log::info('Referrer ID 9: ' . $referrer->id);
+
         Transaction::createTransaction([
             'member_id' => $newMember->id,
             'transaction_points' => $ppAmount,
@@ -231,17 +248,20 @@ class ReferralController extends Controller
             'transaction_reason' => 'Personal Points from registration',
         ]);
 
+        Log::info('Referrer ID 10: ' . $referrer->id);
+
         // 2️⃣ RP: 20 points to REFERRER'S DIRECT UPLINE
         $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); // 20 points
         $referrerUpline = Referral::where('child_member_id', $referrer->id)->first();
         
         if ($referrerUpline && $referrerUpline->parentMember) {
+            Log::info('Referrer ID 11: ' . $referrer->id);
             $uplineWallet = $referrerUpline->parentMember->wallet;
             $uplineWallet->total_rp += $rpAmount;
             $uplineWallet->available_points += $rpAmount;
             $uplineWallet->total_points += $rpAmount;
             $uplineWallet->save();
-
+            Log::info('Referrer ID 12: ' . $referrer->id);
             Transaction::createTransaction([
                 'member_id' => $referrerUpline->parent_member_id,
                 'referral_member_id' => $newMember->id,
@@ -250,7 +270,7 @@ class ReferralController extends Controller
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Referral Points from {$newMember->name}'s registration",
             ]);
-
+            Log::info('Referrer ID 13: ' . $referrer->id);
             Notification::createForMember([
                 'member_id' => $referrerUpline->parent_member_id,
                 'type' => 'referral_points_earned',
@@ -258,16 +278,16 @@ class ReferralController extends Controller
                 'message' => "You earned {$rpAmount} RP from {$newMember->name}'s registration.",
             ]);
         }
-
+        Log::info('distributeCommunityPoints');
         // 3️⃣ CP: 50 points distributed across 30-level community tree
         $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
         $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount);
-
+        Log::info('Transaction');
         // 4️⃣ CR: 20 points to Company Reserve
         $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); // 20 points
         $company = CompanyInfo::getCompany();
         $company->incrementCrPoint($crAmount);
-
+        Log::info('createTransaction');
         Transaction::createTransaction([
             'member_id' => null,
             'transaction_points' => $crAmount,
@@ -307,6 +327,8 @@ class ReferralController extends Controller
 
             // Check if this level is locked for the receiver
             $isLocked = $level > $receiverWallet->unlocked_level;
+
+            Log::info('createCpTransaction');
 
             // Create CP transaction record
             CpTransaction::createCpTransaction([

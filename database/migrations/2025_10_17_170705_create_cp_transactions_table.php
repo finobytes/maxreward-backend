@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('cp_transactions', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('purchase_id')->comment('References PURCHASES table');
+            $table->unsignedBigInteger('purchase_id')->nullable()->comment('References PURCHASES table');
             $table->unsignedBigInteger('source_member_id')->comment('Member who made the purchase');
             $table->unsignedBigInteger('receiver_member_id')->comment('Member receiving CP');
             $table->integer('level')->comment('Community level (1-30)');
