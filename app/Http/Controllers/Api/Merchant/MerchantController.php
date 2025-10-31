@@ -354,7 +354,8 @@ class MerchantController extends Controller
                     $q->where('business_name', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('email', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('phone', 'LIKE', '%' . $request->search . '%')
-                      ->orWhere('business_type', 'LIKE', '%' . $request->search . '%');
+                      ->orWhere('business_type_id', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('id', 'LIKE', '%' . $request->search . '%');
                 });
             }
 
