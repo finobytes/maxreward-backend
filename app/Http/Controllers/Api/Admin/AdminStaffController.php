@@ -267,8 +267,8 @@ class AdminStaffController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone,' . $id,
-            'email' => 'sometimes|required|email|max:255|unique:admin,email,' . $id,
+            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone,' . $id . ',id',
+            'email' => 'sometimes|required|email|max:255|unique:admin,email,' . $id . ',id',
             'password' => 'nullable|string|min:6',
             'address' => 'nullable|string|max:500',
             'designation' => 'nullable|string|max:255',
