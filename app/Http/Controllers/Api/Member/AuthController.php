@@ -42,7 +42,7 @@ class AuthController extends Controller implements HasMiddleware
     public function me()
     {
         // return response()->json(auth('member')->user());
-        $member = auth('member')->user()->load(['wallet', 'merchant']);
+        $member = auth('member')->user()->load('wallet');
         return response()->json($member);
     }
 
