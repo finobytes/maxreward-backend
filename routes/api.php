@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\Admin\DenominationController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
+use App\Http\Controllers\Api\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\Api\Admin\CpLevelConfigController;
 
 
@@ -78,6 +79,11 @@ Route::prefix('admin')->group(function () {
             Route::get('statistics', [CompanyInfoController::class, 'getStatistics']);
         });
 
+        // Voucher Management (Admin only)
+        Route::prefix('vouchers')->group(function () {
+            Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
+            Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
+        });
 
     });
 });
