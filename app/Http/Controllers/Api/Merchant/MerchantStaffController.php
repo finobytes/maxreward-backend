@@ -193,7 +193,8 @@ class MerchantStaffController extends Controller
                     $q->where('name', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('email', 'LIKE', '%' . $request->search . '%')
                       ->orWhere('phone', 'LIKE', '%' . $request->search . '%')
-                      ->orWhere('user_name', 'LIKE', '%' . $request->search . '%');
+                      ->orWhere('user_name', 'LIKE', '%' . $request->search . '%')
+                      ->orWhere('id', $request->search);
                 });
             }
 

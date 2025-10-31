@@ -74,7 +74,8 @@ class MemberController extends Controller
                       ->orWhere('phone', 'LIKE', '%' . $search . '%')
                       ->orWhere('user_name', 'LIKE', '%' . $search . '%')
                       ->orWhere('email', 'LIKE', '%' . $search . '%')
-                      ->orWhere('address', 'LIKE', '%' . $search . '%');
+                      ->orWhere('address', 'LIKE', '%' . $search . '%')
+                      ->orWhere('id', $search);
                 });
             }
 
