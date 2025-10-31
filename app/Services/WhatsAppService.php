@@ -109,27 +109,27 @@ class WhatsAppService
         //     'error' => null
         // ];
 
-        // try {
-        //     $sid    = env('TWILIO_SID');
-        //     $token  = env('TWILIO_AUTH_TOKEN');
-        //     $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
-        //     $contentSid = env('TWILIO_CONTENT_SID'); // optional
-        //     $contentVars = json_encode([
-        //         "1" => "12/1",
-        //         "2" => "3pm"
-        //     ]); // optional example variables
+        try {
+            // $sid    = env('TWILIO_SID');
+            // $token  = env('TWILIO_AUTH_TOKEN');
+            // $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
+            // $contentSid = env('TWILIO_CONTENT_SID'); // optional
+            // $contentVars = json_encode([
+            //     "1" => "12/1",
+            //     "2" => "3pm"
+            // ]); // optional example variables
 
-        //     $twilio = new Client($sid, $token);
+            // $twilio = new Client($sid, $token);
 
-        //     $params = [
-        //         "from" => $from,
-        //         "body" => $message, // basic message
-        //         // Uncomment below if using Twilio content templates:
-        //         // "contentSid" => $contentSid,
-        //         // "contentVariables" => $contentVars,
-        //     ];
+            // $params = [
+            //     "from" => $from,
+            //     "body" => $message, // basic message
+            //     // Uncomment below if using Twilio content templates:
+            //     // "contentSid" => $contentSid,
+            //     // "contentVariables" => $contentVars,
+            // ];
 
-        //     $twilio->messages->create("whatsapp:+{$phone}", $params);
+            // $twilio->messages->create("whatsapp:+{$phone}", $params);
 
             Log::info("✅ WhatsApp message sent successfully to {$phone}: {$message}");
 
