@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
 use App\Http\Controllers\Api\Admin\VoucherController as AdminVoucherController;
 use App\Http\Controllers\Api\Admin\CpLevelConfigController;
+use App\Http\Controllers\Api\Admin\TransactionController;
+use App\Http\Controllers\Api\Admin\NotificationController;
+use App\Http\Controllers\Api\Admin\WhatsAppLogController;
 
 
 /*
@@ -84,8 +87,32 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
             Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
         });
-
     });
+});
+
+
+
+// Transaction Management (Admin only)
+Route::prefix('transactions')->middleware('auth:admin,member')->group(function () {
+    Route::get('/', [TransactionController::class, 'index']);
+    Route::get('/all', [TransactionController::class, 'getAllTransactions']);
+    Route::get('/{id}', [TransactionController::class, 'show']);
+});
+
+// Notification Management (Admin only)
+Route::prefix('notifications')->middleware('auth:admin,member')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::get('/all', [NotificationController::class, 'getAllNotifications']);
+    Route::get('/{id}', [NotificationController::class, 'show']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+});
+
+// WhatsApp Message Log Management (Admin only)
+Route::prefix('whatsapp-logs')->middleware('auth:admin,member')->group(function () {
+    Route::get('/', [WhatsAppLogController::class, 'index']);
+    Route::get('/all', [WhatsAppLogController::class, 'getAllLogs']);
+    Route::get('/{id}', [WhatsAppLogController::class, 'show']);
+    Route::delete('/{id}', [WhatsAppLogController::class, 'destroy']);
 });
 
 
