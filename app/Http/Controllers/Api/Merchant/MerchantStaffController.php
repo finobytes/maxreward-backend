@@ -41,7 +41,7 @@ class MerchantStaffController extends Controller
             'phone' => 'required|string|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone',
             'email' => 'required|email|max:255|unique:merchant_staffs,email',
             'password' => 'required|string|min:6',
-            'gender_type' => 'required|in:male,female,other',
+            'gender_type' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
@@ -265,7 +265,7 @@ class MerchantStaffController extends Controller
             'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone,' . $id,
             'email' => 'sometimes|required|email|max:255|unique:merchant_staffs,email,' . $id,
             'password' => 'nullable|string|min:6',
-            'gender_type' => 'sometimes|required|in:male,female,other',
+            'gender_type' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
         ]);
