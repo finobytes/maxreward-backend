@@ -31,6 +31,8 @@ class CommunityTreeService
                 'child_member_id' => $newMemberId,
             ]);
 
+            Log::info('Referrer created :::');
+
             DB::commit();
 
             return [
