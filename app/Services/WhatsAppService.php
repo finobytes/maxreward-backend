@@ -110,34 +110,35 @@ class WhatsAppService
         // ];
 
         try {
-            // $sid    = env('TWILIO_SID');
-            // $token  = env('TWILIO_AUTH_TOKEN');
-            // $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
-            // $contentSid = env('TWILIO_CONTENT_SID'); // optional
-            // $contentVars = json_encode([
-            //     "1" => "12/1",
-            //     "2" => "3pm"
-            // ]); // optional example variables
+            $sid    = env('TWILIO_SID');
+            $token  = env('TWILIO_AUTH_TOKEN');
+            $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
 
-            // $twilio = new Client($sid, $token);
+            // Check if Twilio credentials are configured
+            if (empty($sid) || empty($token) || empty($from)) {
+                Log::warning("⚠️ Twilio credentials not configured. Skipping WhatsApp message to {$phone}");
+                return [
+                    'success' => false,
+                    'error' => 'Twilio credentials not configured'
+                ];
+            }
 
-            // $params = [
-            //     "from" => $from,
-            //     "body" => $message, // basic message
-            //     // Uncomment below if using Twilio content templates:
-            //     // "contentSid" => $contentSid,
-            //     // "contentVariables" => $contentVars,
-            // ];
+            $twilio = new Client($sid, $token);
 
-            // $twilio->messages->create("whatsapp:+{$phone}", $params);
+            $params = [
+                "from" => $from,
+                "body" => $message,
+            ];
 
-            Log::info("✅ WhatsApp message sent successfully to {$phone}: {$message}");
+            $twilio->messages->create("whatsapp:+{$phone}", $params);
+
+            Log::info("✅ WhatsApp message sent successfully to {$phone}");
 
             return [
                 'success' => true,
                 'error' => null,
             ];
-    
+
         } catch (\Exception $e) {
             Log::error("❌ WhatsApp send failed: " . $e->getMessage());
             return [

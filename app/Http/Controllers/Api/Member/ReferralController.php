@@ -169,7 +169,7 @@ class ReferralController extends Controller
                 'name' => $newMember->name,
                 'phone' => $newMember->phone,
                 'user_name' => $userName,
-                'password' => Hash::make($password),
+                'password' => $password, // Send plain text password for WhatsApp message
                 'login_url' => env('APP_URL') . '/login',
             ]);
 
