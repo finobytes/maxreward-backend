@@ -517,7 +517,7 @@ class ReferralController extends Controller
 
 
     /**
-     * Get referral tree for authenticated member
+     * Get referral tree for authenticated members tree (30 levels)
      * 
      * GET /api/referral-tree
      */
@@ -528,11 +528,63 @@ class ReferralController extends Controller
             $tree = Referral::getReferralTree($member->id, 30);
             $statistics = $this->treeService->getTreeStatistics($member->id);
 
+            // Format tree with member details
+            $formattedTree = [];
+            foreach ($tree as $level => $memberIds) {
+                $levelData = [
+                    'level' => $level,
+                    'member_count' => count($memberIds),
+                    'members' => []
+                ];
+                $members = Member::with('wallet')
+                        ->whereIn('id', $memberIds)
+                        ->get();
+
+                $levelData['members'] = $members->map(function($m) use ($level) {
+                    return [
+                        'id' => $m->id,
+                        'name' => $m->name,
+                        'user_name' => $m->user_name,
+                        'phone' => $m->phone,
+                        'member_type' => $m->member_type,
+                        'status' => $m->status,
+                        'referral_code' => $m->referral_code,
+                        'wallet' => [
+                            'total_points' => round($m->wallet->total_points, 2),
+                            'available_points' => round($m->wallet->available_points, 2),
+                            'onhold_points' => round($m->wallet->onhold_points, 2),
+                            'total_referrals' => $m->wallet->total_referrals,
+                        ],
+                        'level_in_tree' => $level,
+                    ];
+                });
+
+                $formattedTree[] = $levelData;
+            }
+            // return response()->json([
+            //     'success' => true,
+            //     'data' => [
+            //         'tree' => $tree,
+            //         'statistics' => $statistics,
+            //     ]
+            // ]);
             return response()->json([
                 'success' => true,
+                'message' => 'Member tree retrieved successfully',
                 'data' => [
-                    'tree' => $tree,
-                    'statistics' => $statistics,
+                    'root_member' => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'user_name' => $member->user_name,
+                        'referral_code' => $member->referral_code,
+                    ],
+                    'statistics' => [
+                        'total_members' => $statistics['total_members'],
+                        'deepest_level' => $statistics['deepest_level'],
+                        // 'by_level' => $statistics['by_level'],
+                        // 'width_at_each_level' => $statistics['width_at_each_level'],
+                    ],
+                    'tree' => $formattedTree,
                 ]
             ]);
 
