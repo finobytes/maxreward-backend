@@ -298,6 +298,7 @@ class MerchantController extends Controller
         //     'user_name' => $user?->user_name ?? null,
         // ]);
 
+        // dd(auth()->user());
 
         // dd([
         //     'request_user' => $request->user(),
