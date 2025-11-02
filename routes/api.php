@@ -284,10 +284,10 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     Route::post('/refer-new-member', [ReferralController::class, 'referNewMember']);
 
     // Get referral tree
-    Route::get('/referral-tree', [ReferralController::class, 'getReferralTree'])->middleware('role:admin,member');
+    Route::get('/referral-tree', [ReferralController::class, 'getReferralTree'])->middleware('role:member');
 
     // Get directly referred members
-    Route::get('/referred-members', [ReferralController::class, 'getReferredMembers'])->middleware('role:admin,member');
+    Route::get('/referred-members', [ReferralController::class, 'getReferredMembers'])->middleware('role:member');
 
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
