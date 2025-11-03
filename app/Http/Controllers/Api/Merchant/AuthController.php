@@ -45,7 +45,7 @@ class AuthController extends Controller implements HasMiddleware
         $user = auth('merchant')->user();
     
         // Load merchant relationship (full data)
-        $user->load('merchant.wallet');
+        $user->load('merchant.wallet', 'merchant.corporateMember');
         
         return response()->json($user);
     }

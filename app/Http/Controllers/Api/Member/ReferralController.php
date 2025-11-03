@@ -531,15 +531,16 @@ class ReferralController extends Controller
             // Format tree with member details
             $formattedTree = [];
             foreach ($tree as $level => $memberIds) {
+
                 $levelData = [
                     'level' => $level,
                     'member_count' => count($memberIds),
                     'members' => []
                 ];
-                $members = Member::with('wallet')
-                        ->whereIn('id', $memberIds)
-                        ->get();
 
+                // $members = Member::with('wallet')->whereIn('id', $memberIds)->get();
+                $members = Member::whereIn('id', $memberIds)->get();
+                
                 $levelData['members'] = $members->map(function($m) use ($level) {
                     return [
                         'id' => $m->id,
@@ -549,12 +550,12 @@ class ReferralController extends Controller
                         'member_type' => $m->member_type,
                         'status' => $m->status,
                         'referral_code' => $m->referral_code,
-                        'wallet' => [
-                            'total_points' => round($m->wallet->total_points, 2),
-                            'available_points' => round($m->wallet->available_points, 2),
-                            'onhold_points' => round($m->wallet->onhold_points, 2),
-                            'total_referrals' => $m->wallet->total_referrals,
-                        ],
+                        // 'wallet' => [
+                        //     'total_points' => round($m->wallet->total_points, 2),
+                        //     'available_points' => round($m->wallet->available_points, 2),
+                        //     'onhold_points' => round($m->wallet->onhold_points, 2),
+                        //     'total_referrals' => $m->wallet->total_referrals,
+                        // ],
                         'level_in_tree' => $level,
                     ];
                 });
