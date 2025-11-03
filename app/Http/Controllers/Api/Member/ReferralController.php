@@ -112,9 +112,12 @@ class ReferralController extends Controller
             Log::info('Step 2: Generate credentials for new member');
 
             // Step 2: Generate credentials for new member
-            $password = Str::random(8); // Random password
+            // $password = Str::random(8); // Random password
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             $userName = $this->formatPhoneNumber($request->phone);
+            $lastSix = substr($userName, -6);
+            $prefix = Str::upper(Str::random(2));
+            $password = $prefix . $lastSix;
 
             Log::info('Step 3: Create new member');
 
@@ -288,13 +291,17 @@ class ReferralController extends Controller
         $referrerUpline = Referral::where('child_member_id', $referrer->id)->first();
         
         if ($referrerUpline && $referrerUpline->parentMember) {
+
             Log::info('Step :: referrerUpline');
+
             $uplineWallet = $referrerUpline->parentMember->wallet;
             $uplineWallet->total_rp += $rpAmount;
             $uplineWallet->available_points += $rpAmount;
             $uplineWallet->total_points += $rpAmount;
             $uplineWallet->save();
+
             Log::info('Step :: createTransaction for referrerUpline');
+
             Transaction::createTransaction([
                 'member_id' => $referrerUpline->parent_member_id,
                 'referral_member_id' => $newMember->id,
@@ -303,7 +310,9 @@ class ReferralController extends Controller
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Referral Points from {$newMember->name}'s registration",
             ]);
+
             Log::info('Step :: Referral points earned notification');
+
             Notification::createForMember([
                 'member_id' => $referrerUpline->parent_member_id,
                 'type' => 'referral_points_earned',
@@ -311,16 +320,22 @@ class ReferralController extends Controller
                 'message' => "You earned {$rpAmount} RP from {$newMember->name}'s registration.",
             ]);
         }
+
         Log::info('3️ CP: 50 points distributed across 30-level community tree');
+
         // 3️ CP: 50 points distributed across 30-level community tree
         $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
         $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount);
+
         Log::info('4️ CR: 20 points to Company Reserve');
+
         // 4️ CR: 20 points to Company Reserve
         $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); // 20 points
         $company = CompanyInfo::getCompany();
         $company->incrementCrPoint($crAmount);
+
         Log::info('Company Reserve from '.$newMember->name.'s registration');
+        
         Transaction::createTransaction([
             'member_id' => null,
             'transaction_points' => $crAmount,
