@@ -174,8 +174,8 @@ class MemberController extends Controller
     }
 
     /**
-     * Get member by referral code
-     * 
+     * Get member by referral code (searches in both referral_code and phone columns)
+     *
      * @param string $referralCode
      * @return \Illuminate\Http\JsonResponse
      */
@@ -185,7 +185,10 @@ class MemberController extends Controller
             $member = Member::with([
                 'wallet',
                 'merchant'
-            ])->where('referral_code', $referralCode)->firstOrFail();
+            ])->where(function($query) use ($referralCode) {
+                $query->where('referral_code', $referralCode)
+                      ->orWhere('phone', $referralCode);
+            })->firstOrFail();
 
             return response()->json([
                 'success' => true,
@@ -196,7 +199,7 @@ class MemberController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Member not found with this referral code'
+                'message' => 'Member not found with this referral code or phone'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
@@ -292,7 +295,7 @@ class MemberController extends Controller
                 'address' => 'sometimes|string|max:500',
                 'email' => 'sometimes|email|max:255|unique:members,email,' . $id,
                 'status' => 'sometimes|in:active,inactive,suspended',
-                'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
             ]);
 
             // Handle image upload to Cloudinary
