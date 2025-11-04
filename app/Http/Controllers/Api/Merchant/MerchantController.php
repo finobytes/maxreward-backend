@@ -82,7 +82,7 @@ class MerchantController extends Controller
             'merchant_password' => 'nullable|string|min:6',
 
             // Business Logo
-            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
 
             // Additional Staff Members (optional)
             'staffs' => 'nullable|array',
@@ -506,7 +506,7 @@ class MerchantController extends Controller
             'products_services' => 'nullable|string',
 
             // Business Logo
-            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
 
             // Staff Members (optional) - can update existing or add new
             'staffs' => 'nullable|array',
