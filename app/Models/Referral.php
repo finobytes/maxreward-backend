@@ -16,6 +16,7 @@ class Referral extends Model
         'parent_member_id',
         // 'merchant_id',
         'child_member_id',
+        'position', // 'left' or 'right'
     ];
 
     protected $casts = [
@@ -193,5 +194,143 @@ class Referral extends Model
         }
         
         return $stats;
+    }
+
+
+    /**
+     * Check if left position is filled for a parent
+     * 
+     * @param int $parentId Parent member ID
+     * @return bool
+     */
+    public static function isLeftFilled($parentId)
+    {
+        return self::where('parent_member_id', $parentId)
+            ->where('position', 'left')
+            ->exists();
+    }
+
+    /**
+     * Check if right position is filled for a parent
+     * 
+     * @param int $parentId Parent member ID
+     * @return bool
+     */
+    public static function isRightFilled($parentId)
+    {
+        return self::where('parent_member_id', $parentId)
+            ->where('position', 'right')
+            ->exists();
+    }
+
+    /**
+     * Check if both positions (left & right) are filled
+     * 
+     * @param int $parentId Parent member ID
+     * @return bool
+     */
+    public static function areBothPositionsFilled($parentId)
+    {
+        return self::isLeftFilled($parentId) && self::isRightFilled($parentId);
+    }
+
+    /**
+     * Get children count for a parent (max should be 2)
+     * 
+     * @param int $parentId Parent member ID
+     * @return int
+     */
+    public static function getChildrenCount($parentId)
+    {
+        return self::where('parent_member_id', $parentId)->count();
+    }
+
+    /**
+     * Get left child member ID
+     * 
+     * @param int $parentId Parent member ID
+     * @return int|null
+     */
+    public static function getLeftChildId($parentId)
+    {
+        return self::where('parent_member_id', $parentId)
+            ->where('position', 'left')
+            ->value('child_member_id');
+    }
+
+    /**
+     * Get right child member ID
+     * 
+     * @param int $parentId Parent member ID
+     * @return int|null
+     */
+    public static function getRightChildId($parentId)
+    {
+        return self::where('parent_member_id', $parentId)
+            ->where('position', 'right')
+            ->value('child_member_id');
+    }
+
+    /**
+     * Get both children IDs
+     * 
+     * @param int $parentId Parent member ID
+     * @return array ['left' => int|null, 'right' => int|null]
+     */
+    public static function getChildren($parentId)
+    {
+        return [
+            'left' => self::getLeftChildId($parentId),
+            'right' => self::getRightChildId($parentId),
+        ];
+    }
+
+    /**
+     * Get available position for a parent (null if both filled)
+     * 
+     * @param int $parentId Parent member ID
+     * @return string|null 'left', 'right', or null
+     */
+    public static function getAvailablePosition($parentId)
+    {
+        if (!self::isLeftFilled($parentId)) {
+            return 'left';
+        }
+        
+        if (!self::isRightFilled($parentId)) {
+            return 'right';
+        }
+        
+        return null; // Both filled
+    }
+
+    /**
+     * Scope to get by position
+     * 
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param string $position 'left' or 'right'
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeByPosition($query, $position)
+    {
+        return $query->where('position', $position);
+    }
+
+    /**
+     * Get left child relationship
+     */
+    public function leftChild()
+    {
+        return $this->hasOne(self::class, 'parent_member_id', 'child_member_id')
+            ->where('position', 'left');
+    }
+
+    /**
+     * Get right child relationship
+     */
+    public function rightChild()
+    {
+        return $this->hasOne(self::class, 'parent_member_id', 'child_member_id')
+            ->where('position', 'right');
     }
 }

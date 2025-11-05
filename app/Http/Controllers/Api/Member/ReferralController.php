@@ -623,7 +623,8 @@ class ReferralController extends Controller
         try {
             $member = auth()->user();
             
-            $referrals = Referral::with(['childMember.wallet'])
+            // $referrals = Referral::with(['childMember.wallet'])
+            $referrals = Referral::with(['childMember'])
                 ->where('parent_member_id', $member->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);

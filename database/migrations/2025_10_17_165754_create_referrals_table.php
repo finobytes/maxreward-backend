@@ -15,10 +15,12 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('parent_member_id')->nullable()->comment('Referrer member ID');
             $table->unsignedBigInteger('child_member_id')->comment('New member ID');
+            $table->enum('position', ['left', 'right'])->nullable()->comment('Position in binary tree: left or right');
             $table->timestamps();
             
             $table->index('parent_member_id');
             $table->index('child_member_id');
+            $table->index('position');
             
             $table->foreign('parent_member_id')->references('id')->on('members');
             $table->foreign('child_member_id')->references('id')->on('members');
