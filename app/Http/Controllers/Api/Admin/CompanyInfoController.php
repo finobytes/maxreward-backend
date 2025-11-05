@@ -26,7 +26,7 @@ class CompanyInfoController extends Controller
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:100',
-            'logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
         ]);
 
         if ($validator->fails()) {
