@@ -147,13 +147,13 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
 | Business Type Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('business-types')->middleware('auth:admin')->group(function () {
-    Route::post('/', [BusinessTypeController::class, 'store']);
-    Route::get('/', [BusinessTypeController::class, 'index']);
-    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes']);
-    Route::get('/{id}', [BusinessTypeController::class, 'show']);
-    Route::patch('/{id}', [BusinessTypeController::class, 'update']);
-    Route::delete('/{id}', [BusinessTypeController::class, 'destroy']);
+Route::prefix('business-types')->middleware('auth:admin,member')->group(function () {
+    Route::post('/', [BusinessTypeController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [BusinessTypeController::class, 'index'])->middleware('role:admin,member');
+    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes'])->middleware('role:admin');
+    Route::get('/{id}', [BusinessTypeController::class, 'show'])->middleware('role:admin');
+    Route::patch('/{id}', [BusinessTypeController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [BusinessTypeController::class, 'destroy'])->middleware('role:admin');
 });
 
 
