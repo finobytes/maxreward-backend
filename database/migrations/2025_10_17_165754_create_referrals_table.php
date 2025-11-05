@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('referrals', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('parent_member_id')->nullable()->comment('Referrer member ID');
+            $table->unsignedBigInteger('sponsor_member_id')->nullable()->comment('ID of member who actually referred (sponsor)');
+            $table->unsignedBigInteger('parent_member_id')->nullable()->comment('Placement parent id');
             $table->unsignedBigInteger('child_member_id')->comment('New member ID');
             $table->enum('position', ['left', 'right'])->nullable()->comment('Position in binary tree: left or right');
             $table->timestamps();
             
+            $table->index('sponsor_member_id');
             $table->index('parent_member_id');
             $table->index('child_member_id');
             $table->index('position');
