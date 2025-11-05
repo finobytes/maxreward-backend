@@ -37,8 +37,7 @@ class CommunityTreeService
 
             // Create the referral relationship with position
             $referral = Referral::create([
-                'sponsor_member_id' => $referrer->id,  // ⭐ ADD THIS - যে refer করেছে
-                'parent_member_id' => $placementPosition['parent_id'], // tree তে কার নিচে
+                'parent_member_id' => $placementPosition['parent_id'],
                 'child_member_id' => $newMemberId,
                 'position' => $placementPosition['position'], // 'left' or 'right'
             ]);

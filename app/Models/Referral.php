@@ -13,6 +13,7 @@ class Referral extends Model
     protected $table = 'referrals';
 
     protected $fillable = [
+        'sponsor_member_id',
         'parent_member_id',
         // 'merchant_id',
         'child_member_id',

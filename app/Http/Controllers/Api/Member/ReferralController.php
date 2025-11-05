@@ -642,4 +642,74 @@ class ReferralController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Get members I personally sponsored (not just tree children)
+     */
+    public function getMySponsoredMembers(Request $request)
+    {
+        try {
+            $member = auth()->user();
+            
+            $sponsored = Referral::with(['childMember', 'parentMember'])
+                ->where('sponsor_member_id', $member->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+            
+            // Add placement info
+            $data = $sponsored->getCollection()->map(function($ref) {
+                return [
+                    'id' => $ref->id,
+                    'child_member' => $ref->childMember,
+                    'placed_under' => $ref->parentMember ? [
+                        'id' => $ref->parentMember->id,
+                        'name' => $ref->parentMember->name,
+                    ] : null,
+                    'position' => $ref->position,
+                    'level_in_my_tree' => $this->calculateLevel($member->id, $ref->child_member_id),
+                    'created_at' => $ref->created_at,
+                ];
+            });
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Members you personally sponsored',
+                'data' => $sponsored->setCollection($data)
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve sponsored members',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Calculate at which level a member is in sponsor's tree
+     */
+    private function calculateLevel($sponsorId, $memberId)
+    {
+        $level = 0;
+        $currentId = $memberId;
+        
+        for ($i = 0; $i < 30; $i++) {
+            $ref = Referral::where('child_member_id', $currentId)->first();
+            
+            if (!$ref) break;
+            
+            $level++;
+            
+            if ($ref->parent_member_id == $sponsorId) {
+                return $level;
+            }
+            
+            $currentId = $ref->parent_member_id;
+        }
+        
+        return null; // Not in sponsor's tree
+    }
+
+
 }
