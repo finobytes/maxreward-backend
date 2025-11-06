@@ -258,7 +258,7 @@ class ReferralController extends Controller
     /**
      * Distribute 100 referral points:
      * PP: 10 (to new member)
-     * RP: 20 (to referrer's direct upline)
+     * RP: 20 (to who sponsored)
      * CP: 50 (distributed across 30 levels)
      * CR: 20 (to company reserve)
      */
