@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             MerchantSeeder::class,
             CpLevelConfigSeeder::class,
+            CompanyInfoSeeder::class
         ]);
 
         // User::factory()->create([
