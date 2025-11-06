@@ -26,6 +26,14 @@ class Referral extends Model
     ];
 
     /**
+     * Get the sponsor member (who actually referred)
+     */
+    public function sponsorMember()
+    {
+        return $this->belongsTo(Member::class, 'sponsor_member_id');
+    }
+
+    /**
      * Get the parent member (referrer)
      */
     public function parentMember()
