@@ -87,6 +87,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
             Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
             Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
+            Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
         });
     });
 });
@@ -298,6 +299,9 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
 
     // Get all vouchers
     Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member');
+
+    // Get member all vouchers
+    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member');
 
 });
 

@@ -211,5 +211,23 @@ class VoucherController extends Controller
         }
     }
 
+
+    public function getVoucher($voucherId) {
+        try {
+            $voucher = Voucher::with(['denomination', 'member'])->findOrFail($voucherId);
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher retrieved successfully',
+                'data' => $voucher
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
    
 }
