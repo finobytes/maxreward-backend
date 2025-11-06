@@ -289,6 +289,9 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Get directly referred members
     Route::get('/referred-members', [ReferralController::class, 'getReferredMembers'])->middleware('role:member');
 
+    // Get my sponsored members
+    Route::get('/sponsored-members', [ReferralController::class, 'getMySponsoredMembers'])->middleware('role:member');
+
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
 
