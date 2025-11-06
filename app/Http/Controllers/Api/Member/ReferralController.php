@@ -284,26 +284,26 @@ class ReferralController extends Controller
             'transaction_reason' => 'Personal Points from registration',
         ]);
 
-        Log::info('2️ RP: 20 points to REFERRERS DIRECT UPLINE');
+        Log::info('2️ RP: 20 points to who Directly sponsored');
 
-        // 2️ RP: 20 points to REFERRER'S DIRECT UPLINE
+        // 2️ RP: 20 points to who Directly sponsored
         $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); // 20 points
-        $referrerUpline = Referral::where('child_member_id', $referrer->id)->first();
+        $sponsor = Member::where('id', $referrer->id)->first();
         
-        if ($referrerUpline && $referrerUpline->parentMember) {
+        if ($sponsor) {
 
-            Log::info('Step :: referrerUpline');
+            Log::info('Step :: sponsor');
 
-            $uplineWallet = $referrerUpline->parentMember->wallet;
-            $uplineWallet->total_rp += $rpAmount;
-            $uplineWallet->available_points += $rpAmount;
-            $uplineWallet->total_points += $rpAmount;
-            $uplineWallet->save();
+            $sponsorWallet = $sponsor->wallet;
+            $sponsorWallet->total_rp += $rpAmount;
+            $sponsorWallet->available_points += $rpAmount;
+            $sponsorWallet->total_points += $rpAmount;
+            $sponsorWallet->save();
 
-            Log::info('Step :: createTransaction for referrerUpline');
+            Log::info('Step :: createTransaction for sponsor');
 
             Transaction::createTransaction([
-                'member_id' => $referrerUpline->parent_member_id,
+                'member_id' => $sponsor->id,
                 'referral_member_id' => $newMember->id,
                 'transaction_points' => $rpAmount,
                 'transaction_type' => Transaction::TYPE_RP,
@@ -314,7 +314,7 @@ class ReferralController extends Controller
             Log::info('Step :: Referral points earned notification');
 
             Notification::createForMember([
-                'member_id' => $referrerUpline->parent_member_id,
+                'member_id' => $sponsor->id,
                 'type' => 'referral_points_earned',
                 'title' => 'Referral Points Earned!',
                 'message' => "You earned {$rpAmount} RP from {$newMember->name}'s registration.",
