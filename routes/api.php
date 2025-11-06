@@ -86,6 +86,7 @@ Route::prefix('admin')->group(function () {
         Route::prefix('vouchers')->group(function () {
             Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
             Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
+            Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
         });
     });
 });
@@ -274,6 +275,9 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     // Update member information
     Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member');
+
+    // Status update
+    Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
 });
 
 

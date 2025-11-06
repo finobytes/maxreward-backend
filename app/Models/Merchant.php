@@ -29,8 +29,8 @@ class Merchant extends Model
         'gender',
         'address',
         'email',
-        'commission_rate',
-        'settlement_period',
+        'reward_budget',
+        'annual_sales_turnover',
         'state',
         'country',
         'products_services',
@@ -47,7 +47,8 @@ class Merchant extends Model
         'verification_docs_url',
         'verification_cloudinary_id',
         'iamge',
-        'image_cloudinary_id'
+        'image_cloudinary_id',
+        'authorized_person_name'
     ];
 
     protected $casts = [
