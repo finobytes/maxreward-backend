@@ -354,4 +354,23 @@ class MemberController extends Controller
             ], 500);
         }
     }
+
+
+    public function updateStatus(Request $request, $id){
+        try {
+            $member = Member::findOrFail($id);
+            $member->status = $request->status;
+            $member->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Member status updated successfully',
+                'data' => $member
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found'
+            ], 404);
+        }
+    }
 }
