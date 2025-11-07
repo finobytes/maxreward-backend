@@ -10,20 +10,20 @@ use Illuminate\Support\Facades\Log;
 class CommunityTreeService
 {
     /**
-     * 🎯 Place new member in BINARY community tree using LEFT-PRIORITY-FIRST algorithm
+     * 🎯 Place new member in BINARY community tree using Level-by-Level, Left-First BFS
      */
     public function placeInCommunityTree($sponsorMemberId, $newMemberId)
     {
         try {
             DB::beginTransaction();
 
-            Log::info("🌳 Starting Binary Tree Placement", [
+            Log::info("🌳 Starting Level-by-Level Left-First Binary Tree Placement", [
                 'sponsor_id' => $sponsorMemberId,
                 'new_member_id' => $newMemberId
             ]);
 
-            // Find optimal placement
-            $placementPosition = $this->findCorrectPlacement($sponsorMemberId);
+            // Find optimal placement position
+            $placementPosition = $this->findLevelByLevelLeftFirstPlacement($sponsorMemberId);
 
             Log::info("📍 Found placement position", $placementPosition);
 
@@ -37,9 +37,6 @@ class CommunityTreeService
 
             Log::info("✅ Referral created successfully", [
                 'referral_id' => $referral->id,
-                'sponsor' => $sponsorMemberId,
-                'parent' => $placementPosition['parent_id'],
-                'child' => $newMemberId,
                 'position' => $placementPosition['position'],
                 'level' => $placementPosition['level']
             ]);
@@ -48,18 +45,16 @@ class CommunityTreeService
 
             return [
                 'success' => true,
-                'sponsor_member_id' => $sponsorMemberId,
                 'placement_parent_id' => $placementPosition['parent_id'],
                 'position' => $placementPosition['position'],
                 'level' => $placementPosition['level'],
                 'referral_id' => $referral->id,
-                'message' => "Member {$newMemberId} placed at level {$placementPosition['level']} - {$placementPosition['position']} side under parent {$placementPosition['parent_id']}"
+                'message' => "Member placed at level {$placementPosition['level']} - {$placementPosition['position']} side"
             ];
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('❌ Binary tree placement failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             return [
                 'success' => false,
@@ -70,122 +65,84 @@ class CommunityTreeService
     }
 
     /**
-     * 🔍 CORRECT: Find placement using Level-by-Level LEFT-FIRST then RIGHT
+     * 🔍 Level-by-Level, Left-First Placement Algorithm
      * 
-     * Strategy:
-     * 1. Build complete level map using BFS
-     * 2. Check ALL nodes level-by-level for empty LEFT positions
-     * 3. Then check ALL nodes level-by-level for empty RIGHT positions
+     * Steps:
+     * 1. Build complete level-by-level tree
+     * 2. For each level, check ALL nodes for empty LEFT
+     * 3. Then for same level, check ALL nodes for empty RIGHT
+     * 4. Move to next level
      */
-    private function findCorrectPlacement($rootMemberId)
+    private function findLevelByLevelLeftFirstPlacement($rootMemberId)
     {
-        Log::info("🔍 Starting placement search", ['root' => $rootMemberId]);
+        $maxLevel = 30;
         
-        // Step 1: Build level map using BFS
-        $levelMap = $this->buildLevelMap($rootMemberId);
+        // Build complete level-by-level tree
+        $levels = [];
+        $levels[0] = [$rootMemberId];
         
-        Log::info("📊 Level map built", [
-            'total_levels' => count($levelMap),
-            'structure' => array_map('count', $levelMap)
-        ]);
-        
-        // Step 2: Find first empty LEFT position (level by level)
-        foreach ($levelMap as $level => $nodes) {
-            Log::info("🔍 Checking level {$level} for LEFT positions", [
-                'nodes' => $nodes
-            ]);
+        for ($level = 0; $level < $maxLevel; $level++) {
+            if (!isset($levels[$level]) || empty($levels[$level])) {
+                break;
+            }
             
-            foreach ($nodes as $nodeId) {
-                if (!Referral::isLeftFilled($nodeId)) {
-                    Log::info("✅ Found empty LEFT at node {$nodeId}");
+            $nextLevel = [];
+            
+            // First pass: Check all nodes in current level for LEFT positions
+            foreach ($levels[$level] as $parentId) {
+                if (!Referral::isLeftFilled($parentId)) {
+                    Log::info("✅ Found empty LEFT at level {$level}", [
+                        'parent_id' => $parentId,
+                        'level' => $level + 1
+                    ]);
                     
                     return [
-                        'parent_id' => $nodeId,
+                        'parent_id' => $parentId,
                         'position' => 'left',
                         'level' => $level + 1
                     ];
                 }
+                
+                // Collect children for next level
+                $children = Referral::getChildren($parentId);
+                if ($children['left']) {
+                    $nextLevel[] = $children['left'];
+                }
+                if ($children['right']) {
+                    $nextLevel[] = $children['right'];
+                }
             }
-        }
-        
-        // Step 3: All LEFT filled, check RIGHT positions (level by level)
-        Log::info("🔄 All LEFT positions filled, checking RIGHT");
-        
-        foreach ($levelMap as $level => $nodes) {
-            Log::info("🔍 Checking level {$level} for RIGHT positions", [
-                'nodes' => $nodes
-            ]);
             
-            foreach ($nodes as $nodeId) {
-                if (!Referral::isRightFilled($nodeId)) {
-                    Log::info("✅ Found empty RIGHT at node {$nodeId}");
+            // Second pass: Check all nodes in current level for RIGHT positions
+            foreach ($levels[$level] as $parentId) {
+                if (!Referral::isRightFilled($parentId)) {
+                    Log::info("✅ Found empty RIGHT at level {$level}", [
+                        'parent_id' => $parentId,
+                        'level' => $level + 1
+                    ]);
                     
                     return [
-                        'parent_id' => $nodeId,
+                        'parent_id' => $parentId,
                         'position' => 'right',
                         'level' => $level + 1
                     ];
                 }
             }
+            
+            // Store next level for continuation
+            if (!empty($nextLevel)) {
+                $levels[$level + 1] = $nextLevel;
+            }
         }
         
-        // Fallback
-        Log::warning("⚠️ No empty position found");
+        // Fallback: If tree is full up to level 30
+        Log::warning("⚠️ Tree full up to level {$maxLevel}, using root fallback");
         
         return [
             'parent_id' => $rootMemberId,
             'position' => 'left',
             'level' => 1
         ];
-    }
-
-    /**
-     * Build level map using proper BFS traversal
-     * 
-     * @param int $rootId Root member ID
-     * @return array Level map [level => [node_ids]]
-     */
-    private function buildLevelMap($rootId)
-    {
-        $levelMap = [
-            0 => [$rootId]
-        ];
-        
-        $maxDepth = 30;
-        
-        // Build tree level by level
-        for ($level = 0; $level < $maxDepth; $level++) {
-            if (!isset($levelMap[$level]) || empty($levelMap[$level])) {
-                break;
-            }
-            
-            $nextLevelNodes = [];
-            
-            // Process all nodes in current level
-            foreach ($levelMap[$level] as $nodeId) {
-                $children = Referral::getChildren($nodeId);
-                
-                // Add children to next level (left first, then right)
-                if ($children['left']) {
-                    $nextLevelNodes[] = $children['left'];
-                }
-                if ($children['right']) {
-                    $nextLevelNodes[] = $children['right'];
-                }
-            }
-            
-            // Add next level to map if it has nodes
-            if (!empty($nextLevelNodes)) {
-                $levelMap[$level + 1] = $nextLevelNodes;
-            }
-        }
-        
-        Log::info("✅ Level map complete", [
-            'levels' => count($levelMap),
-            'details' => $levelMap
-        ]);
-        
-        return $levelMap;
     }
 
     /**
@@ -212,6 +169,7 @@ class CommunityTreeService
             $stats['width_at_each_level'][$level] = $count;
         }
 
+        // Calculate left vs right leg members
         $leftLegRoot = Referral::getLeftChildId($memberId);
         $rightLegRoot = Referral::getRightChildId($memberId);
 
@@ -220,7 +178,7 @@ class CommunityTreeService
             foreach ($leftTree as $members) {
                 $stats['left_leg_count'] += count($members);
             }
-            $stats['left_leg_count']++;
+            $stats['left_leg_count']++; // Include the root of left leg
         }
 
         if ($rightLegRoot) {
@@ -228,7 +186,7 @@ class CommunityTreeService
             foreach ($rightTree as $members) {
                 $stats['right_leg_count'] += count($members);
             }
-            $stats['right_leg_count']++;
+            $stats['right_leg_count']++; // Include the root of right leg
         }
 
         return $stats;
@@ -310,9 +268,11 @@ class CommunityTreeService
         return null;
     }
 
+    
     /**
      * Validate tree integrity
      */
+
     public function validateTreeIntegrity($rootMemberId)
     {
         $issues = [];
@@ -345,7 +305,7 @@ class CommunityTreeService
         ];
     }
 
-    /**
+     /**
      * Get tree balance report
      */
     public function getTreeBalance($memberId)
