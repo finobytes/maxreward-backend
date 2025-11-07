@@ -47,24 +47,24 @@ class MerchantController extends Controller
             'business_name' => 'required|string|max:255',
             'business_type' => 'required|string|max:255',
             'business_description' => 'nullable|string',
-            'company_address' => 'required|string',
-            'license_number' => 'required|string|unique:merchants,license_number',
+            // 'company_address' => 'required|string',
+            // 'license_number' => 'required|string|unique:merchants,license_number',
 
             // Merchant Status
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'required|string|max:255',
-            'account_holder_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50',
+            // 'bank_name' => 'required|string|max:255',
+            // 'account_holder_name' => 'required|string|max:255',
+            // 'account_number' => 'required|string|max:50',
             'preferred_payment_method' => 'nullable|string',
             'routing_number' => 'nullable|string|max:50',
             'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'required|string|max:255',
+            // 'owner_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone',
-            'gender' => 'required|in:male,female,others',
+            // 'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'email' => 'required|email|max:255|unique:merchants,email',
 
@@ -479,24 +479,24 @@ class MerchantController extends Controller
             'business_name' => 'sometimes|required|string|max:255',
             'business_type' => 'sometimes|required|string|max:255',
             'business_description' => 'nullable|string',
-            'company_address' => 'sometimes|required|string',
-            'license_number' => 'sometimes|required|string|unique:merchants,license_number,' . $id,
+            // 'company_address' => 'sometimes|required|string',
+            // 'license_number' => 'sometimes|required|string|unique:merchants,license_number,' . $id,
 
             // Merchant Status
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'sometimes|required|string|max:255',
-            'account_holder_name' => 'sometimes|required|string|max:255',
-            'account_number' => 'sometimes|required|string|max:50',
+            // 'bank_name' => 'sometimes|required|string|max:255',
+            // 'account_holder_name' => 'sometimes|required|string|max:255',
+            // 'account_number' => 'sometimes|required|string|max:50',
             'preferred_payment_method' => 'nullable|string',
             'routing_number' => 'nullable|string|max:50',
             'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'sometimes|required|string|max:255',
+            // 'owner_name' => 'sometimes|required|string|max:255',
             'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone,' . $id,
-            'gender' => 'sometimes|required|in:male,female,others',
+            // 'gender' => 'sometimes|required|in:male,female,others',
             'address' => 'sometimes|required|string',
             'email' => 'sometimes|required|email|max:255|unique:merchants,email,' . $id,
 
