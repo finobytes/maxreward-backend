@@ -24,6 +24,7 @@ return new class extends Migration
             $table->index('child_member_id');
             $table->index('position');
             
+            $table->foreign('sponsor_member_id')->references('id')->on('members');
             $table->foreign('parent_member_id')->references('id')->on('members');
             $table->foreign('child_member_id')->references('id')->on('members');
         });

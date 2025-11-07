@@ -10,15 +10,7 @@ use Illuminate\Support\Facades\Log;
 class CommunityTreeService
 {
     /**
-     * 🎯 Place new member in BINARY community tree using BFS algorithm
-     * 
-     * Binary Rule: Maximum 2 children per parent (LEFT & RIGHT only)
-     * Tree grows level by level, left to right
-     * Maximum 30 levels supported
-     * 
-     * @param int $sponsorMemberId The referrer/sponsor member ID
-     * @param int $newMemberId The new member to be placed
-     * @return array Placement details
+     * 🎯 Place new member in BINARY community tree using LEFT-PRIORITY-FIRST algorithm
      */
     public function placeInCommunityTree($sponsorMemberId, $newMemberId)
     {
@@ -30,21 +22,24 @@ class CommunityTreeService
                 'new_member_id' => $newMemberId
             ]);
 
-            // Find optimal placement position using BFS
-            $placementPosition = $this->findBinaryPlacementPosition($sponsorMemberId);
+            // Find optimal placement
+            $placementPosition = $this->findCorrectPlacement($sponsorMemberId);
 
             Log::info("📍 Found placement position", $placementPosition);
 
-            // Create the referral relationship with position
+            // Create the referral relationship
             $referral = Referral::create([
-                'sponsor_member_id' => $sponsorMemberId,  // ⭐ ADD THIS - যে refer করেছে
-                'parent_member_id' => $placementPosition['parent_id'], // tree তে কার নিচে
+                'sponsor_member_id' => $sponsorMemberId,
+                'parent_member_id' => $placementPosition['parent_id'],
                 'child_member_id' => $newMemberId,
-                'position' => $placementPosition['position'], // 'left' or 'right'
+                'position' => $placementPosition['position'],
             ]);
 
             Log::info("✅ Referral created successfully", [
-                'referral_id' => $sponsorMemberId,
+                'referral_id' => $referral->id,
+                'sponsor' => $sponsorMemberId,
+                'parent' => $placementPosition['parent_id'],
+                'child' => $newMemberId,
                 'position' => $placementPosition['position'],
                 'level' => $placementPosition['level']
             ]);
@@ -53,16 +48,18 @@ class CommunityTreeService
 
             return [
                 'success' => true,
+                'sponsor_member_id' => $sponsorMemberId,
                 'placement_parent_id' => $placementPosition['parent_id'],
                 'position' => $placementPosition['position'],
                 'level' => $placementPosition['level'],
                 'referral_id' => $referral->id,
-                'message' => "Member placed at level {$placementPosition['level']} - {$placementPosition['position']} side"
+                'message' => "Member {$newMemberId} placed at level {$placementPosition['level']} - {$placementPosition['position']} side under parent {$placementPosition['parent_id']}"
             ];
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('❌ Binary tree placement failed: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             
             return [
                 'success' => false,
@@ -73,144 +70,126 @@ class CommunityTreeService
     }
 
     /**
-     * 🔍 Find optimal placement position using BFS (Breadth-First Search)
+     * 🔍 CORRECT: Find placement using Level-by-Level LEFT-FIRST then RIGHT
      * 
-     * Binary Tree Rule:
-     * - Each parent can have MAXIMUM 2 children (left & right)
-     * - Tree grows level by level, left to right
-     * - Search order: Check left first, then right
-     * - Maximum 30 levels
-     * 
-     * Algorithm:
-     * 1. Start with sponsor at level 1
-     * 2. Check if left position empty → place there
-     * 3. Check if right position empty → place there
-     * 4. If both filled, add children to queue
-     * 5. Move to next level and repeat
-     * 
-     * @param int $rootMemberId Starting point (sponsor/referrer)
-     * @return array ['parent_id' => int, 'position' => 'left'|'right', 'level' => int]
+     * Strategy:
+     * 1. Build complete level map using BFS
+     * 2. Check ALL nodes level-by-level for empty LEFT positions
+     * 3. Then check ALL nodes level-by-level for empty RIGHT positions
      */
-    private function findBinaryPlacementPosition($rootMemberId)
+    private function findCorrectPlacement($rootMemberId)
     {
-        // Initialize BFS queue with root member at level 1
-        $queue = [
-            [
-                'member_id' => $rootMemberId, 
-                'level' => 1
-            ]
-        ];
+        Log::info("🔍 Starting placement search", ['root' => $rootMemberId]);
         
-        $visited = [$rootMemberId => true];
-        $maxLevel = 30;
-
-        Log::info("🔍 Starting BFS search for empty position");
-
-        while (!empty($queue)) {
-            // Get first item from queue (FIFO)
-            $current = array_shift($queue);
-            $currentMemberId = $current['member_id'];
-            $currentLevel = $current['level'];
-
-            Log::info("🔎 Checking member", [
-                'member_id' => $currentMemberId,
-                'level' => $currentLevel
+        // Step 1: Build level map using BFS
+        $levelMap = $this->buildLevelMap($rootMemberId);
+        
+        Log::info("📊 Level map built", [
+            'total_levels' => count($levelMap),
+            'structure' => array_map('count', $levelMap)
+        ]);
+        
+        // Step 2: Find first empty LEFT position (level by level)
+        foreach ($levelMap as $level => $nodes) {
+            Log::info("🔍 Checking level {$level} for LEFT positions", [
+                'nodes' => $nodes
             ]);
-
-            // Don't go beyond level 30
-            if ($currentLevel > $maxLevel) {
-                Log::warning("⚠️ Reached max level {$maxLevel}, stopping search");
-                break;
-            }
-
-            // ===================================
-            // STEP 1: Check LEFT position
-            // ===================================
-            $hasLeftChild = Referral::isLeftFilled($currentMemberId);
             
-            if (!$hasLeftChild) {
-                Log::info("✅ Found empty LEFT position", [
-                    'parent_id' => $currentMemberId,
-                    'level' => $currentLevel
-                ]);
-                
-                return [
-                    'parent_id' => $currentMemberId,
-                    'position' => 'left',
-                    'level' => $currentLevel
-                ];
-            }
-
-            // ===================================
-            // STEP 2: Check RIGHT position
-            // ===================================
-            $hasRightChild = Referral::isRightFilled($currentMemberId);
-            
-            if (!$hasRightChild) {
-                Log::info("✅ Found empty RIGHT position", [
-                    'parent_id' => $currentMemberId,
-                    'level' => $currentLevel
-                ]);
-                
-                return [
-                    'parent_id' => $currentMemberId,
-                    'position' => 'right',
-                    'level' => $currentLevel
-                ];
-            }
-
-            // ===================================
-            // STEP 3: Both positions filled
-            // Add children to queue for next level
-            // ===================================
-            $leftChildId = Referral::getLeftChildId($currentMemberId);
-            $rightChildId = Referral::getRightChildId($currentMemberId);
-
-            // Add left child to queue
-            if ($leftChildId && !isset($visited[$leftChildId]) && $currentLevel < $maxLevel) {
-                $queue[] = [
-                    'member_id' => $leftChildId,
-                    'level' => $currentLevel + 1
-                ];
-                $visited[$leftChildId] = true;
-                
-                Log::info("➕ Added LEFT child to queue", [
-                    'child_id' => $leftChildId,
-                    'next_level' => $currentLevel + 1
-                ]);
-            }
-
-            // Add right child to queue
-            if ($rightChildId && !isset($visited[$rightChildId]) && $currentLevel < $maxLevel) {
-                $queue[] = [
-                    'member_id' => $rightChildId,
-                    'level' => $currentLevel + 1
-                ];
-                $visited[$rightChildId] = true;
-                
-                Log::info("➕ Added RIGHT child to queue", [
-                    'child_id' => $rightChildId,
-                    'next_level' => $currentLevel + 1
-                ]);
+            foreach ($nodes as $nodeId) {
+                if (!Referral::isLeftFilled($nodeId)) {
+                    Log::info("✅ Found empty LEFT at node {$nodeId}");
+                    
+                    return [
+                        'parent_id' => $nodeId,
+                        'position' => 'left',
+                        'level' => $level + 1
+                    ];
+                }
             }
         }
-
-        // Fallback: If tree is completely full up to level 30
-        // This should rarely happen
-        Log::warning("⚠️ Tree full or search exhausted, using root fallback");
+        
+        // Step 3: All LEFT filled, check RIGHT positions (level by level)
+        Log::info("🔄 All LEFT positions filled, checking RIGHT");
+        
+        foreach ($levelMap as $level => $nodes) {
+            Log::info("🔍 Checking level {$level} for RIGHT positions", [
+                'nodes' => $nodes
+            ]);
+            
+            foreach ($nodes as $nodeId) {
+                if (!Referral::isRightFilled($nodeId)) {
+                    Log::info("✅ Found empty RIGHT at node {$nodeId}");
+                    
+                    return [
+                        'parent_id' => $nodeId,
+                        'position' => 'right',
+                        'level' => $level + 1
+                    ];
+                }
+            }
+        }
+        
+        // Fallback
+        Log::warning("⚠️ No empty position found");
         
         return [
             'parent_id' => $rootMemberId,
-            'position' => 'left', // Default to left
+            'position' => 'left',
             'level' => 1
         ];
     }
 
     /**
-     * 📊 Get binary tree statistics for a member
+     * Build level map using proper BFS traversal
      * 
-     * @param int $memberId Root member
-     * @return array Statistics including left/right leg counts
+     * @param int $rootId Root member ID
+     * @return array Level map [level => [node_ids]]
+     */
+    private function buildLevelMap($rootId)
+    {
+        $levelMap = [
+            0 => [$rootId]
+        ];
+        
+        $maxDepth = 30;
+        
+        // Build tree level by level
+        for ($level = 0; $level < $maxDepth; $level++) {
+            if (!isset($levelMap[$level]) || empty($levelMap[$level])) {
+                break;
+            }
+            
+            $nextLevelNodes = [];
+            
+            // Process all nodes in current level
+            foreach ($levelMap[$level] as $nodeId) {
+                $children = Referral::getChildren($nodeId);
+                
+                // Add children to next level (left first, then right)
+                if ($children['left']) {
+                    $nextLevelNodes[] = $children['left'];
+                }
+                if ($children['right']) {
+                    $nextLevelNodes[] = $children['right'];
+                }
+            }
+            
+            // Add next level to map if it has nodes
+            if (!empty($nextLevelNodes)) {
+                $levelMap[$level + 1] = $nextLevelNodes;
+            }
+        }
+        
+        Log::info("✅ Level map complete", [
+            'levels' => count($levelMap),
+            'details' => $levelMap
+        ]);
+        
+        return $levelMap;
+    }
+
+    /**
+     * 📊 Get binary tree statistics
      */
     public function getTreeStatistics($memberId)
     {
@@ -233,7 +212,6 @@ class CommunityTreeService
             $stats['width_at_each_level'][$level] = $count;
         }
 
-        // Calculate left vs right leg members
         $leftLegRoot = Referral::getLeftChildId($memberId);
         $rightLegRoot = Referral::getRightChildId($memberId);
 
@@ -242,7 +220,7 @@ class CommunityTreeService
             foreach ($leftTree as $members) {
                 $stats['left_leg_count'] += count($members);
             }
-            $stats['left_leg_count']++; // Include the root of left leg
+            $stats['left_leg_count']++;
         }
 
         if ($rightLegRoot) {
@@ -250,7 +228,7 @@ class CommunityTreeService
             foreach ($rightTree as $members) {
                 $stats['right_leg_count'] += count($members);
             }
-            $stats['right_leg_count']++; // Include the root of right leg
+            $stats['right_leg_count']++;
         }
 
         return $stats;
@@ -258,10 +236,6 @@ class CommunityTreeService
 
     /**
      * 🌲 Get complete binary tree structure
-     * 
-     * @param int $memberId Root member
-     * @param int $maxLevel Maximum depth
-     * @return array Tree structure [level => [member_ids]]
      */
     private function getBinaryTree($memberId, $maxLevel = 30)
     {
@@ -294,22 +268,16 @@ class CommunityTreeService
     }
 
     /**
-     * 🔍 Get member's position in tree
-     * 
-     * @param int $memberId Member to locate
-     * @param int $rootMemberId Tree root
-     * @return array|null Position info
+     * Get member's position in tree
      */
     public function getMemberTreePosition($memberId, $rootMemberId)
     {
-        // Get parent referral
         $referral = Referral::where('child_member_id', $memberId)->first();
         
         if (!$referral) {
             return null;
         }
 
-        // Build path to root
         $path = [];
         $currentMemberId = $memberId;
         $level = 0;
@@ -343,15 +311,7 @@ class CommunityTreeService
     }
 
     /**
-     * ✅ Validate binary tree integrity
-     * Checks for:
-     * - Duplicate members
-     * - Non-existent members
-     * - Parents with more than 2 children
-     * - Circular references
-     * 
-     * @param int $rootMemberId Root to validate from
-     * @return array Validation results
+     * Validate tree integrity
      */
     public function validateTreeIntegrity($rootMemberId)
     {
@@ -361,18 +321,15 @@ class CommunityTreeService
 
         foreach ($tree as $level => $members) {
             foreach ($members as $memberId) {
-                // Check for duplicates (indicates circular reference)
                 if (in_array($memberId, $allMembers)) {
                     $issues[] = "Duplicate member ID {$memberId} at level {$level}";
                 }
                 $allMembers[] = $memberId;
 
-                // Check if member exists
                 if (!Member::find($memberId)) {
                     $issues[] = "Member ID {$memberId} at level {$level} does not exist";
                 }
 
-                // Check if parent has more than 2 children
                 $childrenCount = Referral::getChildrenCount($memberId);
                 if ($childrenCount > 2) {
                     $issues[] = "Member ID {$memberId} has {$childrenCount} children (max 2 allowed)";
@@ -389,11 +346,7 @@ class CommunityTreeService
     }
 
     /**
-     * 📈 Get tree balance report
-     * Shows if tree is balanced between left and right legs
-     * 
-     * @param int $memberId Root member
-     * @return array Balance report
+     * Get tree balance report
      */
     public function getTreeBalance($memberId)
     {
@@ -403,7 +356,7 @@ class CommunityTreeService
         $rightCount = $stats['right_leg_count'];
         $total = $leftCount + $rightCount;
         
-        $balance = [
+        return [
             'left_leg_members' => $leftCount,
             'right_leg_members' => $rightCount,
             'total_members' => $total,
@@ -412,7 +365,5 @@ class CommunityTreeService
             'is_balanced' => abs($leftCount - $rightCount) <= 1,
             'difference' => abs($leftCount - $rightCount),
         ];
-        
-        return $balance;
     }
 }
