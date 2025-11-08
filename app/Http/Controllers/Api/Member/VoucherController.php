@@ -187,4 +187,31 @@ class VoucherController extends Controller
             ]
         ], 200);
     }
+
+
+    public function getMemberVouchers(){
+        try{
+            $Auth = auth('member')->user();
+            $vouchers = Voucher::with('denomination')->where('member_id', $Auth->id)->get();
+            if (count($vouchers) == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vouchers not found'
+                ], 404);
+            }
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'vouchers' => $vouchers
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve vouchers',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+       
+    }
 }

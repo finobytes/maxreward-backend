@@ -170,6 +170,64 @@ class VoucherController extends Controller
     }
 
 
+    public function rejectVoucher(Request $request, $voucherId) {
+        try {
+            // Find the voucher
+            $voucher = Voucher::findOrFail($voucherId);
+
+            if (!$voucher) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Voucher not found'
+                ], 404);
+            }
+
+            // Check if voucher is pending
+            if ($voucher->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only pending vouchers can be rejected. Current status: ' . $voucher->status
+                ], 400);
+            }
+
+            // Update voucher status to failed
+            $voucher->status = 'failed';
+            $voucher->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher rejected successfully',
+                'data' => [
+                    'voucher' => $voucher->load('denomination', 'member'),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getVoucher($voucherId) {
+        try {
+            $voucher = Voucher::with(['denomination', 'member'])->findOrFail($voucherId);
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher retrieved successfully',
+                'data' => $voucher
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
    
 }

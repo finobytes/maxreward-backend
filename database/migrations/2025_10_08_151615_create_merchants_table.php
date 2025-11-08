@@ -38,8 +38,8 @@ return new class extends Migration
             $table->string("image")->nullable()->comment('Cloudinary base URL');
             $table->string("image_cloudinary_id")->nullable();
             $table->string('tax_certificate')->nullable();
-            $table->decimal('commission_rate')->nullable()->comment('Reward budget percentage');
-            $table->string('settlement_period')->nullable();
+            $table->integer('reward_budget')->nullable();
+            $table->string('annual_sales_turnover')->nullable();
             $table->unsignedBigInteger('approved_by')->nullable()->comment('Admin ID who approved');
             $table->string('state')->nullable();
             $table->string('country')->nullable();
@@ -49,6 +49,7 @@ return new class extends Migration
             $table->string('verification_docs_url')->nullable();
             $table->string('verification_cloudinary_id')->nullable();
             $table->enum('merchant_created_by', ['general_member', 'admin'])->default('admin')->nullable();
+            $table->string("authorized_person_name")->nullable();
             $table->timestamps();
             $table->softDeletes();
 

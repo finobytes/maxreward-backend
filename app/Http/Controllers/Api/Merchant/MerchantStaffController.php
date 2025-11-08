@@ -43,7 +43,7 @@ class MerchantStaffController extends Controller
             'password' => 'required|string|min:6',
             'gender_type' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -268,7 +268,7 @@ class MerchantStaffController extends Controller
             'password' => 'nullable|string|min:6',
             'gender_type' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
-            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
         ]);
 
         if ($validator->fails()) {
