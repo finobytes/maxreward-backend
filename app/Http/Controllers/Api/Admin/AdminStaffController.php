@@ -42,9 +42,9 @@ class AdminStaffController extends Controller
             'designation' => 'nullable|string|max:255',
             'gender' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
-            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
-            'national_id_card' => 'nullable|array|min:1|max:2',
-            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'national_id_card' => 'nullable|array|size:2',
+            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -235,6 +235,9 @@ class AdminStaffController extends Controller
                 ], 400);
             }
 
+            // Make password visible in response (hashed)
+            $staff->makeVisible('password');
+
             return response()->json([
                 'success' => true,
                 'message' => 'Admin staff retrieved successfully',
@@ -274,9 +277,9 @@ class AdminStaffController extends Controller
             'designation' => 'nullable|string|max:255',
             'gender' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
-            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
-            'national_id_card' => 'nullable|array|min:1|max:2',
-            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'national_id_card' => 'nullable|array|size:2',
+            'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:5120',
         ]);
 
         if ($validator->fails()) {

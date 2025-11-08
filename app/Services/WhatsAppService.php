@@ -110,27 +110,27 @@ class WhatsAppService
         // ];
 
         try {
-            $sid    = env('TWILIO_SID');
-            $token  = env('TWILIO_AUTH_TOKEN');
-            $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
+            // $sid    = env('TWILIO_SID');
+            // $token  = env('TWILIO_AUTH_TOKEN');
+            // $from   = env('TWILIO_WHATSAPP_FROM'); // e.g. whatsapp:+14155238886
 
-            // Check if Twilio credentials are configured
-            if (empty($sid) || empty($token) || empty($from)) {
-                Log::warning("⚠️ Twilio credentials not configured. Skipping WhatsApp message to {$phone}");
-                return [
-                    'success' => false,
-                    'error' => 'Twilio credentials not configured'
-                ];
-            }
+            // // Check if Twilio credentials are configured
+            // if (empty($sid) || empty($token) || empty($from)) {
+            //     Log::warning("⚠️ Twilio credentials not configured. Skipping WhatsApp message to {$phone}");
+            //     return [
+            //         'success' => false,
+            //         'error' => 'Twilio credentials not configured'
+            //     ];
+            // }
 
-            $twilio = new Client($sid, $token);
+            // $twilio = new Client($sid, $token);
 
-            $params = [
-                "from" => $from,
-                "body" => $message,
-            ];
+            // $params = [
+            //     "from" => $from,
+            //     "body" => $message,
+            // ];
 
-            $twilio->messages->create("whatsapp:+{$phone}", $params);
+            // $twilio->messages->create("whatsapp:+{$phone}", $params);
 
             Log::info("✅ WhatsApp message sent successfully to {$phone}");
 

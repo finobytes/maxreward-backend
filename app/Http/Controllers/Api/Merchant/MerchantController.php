@@ -47,33 +47,34 @@ class MerchantController extends Controller
             'business_name' => 'required|string|max:255',
             'business_type' => 'required|string|max:255',
             'business_description' => 'nullable|string',
-            'company_address' => 'required|string',
-            'license_number' => 'required|string|unique:merchants,license_number',
+            // 'company_address' => 'required|string',
+            // 'license_number' => 'required|string|unique:merchants,license_number',
 
             // Merchant Status
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'required|string|max:255',
-            'account_holder_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:50',
+            // 'bank_name' => 'required|string|max:255',
+            // 'account_holder_name' => 'required|string|max:255',
+            // 'account_number' => 'required|string|max:50',
             'preferred_payment_method' => 'nullable|string',
             'routing_number' => 'nullable|string|max:50',
             'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'required|string|max:255',
+            // 'owner_name' => 'required|string|max:255',
             'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone',
-            'gender' => 'required|in:male,female,others',
+            // 'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'email' => 'required|email|max:255|unique:merchants,email',
 
             // Business Details
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'settlement_period' => 'nullable|in:daily,weekly,monthly',
+            'reward_budget' => 'nullable|numeric|min:0|max:100',
+            'annual_sales_turnover' => 'nullable|string',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
             'products_services' => 'nullable|string',
+            'authorized_person_name' => 'nullable|string|max:255',
 
             // Corporate Member Password
             'corporate_password' => 'nullable|string|min:6',
@@ -82,7 +83,7 @@ class MerchantController extends Controller
             'merchant_password' => 'nullable|string|min:6',
 
             // Business Logo
-            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
 
             // Additional Staff Members (optional)
             'staffs' => 'nullable|array',
@@ -142,15 +143,16 @@ class MerchantController extends Controller
                 'gender' => $request->gender,
                 'address' => $request->address,
                 'email' => $request->email,
-                'commission_rate' => $request->commission_rate ?? 0.00,
-                'settlement_period' => $request->settlement_period ?? 'monthly',
+                'reward_budget' => $request->reward_budget ?? 0,
+                'annual_sales_turnover' => $request->annual_sales_turnover ?? null,
                 'state' => $request->state,
-                'country' => $request->country ?? 'Bangladesh',
+                'country' => $request->country ?? null,
                 'products_services' => $request->products_services,
                 // 'merchant_created_by' => 'api', // or auth()->user()->id if authenticated
                 'merchant_created_by' => $request->merchant_created_by,
                 'business_logo' => $businessLogoUrl,
                 'logo_cloudinary_id' => $logoCloudinaryId,
+                'authorized_person_name' => $request->authorized_person_name
             ]);
 
             // Generate corporate member username
@@ -437,7 +439,10 @@ class MerchantController extends Controller
                 'wallet',
                 'corporateMember',
                 'staffs'
-            ])->where('unique_number', $uniqueNumber)->firstOrFail();
+            ])->where(function($query) use ($uniqueNumber) {
+                $query->where('unique_number', $uniqueNumber)
+                      ->orWhere('owner_name', $uniqueNumber);
+            })->firstOrFail();
 
             return response()->json([
                 'success' => true,
@@ -448,7 +453,7 @@ class MerchantController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Merchant not found with this unique number'
+                'message' => 'Merchant not found with this unique number or phone number'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
@@ -477,36 +482,37 @@ class MerchantController extends Controller
             'business_name' => 'sometimes|required|string|max:255',
             'business_type' => 'sometimes|required|string|max:255',
             'business_description' => 'nullable|string',
-            'company_address' => 'sometimes|required|string',
-            'license_number' => 'sometimes|required|string|unique:merchants,license_number,' . $id,
+            // 'company_address' => 'sometimes|required|string',
+            // 'license_number' => 'sometimes|required|string|unique:merchants,license_number,' . $id,
 
             // Merchant Status
             'status' => 'nullable|in:pending,approved,rejected,suspended',
 
             // Bank Details
-            'bank_name' => 'sometimes|required|string|max:255',
-            'account_holder_name' => 'sometimes|required|string|max:255',
-            'account_number' => 'sometimes|required|string|max:50',
+            // 'bank_name' => 'sometimes|required|string|max:255',
+            // 'account_holder_name' => 'sometimes|required|string|max:255',
+            // 'account_number' => 'sometimes|required|string|max:50',
             'preferred_payment_method' => 'nullable|string',
             'routing_number' => 'nullable|string|max:50',
             'swift_code' => 'nullable|string|max:50',
 
             // Owner Details
-            'owner_name' => 'sometimes|required|string|max:255',
+            // 'owner_name' => 'sometimes|required|string|max:255',
             'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone,' . $id,
-            'gender' => 'sometimes|required|in:male,female,others',
+            // 'gender' => 'sometimes|required|in:male,female,others',
             'address' => 'sometimes|required|string',
             'email' => 'sometimes|required|email|max:255|unique:merchants,email,' . $id,
 
             // Business Details
-            'commission_rate' => 'nullable|numeric|min:0|max:100',
-            'settlement_period' => 'nullable|in:daily,weekly,monthly',
+            'reward_budget' => 'nullable|numeric|min:0|max:100',
+            'annual_sales_turnover' => 'nullable|string',
             'state' => 'nullable|string|max:255',
             'country' => 'nullable|string|max:255',
             'products_services' => 'nullable|string',
+            'authorized_person_name' => 'nullable|string|max:255',
 
             // Business Logo
-            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:2048',
+            'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
 
             // Staff Members (optional) - can update existing or add new
             'staffs' => 'nullable|array',
@@ -567,8 +573,9 @@ class MerchantController extends Controller
                 'bank_name', 'account_holder_name', 'account_number',
                 'preferred_payment_method', 'routing_number', 'swift_code',
                 'owner_name', 'phone', 'gender', 'address', 'email',
-                'commission_rate', 'settlement_period', 'state',
-                'country', 'products_services'
+                'reward_budget', 'annual_sales_turnover', 'state',
+                'country', 'products_services', 'reward_budget',
+                'annual_sales_turnover', 'authorized_person_name'
             ];
 
             foreach ($updateableFields as $field) {

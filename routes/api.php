@@ -86,6 +86,8 @@ Route::prefix('admin')->group(function () {
         Route::prefix('vouchers')->group(function () {
             Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
             Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
+            Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
+            Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
         });
     });
 });
@@ -147,13 +149,13 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
 | Business Type Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('business-types')->middleware('auth:admin')->group(function () {
-    Route::post('/', [BusinessTypeController::class, 'store']);
-    Route::get('/', [BusinessTypeController::class, 'index']);
-    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes']);
-    Route::get('/{id}', [BusinessTypeController::class, 'show']);
-    Route::patch('/{id}', [BusinessTypeController::class, 'update']);
-    Route::delete('/{id}', [BusinessTypeController::class, 'destroy']);
+Route::prefix('business-types')->middleware('auth:admin,member')->group(function () {
+    Route::post('/', [BusinessTypeController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [BusinessTypeController::class, 'index'])->middleware('role:admin,member');
+    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes'])->middleware('role:admin');
+    Route::get('/{id}', [BusinessTypeController::class, 'show'])->middleware('role:admin');
+    Route::patch('/{id}', [BusinessTypeController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [BusinessTypeController::class, 'destroy'])->middleware('role:admin');
 });
 
 
@@ -274,6 +276,9 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     // Update member information
     Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member');
+
+    // Status update
+    Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
 });
 
 
@@ -297,6 +302,9 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
 
     // Get all vouchers
     Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member');
+
+    // Get member all vouchers
+    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member');
 
 });
 
