@@ -391,7 +391,7 @@ class ReferralController extends Controller
             ]);
 
             // Update member's CP wallet
-            $mcp = MemberCommunityPoint::getOrCreateForLevel($receiverMemberId, $level);
+            $mcp = MemberCommunityPoint::getOrCreateForLevel($receiverMemberId, $level, $isLocked);
             $mcp->addCp($cpAmount, $isLocked);
 
             // Update main wallet

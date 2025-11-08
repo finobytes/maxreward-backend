@@ -128,7 +128,7 @@ class MemberCommunityPoint extends Model
      * @param int $level Level (1-30)
      * @return MemberCommunityPoint
      */
-    public static function getOrCreateForLevel($memberId, $level)
+    public static function getOrCreateForLevel($memberId, $level, $isLocked = false)
     {
         return self::firstOrCreate(
             [
@@ -139,7 +139,7 @@ class MemberCommunityPoint extends Model
                 'total_cp' => 0,
                 'available_cp' => 0,
                 'onhold_cp' => 0,
-                'is_locked' => true,
+                'is_locked' => $isLocked,
             ]
         );
     }
