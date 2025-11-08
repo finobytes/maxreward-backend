@@ -373,4 +373,55 @@ class MemberController extends Controller
             ], 404);
         }
     }
+
+
+     public function checkRedeemAmount(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'redeem_amount' => 'required|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+
+            $id = auth()->user()->id;
+
+            $memberWallet = MemberWallet::where('member_id', $id)->firstOrFail();
+
+            if ($memberWallet->available_points <= $request->redeem_amount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient points for redemption'
+                ], 400);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Sufficient points for redemption',
+                'data' => $memberWallet->available_points
+            ], 200);
+
+
+
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to check redeem amount',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

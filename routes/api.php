@@ -221,6 +221,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
 
     // Get merchant by unique number - members, merchants, and admins can view
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
+
+
+    
 });
 
 
@@ -279,6 +282,8 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     // Status update
     Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
+
+    Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
 });
 
 
