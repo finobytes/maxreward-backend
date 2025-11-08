@@ -395,7 +395,7 @@ class MemberController extends Controller
 
             $memberWallet = MemberWallet::where('member_id', $id)->firstOrFail();
 
-            if ($memberWallet->available_points <= $request->redeem_amount) {
+            if ($memberWallet->available_points < $request->redeem_amount) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Insufficient points for redemption'
