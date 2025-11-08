@@ -439,7 +439,10 @@ class MerchantController extends Controller
                 'wallet',
                 'corporateMember',
                 'staffs'
-            ])->where('unique_number', $uniqueNumber)->firstOrFail();
+            ])->where(function($query) use ($uniqueNumber) {
+                $query->where('unique_number', $uniqueNumber)
+                      ->orWhere('phone', $uniqueNumber);
+            })->firstOrFail();
 
             return response()->json([
                 'success' => true,
@@ -450,7 +453,7 @@ class MerchantController extends Controller
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Merchant not found with this unique number'
+                'message' => 'Merchant not found with this unique number or phone number'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
