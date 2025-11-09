@@ -119,6 +119,15 @@ class DenominationController extends Controller
      */
     public function store(Request $request)
     {
+        // Check if already 3 denominations exist
+        $denominationCount = Denomination::count();
+        if ($denominationCount >= 3) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum 3 denominations allowed. Cannot add more.',
+            ], 422);
+        }
+
         // Validate request
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255|unique:denominations,title',
