@@ -66,4 +66,14 @@ class Member extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(MemberWallet::class, 'member_id');
     }
+
+
+    /** 
+     * Get sponsored member info
+     */
+    public function sponsoredMemberInfo()
+    {
+        return $this->hasOne(Referral::class, 'child_member_id');
+    }
+
 }
