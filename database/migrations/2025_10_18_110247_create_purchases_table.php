@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('member_id');
+            $table->string('transaction_id')->unique();
             $table->enum('merchant_selection_type', ['qrcode', 'unique_number', 'merchant_name']);
             $table->decimal('transaction_amount', 10, 2)->comment('Total purchase amount');
             $table->decimal('redeem_amount', 10, 2)->default(0)->comment('Points redeemed');
