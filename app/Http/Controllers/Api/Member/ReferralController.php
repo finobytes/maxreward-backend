@@ -536,7 +536,7 @@ class ReferralController extends Controller
      * 
      * GET /api/referral-tree
      */
-    public function getReferralTree(Request $request)
+    public function OLD_getReferralTree(Request $request)
     {
         try {
             $member = auth()->user();
@@ -613,6 +613,98 @@ class ReferralController extends Controller
         }
     }
 
+
+    /**
+     * Get referral tree for authenticated members tree (30 levels) with complete structure
+     * 
+     * GET /api/referral-tree
+     */
+    public function getReferralTree(Request $request)
+    {
+        try {
+            $member = auth()->user();
+            
+            // Get tree structure with positions
+            $treeStructure = Referral::getBinaryTreeStructure($member->id, 30);
+            $statistics = $this->treeService->getTreeStatistics($member->id);
+
+            // Format tree with member details and positions
+            $formattedTree = [];
+            
+            foreach ($treeStructure as $level => $levelNodes) {
+                $levelData = [
+                    'level' => $level,
+                    'node_count' => count($levelNodes),
+                    'nodes' => []
+                ];
+
+                foreach ($levelNodes as $node) {
+                    $parentMember = Member::find($node['parent_id']);
+                    $leftChildMember = $node['left_child'] ? Member::find($node['left_child']) : null;
+                    $rightChildMember = $node['right_child'] ? Member::find($node['right_child']) : null;
+                    
+                    $nodeInfo = [
+                        'parent' => [
+                            'id' => $parentMember->id,
+                            'name' => $parentMember->name,
+                            // 'user_name' => $parentMember->user_name,
+                            // 'phone' => $parentMember->phone,
+                            // 'referral_code' => $parentMember->referral_code,
+                        ],
+                        'left_child' => $leftChildMember ? [
+                            'id' => $leftChildMember->id,
+                            'name' => $leftChildMember->name,
+                            // 'user_name' => $leftChildMember->user_name,
+                            // 'phone' => $leftChildMember->phone,
+                            // 'referral_code' => $leftChildMember->referral_code,
+                            'position' => 'left'
+                        ] : null,
+                        'right_child' => $rightChildMember ? [
+                            'id' => $rightChildMember->id,
+                            'name' => $rightChildMember->name,
+                            // 'user_name' => $rightChildMember->user_name,
+                            // 'phone' => $rightChildMember->phone,
+                            // 'referral_code' => $rightChildMember->referral_code,
+                            'position' => 'right'
+                        ] : null
+                    ];
+                    
+                    $levelData['nodes'][] = $nodeInfo;
+                }
+
+                $formattedTree[] = $levelData;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Member tree with structure retrieved successfully',
+                'data' => [
+                    'root_member' => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'user_name' => $member->user_name,
+                        'referral_code' => $member->referral_code,
+                    ],
+                    'statistics' => [
+                        'total_members' => $statistics['total_members'],
+                        'deepest_level' => $statistics['deepest_level'],
+                        'left_leg_count' => $statistics['left_leg_count'],
+                        'right_leg_count' => $statistics['right_leg_count'],
+                    ],
+                    'tree_structure' => $formattedTree,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve referral tree',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     /**
      * Get list of directly referred members
      * 
@@ -651,11 +743,21 @@ class ReferralController extends Controller
         try {
             $member = auth()->user();
 
+            // $sponsored = Referral::with('childMember.wallet')
+            // ->where('sponsor_member_id', $member->id)
+            // ->orderBy('created_at', 'desc')
+            // ->get()
+            // ->pluck('childMember');
+
             $sponsored = Referral::with('childMember.wallet')
             ->where('sponsor_member_id', $member->id)
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->pluck('childMember');
+            ->paginate(20); // ✅ pagination here
+
+            // Extract only the childMember relation from each referral
+            $sponsored->getCollection()->transform(function ($referral) {
+                return $referral->childMember;
+            });
 
             return response()->json([
                 'success' => true,

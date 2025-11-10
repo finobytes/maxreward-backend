@@ -184,7 +184,10 @@ class MemberController extends Controller
         try {
             $member = Member::with([
                 'wallet',
-                'merchant'
+                'merchant',
+                'sponsoredMemberInfo' => function($query) {
+                    $query->with('sponsorMember');
+                }
             ])->where(function($query) use ($referralCode) {
                 $query->where('referral_code', $referralCode)
                       ->orWhere('phone', $referralCode);

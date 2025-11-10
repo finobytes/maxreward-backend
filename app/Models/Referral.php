@@ -342,4 +342,56 @@ class Referral extends Model
         return $this->hasOne(self::class, 'parent_member_id', 'child_member_id')
             ->where('position', 'right');
     }
+
+
+    /**
+     * Get complete binary tree structure with positions
+    */
+    public static function getBinaryTreeStructure($memberId, $maxLevel = 30)
+    {
+        $tree = [];
+        $currentLevel = [$memberId];
+        
+        for ($level = 1; $level <= $maxLevel; $level++) {
+            $nextLevel = [];
+            $levelData = [];
+            
+            foreach ($currentLevel as $parentId) {
+                // Get both children with their positions
+                $children = self::where('parent_member_id', $parentId)
+                    ->get(['child_member_id', 'position']);
+                
+                $leftChild = null;
+                $rightChild = null;
+                
+                foreach ($children as $child) {
+                    if ($child->position === 'left') {
+                        $leftChild = $child->child_member_id;
+                    } elseif ($child->position === 'right') {
+                        $rightChild = $child->child_member_id;
+                    }
+                }
+                
+                $levelData[] = [
+                    'parent_id' => $parentId,
+                    'left_child' => $leftChild,
+                    'right_child' => $rightChild,
+                ];
+                
+                if ($leftChild) $nextLevel[] = $leftChild;
+                if ($rightChild) $nextLevel[] = $rightChild;
+            }
+            
+            if (empty($levelData)) {
+                break;
+            }
+            
+            $tree[$level] = $levelData;
+            $currentLevel = $nextLevel;
+        }
+        
+        return $tree;
+    }
+
+
 }
