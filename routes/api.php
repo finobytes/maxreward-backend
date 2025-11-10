@@ -284,6 +284,11 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
 
     Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
+
+    // Get dashboard statistics
+    Route::get('/dashboard-stats', [MemberController::class, 'getDashboardStats'])->middleware('role:member,admin');
+    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:member,admin');
+
 });
 
 
