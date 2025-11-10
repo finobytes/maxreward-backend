@@ -743,11 +743,21 @@ class ReferralController extends Controller
         try {
             $member = auth()->user();
 
+            // $sponsored = Referral::with('childMember.wallet')
+            // ->where('sponsor_member_id', $member->id)
+            // ->orderBy('created_at', 'desc')
+            // ->get()
+            // ->pluck('childMember');
+
             $sponsored = Referral::with('childMember.wallet')
             ->where('sponsor_member_id', $member->id)
             ->orderBy('created_at', 'desc')
-            ->get()
-            ->pluck('childMember');
+            ->paginate(20); // ✅ pagination here
+
+            // Extract only the childMember relation from each referral
+            $sponsored->getCollection()->transform(function ($referral) {
+                return $referral->childMember;
+            });
 
             return response()->json([
                 'success' => true,
