@@ -20,9 +20,11 @@ return new class extends Migration
             $table->integer('quantity')->default(1);
             $table->enum('payment_method', ['online', 'manual']);
             $table->decimal('total_amount', 10, 2);
-            $table->enum('status', ['success', 'failed', 'pending'])->default('pending');
+            $table->enum('status', ['success', 'failed', 'pending', 'approved', 'rejected'])->default('pending');
             $table->string('manual_payment_docs_url', 500)->nullable();
             $table->string('manual_payment_docs_cloudinary_id')->nullable();
+            $table->text('rejected_reason')->nullable()->comment('Reason for rejection if status is rejected');
+            $table->unsignedBigInteger('rejected_by')->nullable()->comment('Admin ID who rejected the voucher');
             $table->timestamps();
             
             $table->index('member_id');

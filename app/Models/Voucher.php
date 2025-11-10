@@ -27,6 +27,8 @@ class Voucher extends Model
         'total_amount',
         'manual_payment_docs_url',
         'manual_payment_docs_cloudinary_id',
+        'rejected_reason',
+        'rejected_by',
         'status',
     ];
 

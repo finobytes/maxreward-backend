@@ -36,7 +36,7 @@ class VoucherController extends Controller
             'quantity' => 'required|integer|min:1',
             'payment_method' => 'required|in:online,manual',
             'total_amount' => 'required|numeric|min:0',
-            // 'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
+            'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
         ]);
 
         if ($validator->fails()) {
