@@ -21,7 +21,7 @@ class Voucher extends Model
         'member_id',
         'merchant_id',
         'voucher_type',
-        'denomination_id',
+        'denomination_history',
         'quantity',
         'payment_method',
         'total_amount',
@@ -41,6 +41,7 @@ class Voucher extends Model
         'denomination_id' => 'integer',
         'quantity' => 'integer',
         'total_amount' => 'decimal:2',
+        'denomination_history' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

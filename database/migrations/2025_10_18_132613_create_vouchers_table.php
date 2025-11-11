@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('member_id')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->enum('voucher_type', ['max', 'refer'])->comment('max=available points, refer=referral points');
-            $table->unsignedBigInteger('denomination_id');
+            $table->text('denomination_history');
             $table->integer('quantity')->default(1);
             $table->enum('payment_method', ['online', 'manual']);
             $table->decimal('total_amount', 10, 2);
@@ -35,7 +35,6 @@ return new class extends Migration
             
             $table->foreign('member_id')->references('id')->on('members');
             $table->foreign('merchant_id')->references('id')->on('merchants');
-            $table->foreign('denomination_id')->references('id')->on('denominations');
         });
     }
 
