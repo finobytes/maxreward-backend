@@ -861,6 +861,8 @@ class MerchantController extends Controller
 
             $rewardBudget = $purchase->merchant?->reward_budget;
 
+            $pointPool = ($purchase->transaction_amount * $rewardBudget) / 100;
+
             DB::commit();
 
             return response()->json([

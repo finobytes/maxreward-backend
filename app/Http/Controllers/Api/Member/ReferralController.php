@@ -647,24 +647,27 @@ class ReferralController extends Controller
                         'parent' => [
                             'id' => $parentMember->id,
                             'name' => $parentMember->name,
-                            // 'user_name' => $parentMember->user_name,
-                            // 'phone' => $parentMember->phone,
-                            // 'referral_code' => $parentMember->referral_code,
+                            'user_name' => $parentMember->user_name,
+                            'phone' => $parentMember->phone,
+                            'referral_code' => $parentMember->referral_code,
+                            'image' => $parentMember->image,
                         ],
                         'left_child' => $leftChildMember ? [
                             'id' => $leftChildMember->id,
                             'name' => $leftChildMember->name,
-                            // 'user_name' => $leftChildMember->user_name,
-                            // 'phone' => $leftChildMember->phone,
-                            // 'referral_code' => $leftChildMember->referral_code,
+                            'user_name' => $leftChildMember->user_name,
+                            'phone' => $leftChildMember->phone,
+                            'referral_code' => $leftChildMember->referral_code,
+                            'image' => $leftChildMember->image,
                             'position' => 'left'
                         ] : null,
                         'right_child' => $rightChildMember ? [
                             'id' => $rightChildMember->id,
                             'name' => $rightChildMember->name,
-                            // 'user_name' => $rightChildMember->user_name,
-                            // 'phone' => $rightChildMember->phone,
-                            // 'referral_code' => $rightChildMember->referral_code,
+                            'user_name' => $rightChildMember->user_name,
+                            'phone' => $rightChildMember->phone,
+                            'referral_code' => $rightChildMember->referral_code,
+                            'image' => $rightChildMember->image,
                             'position' => 'right'
                         ] : null
                     ];
