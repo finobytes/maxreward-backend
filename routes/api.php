@@ -222,7 +222,11 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Get merchant by unique number - members, merchants, and admins can view
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
 
+    // Get all purchases by merchant ID
+    Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant');
 
+    // Approve purchase
+    Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');
     
 });
 
@@ -283,12 +287,15 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     // Status update
     Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
 
+    // Redeem amount
     Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
 
     // Get dashboard statistics
     Route::get('/dashboard-stats', [MemberController::class, 'getDashboardStats'])->middleware('role:member,admin');
     Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:member,admin');
 
+    // Make purchase
+    Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');
 });
 
 

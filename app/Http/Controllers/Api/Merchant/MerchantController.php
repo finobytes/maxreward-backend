@@ -15,6 +15,7 @@ use App\Models\MerchantWallet;
 use App\Models\MerchantStaff;
 use App\Traits\MerchantHelperTrait;
 use App\Helpers\CloudinaryHelper;
+use App\Models\Purchase;
 
 class MerchantController extends Controller
 {
@@ -735,4 +736,156 @@ class MerchantController extends Controller
             ], 500);
         }
     }
+
+
+    public function getPurchases($id) 
+    {
+        try {
+            // Fetch all purchases for this merchant (latest first)
+            $purchases = Purchase::where('merchant_id', $id)
+                ->with(['member:id,name,email', 'merchant:id,business_name'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20); 
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchases retrieved successfully',
+                'data' => $purchases,
+            ]);
+    
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function approvePurchase($id)
+    {
+        DB::beginTransaction();
+
+        try {
+            // Step 1: Find the purchase record
+            $purchase = Purchase::with(['member.wallet', 'merchant.wallet'])->find($id);
+
+            if (!$purchase) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Purchase not found.'
+                ], 404);
+            }
+
+            // Step 2: Ensure it's pending before approving
+            if ($purchase->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only pending purchases can be approved.'
+                ], 400);
+            }
+
+            // Step 3: Update purchase status to approved
+            $purchase->update(['status' => 'approved']);
+
+            // Step 4: Deduct points from member wallet
+            if ($purchase->member && $purchase->member->wallet) {
+                $purchase->member->wallet->decrement('available_points', $purchase->redeem_amount);
+            }
+
+            // Step 5: Transaction history - Member points deducted
+            Transaction::create([
+                'member_id' => $purchase->member_id,
+                'merchant_id' => $purchase->merchant_id,
+                'transaction_points' => $purchase->redeem_amount,
+                'transaction_type' => Transaction::TYPE_DP, // Deducted Points
+                'points_type' => Transaction::POINTS_DEBITED,
+                'transaction_reason' => "Points redeemed for purchase at {$purchase->merchant->business_name}. Purchase ID: {$purchase->id}"
+            ]);
+
+            // Step 6: Notification for member - Points redeemed
+            Notification::create([
+                'member_id' => $purchase->member_id,
+                'type' => 'purchase_approved',
+                'title' => 'Purchase Approved!',
+                'message' => "Your purchase has been approved. {$purchase->redeem_amount} points redeemed at {$purchase->merchant->business_name}.",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'redeem_amount' => $purchase->redeem_amount,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'merchant_name' => $purchase->merchant->business_name,
+                    'approved_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
+
+            // Step 7: Add transaction amount to merchant wallet
+            if ($purchase->merchant && $purchase->merchant->wallet) {
+                $purchase->merchant->wallet->increment('total_points', $purchase->transaction_amount);
+            }
+
+            // Step 8: Transaction history - Merchant points credited
+            Transaction::create([
+                'member_id' => $purchase->member_id,
+                'merchant_id' => $purchase->merchant_id,
+                'transaction_points' => $purchase->transaction_amount,
+                'transaction_type' => Transaction::TYPE_AP, // Added Points
+                'points_type' => Transaction::POINTS_CREDITED,
+                'transaction_reason' => "Purchase approved from member {$purchase->member->full_name}. Purchase ID: {$purchase->id}"
+            ]);
+
+            // Step 9: Notification for merchant - Purchase approved
+            Notification::create([
+                'merchant_id' => $purchase->merchant_id,
+                'type' => 'purchase_approved',
+                'title' => 'Purchase Transaction Completed',
+                'message' => "Purchase from {$purchase->member->full_name} has been completed. RM {$purchase->transaction_amount} credited to your wallet.",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'member_name' => $purchase->member->full_name,
+                    'member_phone' => $purchase->member->phone,
+                    'redeem_amount' => $purchase->redeem_amount,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'approved_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
+
+            $rewardBudget = $purchase->merchant?->reward_budget;
+
+            $pointPool = ($purchase->transaction_amount * $rewardBudget) / 100;
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase approved successfully.',
+                'data' => [
+                    'purchase' => $purchase,
+                    'member_notification_sent' => true,
+                    'merchant_notification_sent' => true,
+                    'transactions_recorded' => 2
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to approve purchase.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }

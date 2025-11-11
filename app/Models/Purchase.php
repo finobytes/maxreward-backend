@@ -20,6 +20,7 @@ class Purchase extends Model
     protected $fillable = [
         'merchant_id',
         'member_id',
+        'transaction_id',
         'merchant_selection_type',
         'transaction_amount',
         'redeem_amount',
@@ -206,24 +207,6 @@ class Purchase extends Model
     public function getFormattedRedeemAmountAttribute()
     {
         return number_format($this->redeem_amount, 2);
-    }
-
-    /**
-     * Create purchase with validation
-     */
-    public static function createPurchase($data)
-    {
-        // Validate member has sufficient points for redemption
-        if (isset($data['redeem_amount']) && $data['redeem_amount'] > 0) {
-            $member = Member::find($data['member_id']);
-            $wallet = $member->wallet;
-            
-            if ($wallet->available_points < $data['redeem_amount']) {
-                throw new \Exception('Insufficient points for redemption');
-            }
-        }
-
-        return self::create($data);
     }
 
     /**
