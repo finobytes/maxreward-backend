@@ -41,15 +41,11 @@ class AuthController extends Controller implements HasMiddleware
 
     public function me()
     {
-        $member = auth('member')->user();
-
-        if (!$member) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $member->load('wallet');
+        // return response()->json(auth('member')->user());
+        $member = auth('member')->user()->load('wallet');
         return response()->json($member);
     }
+
 
     public function logout()
     {
