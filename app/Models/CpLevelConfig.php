@@ -81,7 +81,8 @@ class CpLevelConfig extends Model
     }
 
     /**
-     * Verify total percentage equals 50%
+     * Verify total percentage equals 100%
+     * ⚠️ UPDATED: Changed from 50% to 100%
      * 
      * @return array Verification result
      */
@@ -91,9 +92,9 @@ class CpLevelConfig extends Model
         
         return [
             'total' => (float) $total,
-            'is_valid' => round($total, 2) == 50.00,
-            'expected' => 50.00,
-            'difference' => round(50.00 - $total, 2)
+            'is_valid' => round($total, 2) == 100.00,
+            'expected' => 100.00,
+            'difference' => round(100.00 - $total, 2)
         ];
     }
 

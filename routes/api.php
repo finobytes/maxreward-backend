@@ -202,6 +202,10 @@ Route::prefix('settings')->middleware('auth:admin,merchant,member')->group(funct
 Route::prefix('cp-config')->middleware('auth:admin')->group(function () {
     Route::get('/', [CpLevelConfigController::class, 'index']);           
     Route::put('/bulk/update', [CpLevelConfigController::class, 'bulkUpdate']);
+    // ✅ New Routes
+    Route::get('/summary', [CpLevelConfigController::class, 'summary']);
+    Route::post('/calculate', [CpLevelConfigController::class, 'calculateDistribution']);
+    Route::get('/level/{level}', [CpLevelConfigController::class, 'getLevelPercentage']);
 });
 
 
