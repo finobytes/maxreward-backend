@@ -232,6 +232,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Get all purchases by merchant ID
     Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant');
 
+    // Get all pending purchases by merchant ID
+    Route::get('/{id}/pending/purchases', [MerchantController::class, 'getPendingPurchases'])->middleware('role:merchant');
+
     // Approve purchase
     Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');
     

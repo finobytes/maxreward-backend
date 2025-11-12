@@ -781,6 +781,37 @@ class MerchantController extends Controller
     }
 
 
+    public function getPendingPurchases($id) 
+    {
+        try {
+            // Fetch all pending purchases for this merchant (latest first)
+            $purchases = Purchase::where('merchant_id', $id)
+                ->where('status', 'pending')
+                ->with(['member:id,name,email', 'merchant:id,business_name'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20); 
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Pending purchases retrieved successfully',
+                'data' => $purchases,
+            ]);
+    
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch pending purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function approvePurchase($id)
     {
         DB::beginTransaction();
