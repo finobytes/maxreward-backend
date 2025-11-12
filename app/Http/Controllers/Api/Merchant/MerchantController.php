@@ -16,10 +16,23 @@ use App\Models\MerchantStaff;
 use App\Traits\MerchantHelperTrait;
 use App\Helpers\CloudinaryHelper;
 use App\Models\Purchase;
+use App\Traits\PointDistributionTrait; 
+use App\Models\Transaction;
+use App\Models\Notification;
+use App\Models\Referral;
+use App\Models\CompanyInfo;
+use Illuminate\Support\Facades\Log;
+use App\Helpers\CommonFunctionHelper;
 
 class MerchantController extends Controller
 {
-    use MerchantHelperTrait;
+    use MerchantHelperTrait, PointDistributionTrait;
+
+    protected $settingAttributes;
+
+    public function __construct(CommonFunctionHelper $commonFunctionHelper) {
+        $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
+    }
 
     /**
      * Generate merchant staff username (M1 + 8 digits)
@@ -768,6 +781,37 @@ class MerchantController extends Controller
     }
 
 
+    public function getPendingPurchases($id) 
+    {
+        try {
+            // Fetch all pending purchases for this merchant (latest first)
+            $purchases = Purchase::where('merchant_id', $id)
+                ->where('status', 'pending')
+                ->with(['member:id,name,email', 'merchant:id,business_name'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20); 
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Pending purchases retrieved successfully',
+                'data' => $purchases,
+            ]);
+    
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch pending purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function approvePurchase($id)
     {
         DB::beginTransaction();
@@ -838,7 +882,7 @@ class MerchantController extends Controller
                 'transaction_points' => $purchase->transaction_amount,
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
                 'points_type' => Transaction::POINTS_CREDITED,
-                'transaction_reason' => "Purchase approved from member {$purchase->member->full_name}. Purchase ID: {$purchase->id}"
+                'transaction_reason' => "Purchase approved from member {$purchase->member->name}. Purchase ID: {$purchase->id}"
             ]);
 
             // Step 9: Notification for merchant - Purchase approved
@@ -846,10 +890,10 @@ class MerchantController extends Controller
                 'merchant_id' => $purchase->merchant_id,
                 'type' => 'purchase_approved',
                 'title' => 'Purchase Transaction Completed',
-                'message' => "Purchase from {$purchase->member->full_name} has been completed. RM {$purchase->transaction_amount} credited to your wallet.",
+                'message' => "Purchase from {$purchase->member->name} has been completed. RM {$purchase->transaction_amount} credited to your wallet.",
                 'data' => [
                     'purchase_id' => $purchase->id,
-                    'member_name' => $purchase->member->full_name,
+                    'member_name' => $purchase->member->name,
                     'member_phone' => $purchase->member->phone,
                     'redeem_amount' => $purchase->redeem_amount,
                     'transaction_amount' => $purchase->transaction_amount,
@@ -861,7 +905,96 @@ class MerchantController extends Controller
 
             $rewardBudget = $purchase->merchant?->reward_budget;
 
-            $pointPool = ($purchase->transaction_amount * $rewardBudget) / 100;
+            $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
+
+            Log::info('1️ PP: total pp points add to PURCHASE MEMBER');
+
+            // 1️ PP: total pp points add to PURCHASE MEMBER
+            $ppAmount = $totalPoints * ($this->settingAttributes['pp_points']/100); 
+            $purchaseMemberWallet = $purchase->member->wallet;
+            $purchaseMemberWallet->total_pp += $ppAmount;
+            $purchaseMemberWallet->available_points += $ppAmount;
+            $purchaseMemberWallet->total_points += $ppAmount;
+            $purchaseMemberWallet->save();
+
+            Log::info('transaction_reason: Personal Points from purchase approval');
+
+            Transaction::createTransaction([
+                'member_id' => $purchase->member_id,
+                'transaction_points' => $ppAmount,
+                'transaction_type' => Transaction::TYPE_PP,
+                'points_type' => Transaction::POINTS_CREDITED,
+                'transaction_reason' => 'Personal Points from purchase approval',
+            ]);
+
+            Log::info('2️ RP: total rp points add to who Directly sponsored');
+
+            // 2️ RP: total rp points add to who Directly sponsored
+            $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); 
+            $sponsor = Referral::where('child_member_id', $purchase->member_id)->first();
+
+            if ($sponsor) {
+
+                Log::info('Step :: sponsor');
+
+                $sponsorId = $sponsor->sponsor_member_id;
+
+                $sponsorMemberWallet = Member::find($sponsorId)->wallet;
+                $sponsorMemberWallet->total_rp += $rpAmount;
+                $sponsorMemberWallet->available_points += $rpAmount;
+                $sponsorMemberWallet->total_points += $rpAmount;
+                $sponsorMemberWallet->save();
+
+                Log::info('Step :: createTransaction for sponsor');
+
+                Transaction::createTransaction([
+                    'member_id' => $sponsorId,
+                    'transaction_points' => $rpAmount,
+                    'transaction_type' => Transaction::TYPE_RP,
+                    'points_type' => Transaction::POINTS_CREDITED,
+                    'transaction_reason' => "Reward Points from {$purchase->member->name}'s purchase approval",
+                ]);
+
+                Log::info('Step :: Reward points earned notification');
+
+                Notification::create([
+                    'member_id' => $sponsorId,
+                    'type' => 'purchase_approved',
+                    'title' => 'Reward Points Earned',
+                    'message' => "You have earned {$rpAmount} Reward Points from {$purchase->member->name}'s purchase approval.",
+                    'data' => [
+                        'member_name' => $purchase->member->name,
+                        'member_phone' => $purchase->member->phone,
+                        'redeem_amount' => $purchase->redeem_amount,
+                        'transaction_amount' => $purchase->transaction_amount,
+                        'approved_at' => now()->toDateTimeString()
+                    ]
+                ]);
+            }
+
+            Log::info('3️ CP: CP points add to distributed across 30-level community tree');
+
+            // 3️ CP: CP points add to distributed across 30-level community tree
+            $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); 
+            // ✅ For purchase, source and new member are the same for distributeCommunityPoints
+            $this->distributeCommunityPoints($purchase->member_id, $purchase->member_id, $cpAmount, 'purchase', $purchase->id);
+
+            Log::info('4️ CR: CR points add to Company Reserve');
+
+            // 4️ CR: CR points add to Company Reserve
+            $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); 
+            $company = CompanyInfo::getCompany();
+            $company->incrementCrPoint($crAmount);
+
+            Log::info('Company Reserve from '.$purchase->member->name.'s purchase approval');
+
+            Transaction::createTransaction([
+                'member_id' => null,
+                'transaction_points' => $crAmount,
+                'transaction_type' => Transaction::TYPE_CR,
+                'points_type' => Transaction::POINTS_CREDITED,
+                'transaction_reason' => "Company Reserve from {$purchase->member->name}'s purchase approval",
+            ]);
 
             DB::commit();
 
@@ -869,20 +1002,58 @@ class MerchantController extends Controller
                 'success' => true,
                 'message' => 'Purchase approved successfully.',
                 'data' => [
-                    'purchase' => $purchase,
-                    'member_notification_sent' => true,
-                    'merchant_notification_sent' => true,
-                    'transactions_recorded' => 2
+                    'purchase_id' => $purchase->id,
+                    'status' => 'approved',
+                    'approved_at' => now()->toDateTimeString(),
+                    'member' => [
+                        'id' => $purchase->member_id,
+                        'name' => $purchase->member->name,
+                        'points_deducted' => $purchase->redeem_amount,
+                        'pp_points_earned' => $ppAmount
+                    ],
+                    'merchant' => [
+                        'id' => $purchase->merchant_id,
+                        'name' => $purchase->merchant->business_name,
+                        'amount_credited' => $purchase->transaction_amount
+                    ],
+                    'points_distribution' => [
+                        'total_points' => $totalPoints,
+                        'pp_points' => $ppAmount,
+                        'rp_points' => $rpAmount,
+                        'cp_points' => $cpAmount,
+                        'cr_points' => $crAmount
+                    ],
+                    'notifications' => [
+                        'member' => true,
+                        'merchant' => true,
+                        'sponsor' => $sponsor ? true : false
+                    ],
+                    'transactions' => [
+                        'member_deduction' => true,
+                        'merchant_credit' => true,
+                        'pp_transaction' => true,
+                        'rp_transaction' => $sponsor ? true : false,
+                        'cp_distribution' => true,
+                        'cr_transaction' => true
+                    ]
                 ]
-            ]);
+            ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
-
+    
+            Log::error('Purchase approval failed: ' . $e->getMessage(), [
+                'purchase_id' => $id,
+                'exception' => $e->getTraceAsString()
+            ]);
+    
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to approve purchase.',
-                'error' => $e->getMessage()
+                'message' => 'Failed to approve purchase. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error',
+                'data' => [
+                    'purchase_id' => $id
+                ]
             ], 500);
         }
     }

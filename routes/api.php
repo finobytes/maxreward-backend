@@ -202,6 +202,10 @@ Route::prefix('settings')->middleware('auth:admin,merchant,member')->group(funct
 Route::prefix('cp-config')->middleware('auth:admin')->group(function () {
     Route::get('/', [CpLevelConfigController::class, 'index']);           
     Route::put('/bulk/update', [CpLevelConfigController::class, 'bulkUpdate']);
+    // ✅ New Routes
+    Route::get('/summary', [CpLevelConfigController::class, 'summary']);
+    Route::post('/calculate', [CpLevelConfigController::class, 'calculateDistribution']);
+    Route::get('/level/{level}', [CpLevelConfigController::class, 'getLevelPercentage']);
 });
 
 
@@ -231,6 +235,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
 
     // Get all purchases by merchant ID
     Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant');
+
+    // Get all pending purchases by merchant ID
+    Route::get('/{id}/pending/purchases', [MerchantController::class, 'getPendingPurchases'])->middleware('role:merchant');
 
     // Approve purchase
     Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');

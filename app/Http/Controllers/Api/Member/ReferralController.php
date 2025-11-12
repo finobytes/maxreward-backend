@@ -25,10 +25,11 @@ use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
 use App\Helpers\CommonFunctionHelper;
 use App\Models\Merchant;
+use App\Traits\PointDistributionTrait; 
 
 class ReferralController extends Controller
 {
-    use MemberHelperTrait;
+    use MemberHelperTrait, PointDistributionTrait;
 
     protected $treeService;
     protected $whatsappService;
@@ -325,7 +326,7 @@ class ReferralController extends Controller
 
         // 3️ CP: 50 points distributed across 30-level community tree
         $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
-        $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount);
+        $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount, 'registration');
 
         Log::info('4️ CR: 20 points to Company Reserve');
 
@@ -349,82 +350,84 @@ class ReferralController extends Controller
      * Distribute Community Points (CP) across 30 levels
      * Based on CpLevelConfig distribution rules
      */
-    private function distributeCommunityPoints($sourceMemberId, $newMemberId, $totalCp)
-    {
-        Log::info('Start :: Distribute Community Points (CP) across 30 levels');
-        // Get upline path (30 levels max)
-        $uplinePath = Referral::getReferralPath($sourceMemberId, 30);
+    // private function OLD_distributeCommunityPoints($sourceMemberId, $newMemberId, $totalCp)
+    // {
+    //     Log::info('Start :: Distribute Community Points (CP) across 30 levels');
+    //     // Get upline path (30 levels max)
+    //     $uplinePath = Referral::getReferralPath($sourceMemberId, 30);
 
-        foreach ($uplinePath as $node) {
-            $level = $node['level'];
-            $receiverMemberId = $node['member_id'];
+    //     foreach ($uplinePath as $node) {
+    //         $level = $node['level'];
+    //         $receiverMemberId = $node['member_id'];
 
-            // Get CP percentage for this level
-            $cpPercentage = CpLevelConfig::getCpPercentageForLevel($level);
-            $cpAmount = ($totalCp * $cpPercentage) / 100;
+    //         // Get CP percentage for this level
+    //         $cpPercentage = CpLevelConfig::getCpPercentageForLevel($level);
+    //         $cpAmount = ($totalCp * $cpPercentage) / 100;
 
-            if ($cpAmount <= 0) {
-                continue;
-            }
+    //         if ($cpAmount <= 0) {
+    //             continue;
+    //         }
 
-            // Get receiver's wallet
-            $receiverWallet = MemberWallet::where('member_id', $receiverMemberId)->first();
+    //         // Get receiver's wallet
+    //         $receiverWallet = MemberWallet::where('member_id', $receiverMemberId)->first();
             
-            if (!$receiverWallet) {
-                continue;
-            }
+    //         if (!$receiverWallet) {
+    //             continue;
+    //         }
 
-            // Check if this level is locked for the receiver
-            $isLocked = $level > $receiverWallet->unlocked_level;
+    //         // Check if this level is locked for the receiver
+    //         $isLocked = $level > $receiverWallet->unlocked_level;
 
-            Log::info('Create CP transaction record');
+    //         Log::info('Create CP transaction record');
 
-            // Create CP transaction record
-            CpTransaction::createCpTransaction([
-                'purchase_id' => null, // This is for referral, not purchase
-                'source_member_id' => $sourceMemberId,
-                'receiver_member_id' => $receiverMemberId,
-                'level' => $level,
-                'cp_percentage' => $cpPercentage,
-                'cp_amount' => $cpAmount,
-                'is_locked' => $isLocked,
-            ]);
+    //         // Create CP transaction record
+    //         CpTransaction::createCpTransaction([
+    //             'purchase_id' => null, // This is for referral, not purchase
+    //             'source_member_id' => $sourceMemberId,
+    //             'receiver_member_id' => $receiverMemberId,
+    //             'level' => $level,
+    //             'cp_percentage' => $cpPercentage,
+    //             'cp_amount' => $cpAmount,
+    //             'is_locked' => $isLocked,
+    //         ]);
 
-            // Update member's CP wallet
-            $mcp = MemberCommunityPoint::getOrCreateForLevel($receiverMemberId, $level, $isLocked);
-            $mcp->addCp($cpAmount, $isLocked);
+    //         // Update member's CP wallet
+    //         $mcp = MemberCommunityPoint::getOrCreateForLevel($receiverMemberId, $level, $isLocked);
+    //         $mcp->addCp($cpAmount, $isLocked);
 
-            // Update main wallet
-            $receiverWallet->total_cp += $cpAmount;
-            $receiverWallet->total_points += $cpAmount;
+    //         // Update main wallet
+    //         $receiverWallet->total_cp += $cpAmount;
+    //         $receiverWallet->total_points += $cpAmount;
 
-            if ($isLocked) {
-                $receiverWallet->onhold_points += $cpAmount;
-            } else {
-                $receiverWallet->available_points += $cpAmount;
-            }
+    //         if ($isLocked) {
+    //             $receiverWallet->onhold_points += $cpAmount;
+    //         } else {
+    //             $receiverWallet->available_points += $cpAmount;
+    //         }
 
-            $receiverWallet->save();
+    //         $receiverWallet->save();
 
-            // Create transaction record
-            Transaction::createTransaction([
-                'member_id' => $receiverMemberId,
-                'referral_member_id' => $newMemberId,
-                'transaction_points' => $cpAmount,
-                'transaction_type' => Transaction::TYPE_CP,
-                'points_type' => Transaction::POINTS_CREDITED,
-                'transaction_reason' => "Community Points (Level {$level}) from {$newMemberId}'s registration" . ($isLocked ? ' [ON HOLD]' : ''),
-            ]);
+    //         // Create transaction record
+    //         Transaction::createTransaction([
+    //             'member_id' => $receiverMemberId,
+    //             'referral_member_id' => $newMemberId,
+    //             'transaction_points' => $cpAmount,
+    //             'transaction_type' => Transaction::TYPE_CP,
+    //             'points_type' => Transaction::POINTS_CREDITED,
+    //             'transaction_reason' => "Community Points (Level {$level}) from {$newMemberId}'s registration" . ($isLocked ? ' [ON HOLD]' : ''),
+    //         ]);
 
-            // Notification
-            Notification::createForMember([
-                'member_id' => $receiverMemberId,
-                'type' => 'community_points_earned',
-                'title' => 'Community Points Earned!',
-                'message' => "You earned {$cpAmount} CP at Level {$level}" . ($isLocked ? ' (On Hold - unlock more levels to access)' : ''),
-            ]);
-        }
-    }
+    //         // Notification
+    //         Notification::createForMember([
+    //             'member_id' => $receiverMemberId,
+    //             'type' => 'community_points_earned',
+    //             'title' => 'Community Points Earned!',
+    //             'message' => "You earned {$cpAmount} CP at Level {$level}" . ($isLocked ? ' (On Hold - unlock more levels to access)' : ''),
+    //         ]);
+    //     }
+    // }
+
+
 
     /**
      * Check and unlock CP levels based on referral count
@@ -499,17 +502,6 @@ class ReferralController extends Controller
         }
     }
 
-    // /**
-    //  * Generate unique 8-character referral code
-    //  */
-    // private function generateUniqueReferralCode()
-    // {
-    //     do {
-    //         $code = strtoupper(Str::random(8));
-    //     } while (Member::where('referral_code', $code)->exists());
-
-    //     return $code;
-    // }
 
     /**
      * Format phone number as user_name
@@ -536,82 +528,82 @@ class ReferralController extends Controller
      * 
      * GET /api/referral-tree
      */
-    public function OLD_getReferralTree(Request $request)
-    {
-        try {
-            $member = auth()->user();
-            $tree = Referral::getReferralTree($member->id, 30);
-            $statistics = $this->treeService->getTreeStatistics($member->id);
+    // public function OLD_getReferralTree(Request $request)
+    // {
+    //     try {
+    //         $member = auth()->user();
+    //         $tree = Referral::getReferralTree($member->id, 30);
+    //         $statistics = $this->treeService->getTreeStatistics($member->id);
 
-            // Format tree with member details
-            $formattedTree = [];
-            foreach ($tree as $level => $memberIds) {
+    //         // Format tree with member details
+    //         $formattedTree = [];
+    //         foreach ($tree as $level => $memberIds) {
 
-                $levelData = [
-                    'level' => $level,
-                    'member_count' => count($memberIds),
-                    'members' => []
-                ];
+    //             $levelData = [
+    //                 'level' => $level,
+    //                 'member_count' => count($memberIds),
+    //                 'members' => []
+    //             ];
 
-                // $members = Member::with('wallet')->whereIn('id', $memberIds)->get();
-                $members = Member::whereIn('id', $memberIds)->get();
+    //             // $members = Member::with('wallet')->whereIn('id', $memberIds)->get();
+    //             $members = Member::whereIn('id', $memberIds)->get();
                 
-                $levelData['members'] = $members->map(function($m) use ($level) {
-                    return [
-                        'id' => $m->id,
-                        'name' => $m->name,
-                        'user_name' => $m->user_name,
-                        'phone' => $m->phone,
-                        'member_type' => $m->member_type,
-                        'status' => $m->status,
-                        'referral_code' => $m->referral_code,
-                        // 'wallet' => [
-                        //     'total_points' => round($m->wallet->total_points, 2),
-                        //     'available_points' => round($m->wallet->available_points, 2),
-                        //     'onhold_points' => round($m->wallet->onhold_points, 2),
-                        //     'total_referrals' => $m->wallet->total_referrals,
-                        // ],
-                        'level_in_tree' => $level,
-                    ];
-                });
+    //             $levelData['members'] = $members->map(function($m) use ($level) {
+    //                 return [
+    //                     'id' => $m->id,
+    //                     'name' => $m->name,
+    //                     'user_name' => $m->user_name,
+    //                     'phone' => $m->phone,
+    //                     'member_type' => $m->member_type,
+    //                     'status' => $m->status,
+    //                     'referral_code' => $m->referral_code,
+    //                     // 'wallet' => [
+    //                     //     'total_points' => round($m->wallet->total_points, 2),
+    //                     //     'available_points' => round($m->wallet->available_points, 2),
+    //                     //     'onhold_points' => round($m->wallet->onhold_points, 2),
+    //                     //     'total_referrals' => $m->wallet->total_referrals,
+    //                     // ],
+    //                     'level_in_tree' => $level,
+    //                 ];
+    //             });
 
-                $formattedTree[] = $levelData;
-            }
-            // return response()->json([
-            //     'success' => true,
-            //     'data' => [
-            //         'tree' => $tree,
-            //         'statistics' => $statistics,
-            //     ]
-            // ]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Member tree retrieved successfully',
-                'data' => [
-                    'root_member' => [
-                        'id' => $member->id,
-                        'name' => $member->name,
-                        'user_name' => $member->user_name,
-                        'referral_code' => $member->referral_code,
-                    ],
-                    'statistics' => [
-                        'total_members' => $statistics['total_members'],
-                        'deepest_level' => $statistics['deepest_level'],
-                        // 'by_level' => $statistics['by_level'],
-                        // 'width_at_each_level' => $statistics['width_at_each_level'],
-                    ],
-                    'tree' => $formattedTree,
-                ]
-            ]);
+    //             $formattedTree[] = $levelData;
+    //         }
+    //         // return response()->json([
+    //         //     'success' => true,
+    //         //     'data' => [
+    //         //         'tree' => $tree,
+    //         //         'statistics' => $statistics,
+    //         //     ]
+    //         // ]);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Member tree retrieved successfully',
+    //             'data' => [
+    //                 'root_member' => [
+    //                     'id' => $member->id,
+    //                     'name' => $member->name,
+    //                     'user_name' => $member->user_name,
+    //                     'referral_code' => $member->referral_code,
+    //                 ],
+    //                 'statistics' => [
+    //                     'total_members' => $statistics['total_members'],
+    //                     'deepest_level' => $statistics['deepest_level'],
+    //                     // 'by_level' => $statistics['by_level'],
+    //                     // 'width_at_each_level' => $statistics['width_at_each_level'],
+    //                 ],
+    //                 'tree' => $formattedTree,
+    //             ]
+    //         ]);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve referral tree',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to retrieve referral tree',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
 
     /**
