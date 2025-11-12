@@ -104,7 +104,7 @@ class MerchantController extends Controller
             'staffs.*.name' => 'required|string|max:255',
             'staffs.*.phone' => 'required|string|max:20',
             'staffs.*.email' => 'required|email|max:255',
-            'staffs.*.gender_type' => 'required|in:male,female,others',
+            // 'staffs.*.gender_type' => 'required|in:male,female,others',
             'staffs.*.type' => 'required|in:merchant,staff',
             'staffs.*.password' => 'nullable|string|min:6',
         ]);
