@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use App\Models\Member;
+use App\Models\Voucher;
 use App\Models\MemberWallet;
 use App\Helpers\CloudinaryHelper;
 use App\Models\Setting;
@@ -316,10 +317,9 @@ class MemberController extends Controller
                     'maxreward/members/images'
                 );
 
-                // Update member with new image data
-                $member->image = $uploadResult['url'];
-                $member->image_cloudinary_id = $uploadResult['public_id'];
-                $member->save();
+                // Add image data to validated data
+                $validatedData['image'] = $uploadResult['url'];
+                $validatedData['image_cloudinary_id'] = $uploadResult['public_id'];
             }
 
             // Update only the fields that are present in the request
@@ -592,6 +592,48 @@ class MemberController extends Controller
                 'success' => false,
                 'message' => 'No member IDs provided'
             ], 400);
+        }
+    }
+
+
+    public function statusBlockSuspend(Request $request){
+        try {
+            $member = Member::findOrFail($request->member_id);
+            $member->status = $request->status;
+            if($request->status == 'blocked'){
+                $member->block_reason = $request->reason;
+            }
+            if($request->status == 'suspended'){
+                $member->suspended_reason = $request->reason;
+            }
+            $member->save();
+            return response()->json([
+                'success' => true,
+                'message' => 'Member status updated successfully',
+                'data' => $member
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Member not found'
+            ], 404);
+        }
+    }
+    
+
+    public function getSingleVoucher(Request $request){
+        try {
+            $voucher = Voucher::with('merchant')->findOrFail($request->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher retrieved successfully',
+                'data' => $voucher
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher not found'
+            ], 404);
         }
     }
 }
