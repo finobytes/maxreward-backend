@@ -430,6 +430,45 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * Get member dashboard statistics
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getDashboardStats()
+    {
+        try {
+            // Get total members count
+            $totalMembers = Member::count();
+
+            // Get total merchants count
+            $totalMerchants = \App\Models\Merchant::count();
+
+            // Get total transactions count
+            $totalTransactions = \App\Models\Transaction::count();
+
+            // Get total merchant approvals (merchants with 'approved' status)
+            $totalMerchantApprovals = \App\Models\Merchant::where('status', 'approved')->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Dashboard statistics retrieved successfully',
+                'data' => [
+                    'total_members' => $totalMembers,
+                    'total_merchants' => $totalMerchants,
+                    'total_transactions' => $totalTransactions,
+                    'total_merchant_approvals' => $totalMerchantApprovals
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve dashboard statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
     public function makePurchase(Request $request)
@@ -531,5 +570,28 @@ class MemberController extends Controller
     }
 
 
+    public function MemberController(Request $request)
+    {
+        $memberIds = $request->member_ids; 
 
+        if($memberIds.length > 0){
+            foreach($memberIds as $id){
+                try {
+                    $member = Member::findOrFail($id);
+                    $member->status = $request->status;
+                    $member->save();
+                } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Member with ID {$id} not found"
+                    ], 404);
+                }
+            }
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No member IDs provided'
+            ], 400);
+        }
+    }
 }

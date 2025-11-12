@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
+use App\Http\Controllers\Api\Admin\DashboardController;
 use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 use App\Http\Controllers\GitWebhookController;
@@ -67,11 +68,17 @@ Route::prefix('admin')->group(function () {
     // Public route - login for both Admin and Staff
     Route::post('login', [AdminAuthController::class, 'login']);
 
+    // Get dashboard statistics
+    Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats'])->middleware('auth:admin');
+
     // Protected routes - require JWT authentication
     Route::middleware('auth:admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
         Route::post('refresh', [AdminAuthController::class, 'refresh']);
         Route::post('me', [AdminAuthController::class, 'me']);
+
+
+       
 
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
@@ -289,6 +296,8 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     // Redeem amount
     Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
+
+    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:member,admin');
 
     // Make purchase
     Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');

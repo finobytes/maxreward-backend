@@ -21,12 +21,14 @@ class Voucher extends Model
         'member_id',
         'merchant_id',
         'voucher_type',
-        'denomination_id',
+        'denomination_history',
         'quantity',
         'payment_method',
         'total_amount',
         'manual_payment_docs_url',
         'manual_payment_docs_cloudinary_id',
+        'rejected_reason',
+        'rejected_by',
         'status',
     ];
 
@@ -39,6 +41,7 @@ class Voucher extends Model
         'denomination_id' => 'integer',
         'quantity' => 'integer',
         'total_amount' => 'decimal:2',
+        'denomination_history' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('merchant_id');
             $table->string('user_name')->unique()->comment('Unique ID (e.g., M123456789)');
-            $table->string('name');
+            $table->string('name')->nullable();
             $table->string('phone')->unique()->nullable();
             $table->string('email')->unique()->nullable();
             $table->string("image")->nullable()->comment('Cloudinary base URL');

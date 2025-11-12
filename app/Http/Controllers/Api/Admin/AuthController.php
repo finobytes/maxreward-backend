@@ -42,6 +42,7 @@ class AuthController extends Controller implements HasMiddleware
         return response()->json(auth('admin')->user());
     }
 
+
     public function logout()
     {
         auth('admin')->logout();

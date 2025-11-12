@@ -191,12 +191,13 @@ class VoucherController extends Controller
             }
 
             // Update voucher status to failed
-            $voucher->status = 'failed';
+            $voucher->status = $request->status;
+            $voucher->rejected_reason = $request->reason;
             $voucher->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Voucher rejected successfully',
+                'message' => "Voucher status {$request->status} successfully",
                 'data' => [
                     'voucher' => $voucher->load('denomination', 'member'),
                 ]
@@ -205,7 +206,7 @@ class VoucherController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reject voucher',
+                'message' => "Failed to {$request->status} voucher",
                 'error' => $e->getMessage()
             ], 500);
         }
