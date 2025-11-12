@@ -451,6 +451,8 @@ class MemberController extends Controller
             $memberId = auth()->user()->id;
             $memberWallet = MemberWallet::where('member_id', $memberId)->firstOrFail();
 
+            // dd($memberWallet);
+
             // ✅ Step 3: Check wallet balance
             if ($memberWallet->available_points < $validatedData['redeem_amount']) {
                 return response()->json([
