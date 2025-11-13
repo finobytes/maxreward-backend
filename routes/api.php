@@ -37,6 +37,7 @@ Route::prefix('member')->group(function () {
         Route::post('logout', [MemberAuthController::class, 'logout']);
         Route::post('refresh', [MemberAuthController::class, 'refresh']);
         Route::post('me', [MemberAuthController::class, 'me']);
+        Route::post('update-profile', [MemberController::class, 'updateProfile']);
     });
 });
 
@@ -96,6 +97,7 @@ Route::prefix('admin')->group(function () {
             Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
             Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
         });
+        
     });
 });
 
@@ -231,6 +233,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Delete merchant - only admin can delete
     Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');
 
+    // Suspend/Activate merchant - only admin can suspend
+    Route::post('/suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
+
     // Get merchant by unique number - members, merchants, and admins can view
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
 
@@ -242,7 +247,7 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
 
     // Approve purchase
     Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');
-    
+
 });
 
 

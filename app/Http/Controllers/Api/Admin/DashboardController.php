@@ -22,8 +22,11 @@ class DashboardController extends Controller
             // Get total members count
             $totalMembers = Member::count();
 
-            // Get total merchants count
-            $totalMerchants = Merchant::count();
+            // Get approved merchants count
+            $approvedMerchants = Merchant::where('status', 'approved')->count();
+
+            // Get pending merchants count
+            $pendingMerchants = Merchant::where('status', 'pending')->count();
 
             // Get total transactions count
             $totalTransactions = Transaction::count();
@@ -36,7 +39,8 @@ class DashboardController extends Controller
                 'message' => 'Dashboard statistics retrieved successfully',
                 'data' => [
                     'total_members' => $totalMembers,
-                    'total_merchants' => $totalMerchants,
+                    'approved_merchants' => $approvedMerchants,
+                    'pending_merchants' => $pendingMerchants,
                     'total_transactions' => $totalTransactions,
                     'total_merchant_approvals' => $totalMerchantApprovals
                 ]

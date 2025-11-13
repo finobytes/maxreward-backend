@@ -42,6 +42,8 @@ class Merchant extends Model
         'swift_code',
         'tax_certificate',
         'approved_by',
+        'suspended_by',
+        'suspended_reason',
         'corporate_member_id',
         'verification_documents',
         'verification_docs_url',

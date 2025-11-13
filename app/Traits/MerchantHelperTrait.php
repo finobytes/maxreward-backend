@@ -10,12 +10,12 @@ use App\Models\Member;
 trait MerchantHelperTrait
 {
     /**
-     * Generate 8 character unique number for merchant
+     * Generate 8 digit unique number for merchant
      */
     public function generateUniqueNumber(): string
     {
         do {
-            $uniqueNumber = strtoupper(Str::random(8));
+            $uniqueNumber = str_pad(rand(1, 99999999), 8, '0', STR_PAD_LEFT);
         } while (Merchant::where('unique_number', $uniqueNumber)->exists());
 
         return $uniqueNumber;

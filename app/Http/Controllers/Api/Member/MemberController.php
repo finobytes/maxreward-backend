@@ -636,4 +636,77 @@ class MemberController extends Controller
             ], 404);
         }
     }
+
+    /**
+     * Update member profile (for authenticated member)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateProfile(Request $request)
+    {
+        try {
+            // Start database transaction
+            DB::beginTransaction();
+
+            // Get authenticated member
+            $member = auth()->user();
+
+            // Validate request
+            $validatedData = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'email' => 'sometimes|email|max:255|unique:members,email,' . $member->id,
+                'address' => 'sometimes|string|max:500',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            ]);
+
+            // Handle image upload to Cloudinary
+            if ($request->hasFile('image')) {
+                // Delete old image from Cloudinary if exists
+                if ($member->image_cloudinary_id) {
+                    CloudinaryHelper::deleteImage($member->image_cloudinary_id);
+                }
+
+                // Upload new image
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $request->file('image'),
+                    'maxreward/members/images'
+                );
+
+                // Add image data to validated data
+                $validatedData['image'] = $uploadResult['url'];
+                $validatedData['image_cloudinary_id'] = $uploadResult['public_id'];
+            }
+
+            // Update only the fields that are present in the request
+            $member->update($validatedData);
+
+            // Commit transaction
+            DB::commit();
+
+            // Reload member with relationships
+            $member->load(['wallet', 'merchant']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated successfully',
+                'data' => $member
+            ], 200);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update profile',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

@@ -1058,5 +1058,71 @@ class MerchantController extends Controller
         }
     }
 
+    /**
+     * Suspend merchant (Admin only)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function suspendMerchant(Request $request)
+    {
+        try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'merchant_id' => 'required|exists:merchants,id',
+                'status' => 'required|in:suspended,active',
+                'suspended_reason' => 'required_if:status,suspended|string|max:500',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Find merchant
+            $merchant = Merchant::findOrFail($request->merchant_id);
+
+            // Update merchant status and reason
+            $merchant->status = $request->status;
+
+            if ($request->status == 'suspended') {
+                $merchant->suspended_reason = $request->suspended_reason;
+                $merchant->suspended_by = auth()->id(); // Store admin who suspended
+            } else {
+                // If activating, clear suspension reason
+                $merchant->suspended_reason = null;
+                $merchant->suspended_by = null;
+            }
+
+            $merchant->save();
+
+            // Load relationships
+            $merchant->load(['wallet', 'corporateMember', 'staffs']);
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->status == 'suspended'
+                    ? 'Merchant suspended successfully'
+                    : 'Merchant activated successfully',
+                'data' => $merchant
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update merchant status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
 }
