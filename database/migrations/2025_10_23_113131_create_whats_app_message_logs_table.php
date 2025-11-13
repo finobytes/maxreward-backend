@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('member_id'); // Receiver
             $table->unsignedBigInteger('sent_by_member_id')->nullable(); // Sender (referrer)
             $table->string('phone_number'); // With country code
-            $table->string('message_type')->default('referral_invite'); // referral_invite, welcome, etc.
+            $table->string('message_type', 100)->default('referral_invite'); // referral_invite, welcome, etc.
             $table->text('message_content');
             $table->string('status')->default('pending'); // pending, sent, failed
             $table->text('error_message')->nullable();
