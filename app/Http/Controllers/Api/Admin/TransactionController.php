@@ -195,4 +195,28 @@ class TransactionController extends Controller
             ], 404);
         }
     }
+
+
+    public function getMemberTransactions($id)
+    {
+        try {
+            $transactions = Transaction::with(['member', 'merchant', 'referralMember'])
+                ->where('member_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transactions retrieved successfully',
+                'data' => $transactions
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve transactions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

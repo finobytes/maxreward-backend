@@ -103,21 +103,22 @@ Route::prefix('admin')->group(function () {
 
 // Transaction Management (Admin only)
 Route::prefix('transactions')->middleware('auth:admin,member')->group(function () {
-    Route::get('/', [TransactionController::class, 'index']);
-    Route::get('/all', [TransactionController::class, 'getAllTransactions']);
-    Route::get('/{id}', [TransactionController::class, 'show']);
+    Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin');
+    Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin');
+    Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member');
+    Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member');
 });
 
 // Notification Management (Admin only)
 Route::prefix('notifications')->middleware('auth:admin,member')->group(function () {
-    Route::get('/', [NotificationController::class, 'index']);
-    Route::get('/all', [NotificationController::class, 'getAllNotifications']);
-    Route::get('/{id}', [NotificationController::class, 'show']);
-    Route::delete('/{id}', [NotificationController::class, 'destroy']);
+    Route::get('/', [NotificationController::class, 'index'])->middleware('role:admin');
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->middleware('role:admin');
+    Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin');
 });
 
 // WhatsApp Message Log Management (Admin only)
-Route::prefix('whatsapp-logs')->middleware('auth:admin,member')->group(function () {
+Route::prefix('whatsapp-logs')->middleware('auth:admin')->group(function () {
     Route::get('/', [WhatsAppLogController::class, 'index']);
     Route::get('/all', [WhatsAppLogController::class, 'getAllLogs']);
     Route::get('/{id}', [WhatsAppLogController::class, 'show']);
