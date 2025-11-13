@@ -248,6 +248,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Approve purchase
     Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');
 
+    // Reject purchase
+    Route::post('/rejected/purchase', [MerchantController::class, 'rejectedPurchase'])->middleware('role:merchant');
+
 });
 
 

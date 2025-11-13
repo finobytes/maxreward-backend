@@ -22,6 +22,8 @@ return new class extends Migration
             $table->decimal('cash_redeem_amount', 10, 2)->default(0)->comment('Cash equivalent');
             $table->enum('payment_method', ['online', 'offline'])->default('offline');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->unsignedBigInteger('rejected_by')->nullable();
+            $table->string('rejected_reason')->nullable();
             $table->timestamps();
             
             $table->index('merchant_id');

@@ -1125,4 +1125,123 @@ class MerchantController extends Controller
     }
 
 
+    public function rejectedPurchase(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'purchase_id' => 'required|exists:purchases,id',
+            'status' => 'required|in:rejected',
+            'reason' => 'required|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Find the purchase record
+            $purchase = Purchase::with(['member', 'merchant'])->find($request->purchase_id);
+
+            if (!$purchase) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Purchase not found.'
+                ], 404);
+            }
+
+            // Ensure it's pending before rejecting
+            if ($purchase->status !== 'pending') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only pending purchases can be rejected.'
+                ], 400);
+            }
+
+            // Update purchase status to rejected
+            $purchase->update([
+                'status' => $request->status,
+                'rejected_reason' => $request->reason,
+                'rejected_by' => auth('merchant')->id()
+            ]);
+
+             // 'rejected_by' => auth()->id() ?? auth('merchant')->id() ?? auth('admin')->id()
+
+            // Refund points to member wallet (since purchase was rejected)
+            if ($purchase->member && $purchase->member->wallet) {
+                $purchase->member->wallet->increment('available_points', $purchase->redeem_amount);
+            }
+
+            // Transaction history - Member points refunded
+            Transaction::create([
+                'member_id' => $purchase->member_id,
+                'merchant_id' => $purchase->merchant_id,
+                'transaction_points' => $purchase->redeem_amount,
+                'transaction_type' => Transaction::TYPE_AP, // Added Points (refund)
+                'points_type' => Transaction::POINTS_CREDITED,
+                'transaction_reason' => "Purchase rejected at {$purchase->merchant->business_name}. Points refunded. Reason: {$request->reason}"
+            ]);
+
+            // Notification for member - Purchase rejected
+            Notification::create([
+                'member_id' => $purchase->member_id,
+                'type' => 'purchase_rejected',
+                'title' => 'Purchase Rejected',
+                'message' => "Your purchase at {$purchase->merchant->business_name} has been rejected. {$purchase->redeem_amount} points have been refunded. Reason: {$request->reason}",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'redeem_amount' => $purchase->redeem_amount,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'merchant_name' => $purchase->merchant->business_name,
+                    'rejected_reason' => $request->reason,
+                    'rejected_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchase rejected successfully.',
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'status' => 'rejected',
+                    'rejected_reason' => $request->reason,
+                    'rejected_at' => now()->toDateTimeString(),
+                    'member' => [
+                        'id' => $purchase->member_id,
+                        'name' => $purchase->member->name,
+                        'points_refunded' => $purchase->redeem_amount
+                    ],
+                    'merchant' => [
+                        'id' => $purchase->merchant_id,
+                        'name' => $purchase->merchant->business_name
+                    ]
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Purchase rejection failed: ' . $e->getMessage(), [
+                'purchase_id' => $request->purchase_id,
+                'exception' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to reject purchase. Please try again.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+
 }

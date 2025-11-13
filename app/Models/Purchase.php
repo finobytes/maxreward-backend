@@ -26,6 +26,8 @@ class Purchase extends Model
         'redeem_amount',
         'cash_redeem_amount',
         'payment_method',
+        'rejected_by',
+        'rejected_reason',
         'status',
     ];
 
