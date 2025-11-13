@@ -617,59 +617,62 @@ class ReferralController extends Controller
         try {
             $member = auth()->user();
             
-            // Get tree structure with positions
-            $treeStructure = Referral::getBinaryTreeStructure($member->id, 30);
-            $statistics = $this->treeService->getTreeStatistics($member->id);
+            // // Get tree structure with positions
+            // $treeStructure = Referral::getBinaryTreeStructure($member->id, 30);
+            // $statistics = $this->treeService->getTreeStatistics($member->id);
 
-            // Format tree with member details and positions
-            $formattedTree = [];
+            // // Format tree with member details and positions
+            // $formattedTree = [];
             
-            foreach ($treeStructure as $level => $levelNodes) {
-                $levelData = [
-                    'level' => $level,
-                    'node_count' => count($levelNodes),
-                    'nodes' => []
-                ];
+            // foreach ($treeStructure as $level => $levelNodes) {
+            //     $levelData = [
+            //         'level' => $level,
+            //         'node_count' => count($levelNodes),
+            //         'nodes' => []
+            //     ];
 
-                foreach ($levelNodes as $node) {
-                    $parentMember = Member::find($node['parent_id']);
-                    $leftChildMember = $node['left_child'] ? Member::find($node['left_child']) : null;
-                    $rightChildMember = $node['right_child'] ? Member::find($node['right_child']) : null;
+            //     foreach ($levelNodes as $node) {
+            //         $parentMember = Member::find($node['parent_id']);
+            //         $leftChildMember = $node['left_child'] ? Member::find($node['left_child']) : null;
+            //         $rightChildMember = $node['right_child'] ? Member::find($node['right_child']) : null;
                     
-                    $nodeInfo = [
-                        'parent' => [
-                            'id' => $parentMember->id,
-                            'name' => $parentMember->name,
-                            'user_name' => $parentMember->user_name,
-                            'phone' => $parentMember->phone,
-                            'referral_code' => $parentMember->referral_code,
-                            'image' => $parentMember->image,
-                        ],
-                        'left_child' => $leftChildMember ? [
-                            'id' => $leftChildMember->id,
-                            'name' => $leftChildMember->name,
-                            'user_name' => $leftChildMember->user_name,
-                            'phone' => $leftChildMember->phone,
-                            'referral_code' => $leftChildMember->referral_code,
-                            'image' => $leftChildMember->image,
-                            'position' => 'left'
-                        ] : null,
-                        'right_child' => $rightChildMember ? [
-                            'id' => $rightChildMember->id,
-                            'name' => $rightChildMember->name,
-                            'user_name' => $rightChildMember->user_name,
-                            'phone' => $rightChildMember->phone,
-                            'referral_code' => $rightChildMember->referral_code,
-                            'image' => $rightChildMember->image,
-                            'position' => 'right'
-                        ] : null
-                    ];
+            //         $nodeInfo = [
+            //             'parent' => [
+            //                 'id' => $parentMember->id,
+            //                 'name' => $parentMember->name,
+            //                 'user_name' => $parentMember->user_name,
+            //                 'phone' => $parentMember->phone,
+            //                 'referral_code' => $parentMember->referral_code,
+            //                 'image' => $parentMember->image,
+            //             ],
+            //             'left_child' => $leftChildMember ? [
+            //                 'id' => $leftChildMember->id,
+            //                 'name' => $leftChildMember->name,
+            //                 'user_name' => $leftChildMember->user_name,
+            //                 'phone' => $leftChildMember->phone,
+            //                 'referral_code' => $leftChildMember->referral_code,
+            //                 'image' => $leftChildMember->image,
+            //                 'position' => 'left'
+            //             ] : null,
+            //             'right_child' => $rightChildMember ? [
+            //                 'id' => $rightChildMember->id,
+            //                 'name' => $rightChildMember->name,
+            //                 'user_name' => $rightChildMember->user_name,
+            //                 'phone' => $rightChildMember->phone,
+            //                 'referral_code' => $rightChildMember->referral_code,
+            //                 'image' => $rightChildMember->image,
+            //                 'position' => 'right'
+            //             ] : null
+            //         ];
                     
-                    $levelData['nodes'][] = $nodeInfo;
-                }
+            //         $levelData['nodes'][] = $nodeInfo;
+            //     }
 
-                $formattedTree[] = $levelData;
-            }
+            //     $formattedTree[] = $levelData;
+            // }
+
+            $data = CommonFunctionHelper::getMemberCommunityTree($member->id, app(CommunityTreeService::class));
+            // dd($data['tree'], $data['statistics']);
 
             return response()->json([
                 'success' => true,
@@ -682,12 +685,12 @@ class ReferralController extends Controller
                         'referral_code' => $member->referral_code,
                     ],
                     'statistics' => [
-                        'total_members' => $statistics['total_members'],
-                        'deepest_level' => $statistics['deepest_level'],
-                        'left_leg_count' => $statistics['left_leg_count'],
-                        'right_leg_count' => $statistics['right_leg_count'],
+                        'total_members' => $data['statistics']['total_members'],
+                        'deepest_level' => $data['statistics']['deepest_level'],
+                        'left_leg_count' => $data['statistics']['left_leg_count'],
+                        'right_leg_count' => $data['statistics']['right_leg_count'],
                     ],
-                    'tree_structure' => $formattedTree,
+                    'tree_structure' => $data['tree'],
                 ]
             ]);
 
@@ -737,23 +740,10 @@ class ReferralController extends Controller
     public function getMySponsoredMembers(Request $request)
     {
         try {
+
             $member = auth()->user();
 
-            // $sponsored = Referral::with('childMember.wallet')
-            // ->where('sponsor_member_id', $member->id)
-            // ->orderBy('created_at', 'desc')
-            // ->get()
-            // ->pluck('childMember');
-
-            $sponsored = Referral::with('childMember.wallet')
-            ->where('sponsor_member_id', $member->id)
-            ->orderBy('created_at', 'desc')
-            ->paginate(20); // ✅ pagination here
-
-            // Extract only the childMember relation from each referral
-            $sponsored->getCollection()->transform(function ($referral) {
-                return $referral->childMember;
-            });
+            $sponsored = CommonFunctionHelper::sponsoredMembers($member->id);
 
             return response()->json([
                 'success' => true,
