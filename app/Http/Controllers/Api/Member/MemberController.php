@@ -14,6 +14,7 @@ use App\Models\MemberWallet;
 use App\Helpers\CloudinaryHelper;
 use App\Models\Setting;
 use App\Models\Purchase;
+use App\Models\TransactionCounter;
 
 class MemberController extends Controller
 {
@@ -474,8 +475,7 @@ class MemberController extends Controller
     public function makePurchase(Request $request)
     {
         try {
-            // dd($request->all());
-            // ✅ Step 1: Validate request
+            // 1. validation
             $validatedData = $request->validate([
                 'merchant_id'        => 'required|exists:merchants,id',
                 'transaction_amount' => 'required|numeric|min:0.01',
@@ -486,59 +486,54 @@ class MemberController extends Controller
                 'merchant_selection_type' => 'required|in:qrcode,unique_number,merchant_name',
             ]);
 
-            // ✅ Step 2: Get current member
+            // 2. member & wallet check
             $memberId = auth()->user()->id;
             $memberWallet = MemberWallet::where('member_id', $memberId)->firstOrFail();
 
-            // dd($memberWallet);
-
-            // ✅ Step 3: Check wallet balance
             if ($memberWallet->available_points < $validatedData['redeem_amount']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient points for redemption'
-                ], 400);
+                return response()->json(['success'=>false,'message'=>'Insufficient points for redemption'], 400);
             }
 
-            $settingInfo = Setting::first() ? Setting::first()->setting_attribute : [];
+            // 3. setting check
+            $settingInfo = Setting::first()?->setting_attribute ?? [];
             if (!$settingInfo) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Setting info not found'
-                ], 400);
+                return response()->json(['success'=>false,'message'=>'Setting info not found'], 400);
             }
 
-            // dd($settingInfo['maxreward']['rm_points']);
             $cashRedeemAmount = $validatedData['transaction_amount'] - $validatedData['redeem_amount'];
             $cashRedeemAmount = $cashRedeemAmount * $settingInfo['maxreward']['rm_points'];
             if ($validatedData['cash_redeem_amount'] != $cashRedeemAmount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Cash redeem amount does not match'
+                return response()->json(['success'=>false,'message'=>'Cash redeem amount does not match']);
+            }
+
+            // 4. Generate transaction id safely using TransactionCounter
+            // Use DB transaction to keep purchase creation atomic (good practice)
+            $purchase = DB::transaction(function () use ($validatedData, $memberId) {
+                // Insert counter row and get id (DB handles concurrency)
+                $counterId = DB::table('transaction_counters')->insertGetId([
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
-            }
 
-            // ✅ Generate sequential transaction ID
-            $lastPurchase = Purchase::orderBy('id', 'desc')->first();
-            $lastNumber = 2000;
-            if ($lastPurchase && isset($lastPurchase->transaction_id)) {
-                $lastNumber = (int) filter_var($lastPurchase->transaction_id, FILTER_SANITIZE_NUMBER_INT);
-            }
-            $newNumber = $lastNumber + 1;
-            $transaction_id = 'TXN-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+                // Create TXN starting from 2001: counterId=1 -> 2001
+                $transactionNumber = $counterId + 2000; // 1 -> 2001
+                $transaction_id = 'TXN-' . str_pad($transactionNumber, 4, '0', STR_PAD_LEFT);
 
-            // ✅ Step 4: Create purchase
-            $purchase = Purchase::create([
-                'member_id'          => $memberId,
-                'merchant_id'        => $validatedData['merchant_id'],
-                'transaction_id'     => $transaction_id,
-                'transaction_amount' => $validatedData['transaction_amount'],
-                'redeem_amount'      => $validatedData['redeem_amount'],
-                'cash_redeem_amount' => $validatedData['cash_redeem_amount'] ?? 0,
-                'payment_method'     => $validatedData['payment_method'],
-                'status'             => $validatedData['status'] ?? 'pending',
-                'merchant_selection_type' => $validatedData['merchant_selection_type']
-            ]);
+                // Create purchase record
+                $purchase = Purchase::create([
+                    'member_id'          => $memberId,
+                    'merchant_id'        => $validatedData['merchant_id'],
+                    'transaction_id'     => $transaction_id,
+                    'transaction_amount' => $validatedData['transaction_amount'],
+                    'redeem_amount'      => $validatedData['redeem_amount'],
+                    'cash_redeem_amount' => $validatedData['cash_redeem_amount'] ?? 0,
+                    'payment_method'     => $validatedData['payment_method'],
+                    'status'             => $validatedData['status'] ?? 'pending',
+                    'merchant_selection_type' => $validatedData['merchant_selection_type'],
+                ]);
+
+                return $purchase;
+            }, 5); // optional 5 attempts for transaction deadlock retry
 
             return response()->json([
                 'success' => true,
@@ -547,25 +542,13 @@ class MemberController extends Controller
             ], 200);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            // ❌ Handle validation errors
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
+            return response()->json(['success'=>false,'message'=>'Validation failed','errors'=>$e->errors()], 422);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Member wallet or merchant not found',
-            ], 404);
+            return response()->json(['success'=>false,'message'=>'Member wallet or merchant not found'], 404);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to make purchase',
-                'error'   => $e->getMessage(),
-            ], 500);
+            return response()->json(['success'=>false,'message'=>'Failed to make purchase','error'=>$e->getMessage()], 500);
         }
     }
 

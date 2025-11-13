@@ -117,8 +117,9 @@ class ReferralController extends Controller
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             $userName = $this->formatPhoneNumber($request->phone);
             $lastSix = substr($userName, -6);
-            $prefix = Str::upper(Str::random(2));
-            $password = $prefix . $lastSix;
+            // $prefix = Str::upper(Str::random(2));
+            // $password = $prefix . $lastSix;
+            $password = $lastSix;
 
             Log::info('Step 3: Create new member');
 
