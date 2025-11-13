@@ -15,6 +15,8 @@ use App\Helpers\CloudinaryHelper;
 use App\Models\Setting;
 use App\Models\Purchase;
 use App\Models\TransactionCounter;
+use App\Helpers\CommonFunctionHelper;
+use App\Services\CommunityTreeService;
 
 class MemberController extends Controller
 {
@@ -123,6 +125,13 @@ class MemberController extends Controller
                 'merchant.wallet'  // Include merchant and its wallet
             ])->findOrFail($id);
 
+            // Calculate lifetime purchase (sum of approved transaction amounts)
+            $member->lifetime_purchase = Purchase::where('member_id', $member->id)
+            ->where('status', 'approved') 
+            ->sum('transaction_amount');
+
+            $member->active_referrals = CommonFunctionHelper::sponsoredMembers($member->id);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Member retrieved successfully',
@@ -140,6 +149,62 @@ class MemberController extends Controller
                 'message' => 'Failed to retrieve member',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+
+    public function getReferrals($id)
+    {
+        try{
+            $member_referrals = CommonFunctionHelper::sponsoredMembers($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Member referrals retrieved successfully',
+                'data' => $member_referrals
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve member referrals',
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
+    public function getCommunityTree($id)
+    {
+        try{
+            $member = Member::find($id);
+            $data = CommonFunctionHelper::getMemberCommunityTree($member->id, app(CommunityTreeService::class));
+            // dd($data['tree'], $data['statistics']);
+            return response()->json([
+                'success' => true,
+                'message' => 'Member tree with structure retrieved successfully',
+                'data' => [
+                    'root_member' => [
+                        'id' => $member->id,
+                        'name' => $member->name,
+                        'user_name' => $member->user_name,
+                        'referral_code' => $member->referral_code,
+                    ],
+                    'statistics' => [
+                        'total_members' => $data['statistics']['total_members'],
+                        'deepest_level' => $data['statistics']['deepest_level'],
+                        'left_leg_count' => $data['statistics']['left_leg_count'],
+                        'right_leg_count' => $data['statistics']['right_leg_count'],
+                    ],
+                    'tree_structure' => $data['tree'],
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve member referrals',
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

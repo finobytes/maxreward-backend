@@ -76,4 +76,10 @@ class Member extends Authenticatable implements JWTSubject
         return $this->hasOne(Referral::class, 'child_member_id');
     }
 
+
+    public function purchases()
+    {
+        return $this->hasMany(Purchase::class, 'member_id');
+    }
+
 }
