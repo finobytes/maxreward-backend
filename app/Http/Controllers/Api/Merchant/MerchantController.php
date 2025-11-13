@@ -175,7 +175,7 @@ class MerchantController extends Controller
             // Create Corporate Member
             $corporateMember = Member::create([
                 'user_name' => $corporateUsername,
-                'name' => $request->business_name,
+                'name' => $merchant->business_name,
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->corporate_password ?? 'password123'),
