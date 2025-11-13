@@ -296,7 +296,7 @@ class ReferralController extends Controller
             Log::info('Step :: sponsor');
 
             $sponsorWallet = $sponsor->wallet;
-            $sponsorWallet->total_rp += $rpAmount;
+            // $sponsorWallet->total_rp += $rpAmount;
             $sponsorWallet->available_points += $rpAmount;
             $sponsorWallet->total_points += $rpAmount;
             $sponsorWallet->save();

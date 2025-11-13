@@ -940,7 +940,7 @@ class MerchantController extends Controller
                 $sponsorId = $sponsor->sponsor_member_id;
 
                 $sponsorMemberWallet = Member::find($sponsorId)->wallet;
-                $sponsorMemberWallet->total_rp += $rpAmount;
+                // $sponsorMemberWallet->total_rp += $rpAmount;
                 $sponsorMemberWallet->available_points += $rpAmount;
                 $sponsorMemberWallet->total_points += $rpAmount;
                 $sponsorMemberWallet->save();
