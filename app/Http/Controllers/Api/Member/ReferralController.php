@@ -117,8 +117,9 @@ class ReferralController extends Controller
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             $userName = $this->formatPhoneNumber($request->phone);
             $lastSix = substr($userName, -6);
-            $prefix = Str::upper(Str::random(2));
-            $password = $prefix . $lastSix;
+            // $prefix = Str::upper(Str::random(2));
+            // $password = $prefix . $lastSix;
+            $password = $lastSix;
 
             Log::info('Step 3: Create new member');
 
@@ -296,7 +297,7 @@ class ReferralController extends Controller
             Log::info('Step :: sponsor');
 
             $sponsorWallet = $sponsor->wallet;
-            $sponsorWallet->total_rp += $rpAmount;
+            // $sponsorWallet->total_rp += $rpAmount;
             $sponsorWallet->available_points += $rpAmount;
             $sponsorWallet->total_points += $rpAmount;
             $sponsorWallet->save();

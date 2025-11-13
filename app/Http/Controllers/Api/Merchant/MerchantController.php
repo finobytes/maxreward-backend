@@ -175,7 +175,7 @@ class MerchantController extends Controller
             // Create Corporate Member
             $corporateMember = Member::create([
                 'user_name' => $corporateUsername,
-                'name' => $request->business_name,
+                'name' => $merchant->business_name,
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->corporate_password ?? 'password123'),
@@ -940,7 +940,7 @@ class MerchantController extends Controller
                 $sponsorId = $sponsor->sponsor_member_id;
 
                 $sponsorMemberWallet = Member::find($sponsorId)->wallet;
-                $sponsorMemberWallet->total_rp += $rpAmount;
+                // $sponsorMemberWallet->total_rp += $rpAmount;
                 $sponsorMemberWallet->available_points += $rpAmount;
                 $sponsorMemberWallet->total_points += $rpAmount;
                 $sponsorMemberWallet->save();
