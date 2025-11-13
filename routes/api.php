@@ -303,10 +303,10 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     // Redeem amount
     Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
+    
+    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:admin');
 
-    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:member,admin');
-
-    Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:member,admin');
+    Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
 
     Route::get('/vouchers/${id}', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
