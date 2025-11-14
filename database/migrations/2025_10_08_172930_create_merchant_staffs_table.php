@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string("image_cloudinary_id")->nullable();
             $table->string('password');
             $table->text('address')->nullable();
+            $table->string('designation')->nullable();
             $table->enum('type', ['merchant', 'staff']);
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('gender_type', ['male', 'female', 'others'])->nullable();

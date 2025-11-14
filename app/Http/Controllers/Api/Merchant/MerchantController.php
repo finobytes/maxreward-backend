@@ -59,7 +59,7 @@ class MerchantController extends Controller
         $validator = Validator::make($request->all(), [
             // Merchant Basic Info
             'business_name' => 'required|string|max:255',
-            'business_type' => 'required|string|max:255',
+            'business_type_id' => 'required|string|max:255',
             'business_description' => 'nullable|string',
             // 'company_address' => 'required|string',
             // 'license_number' => 'required|string|unique:merchants,license_number',
@@ -140,7 +140,7 @@ class MerchantController extends Controller
             // Create Merchant
             $merchant = Merchant::create([
                 'business_name' => $request->business_name,
-                'business_type' => $request->business_type,
+                'business_type_id' => $request->business_type_id,
                 'business_description' => $request->business_description,
                 'company_address' => $request->company_address,
                 'status' => $request->status ?? 'pending',
@@ -220,6 +220,7 @@ class MerchantController extends Controller
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($request->merchant_password),
+                'designation' => $request->designation,
                 'type' => 'merchant',
                 'status' => 'active',
                 'gender_type' => $request->gender,
@@ -343,7 +344,7 @@ class MerchantController extends Controller
 
             // Filter by business type (optional)
             if ($request->has('business_type_id')) {
-                $query->where('business_type_id', $request->business_type);
+                $query->where('business_type_id', $request->business_type_id);
             }
 
             // Search by merchant_id (optional)
@@ -495,7 +496,7 @@ class MerchantController extends Controller
         $validator = Validator::make($request->all(), [
             // Merchant Basic Info
             'business_name' => 'sometimes|required|string|max:255',
-            'business_type' => 'sometimes|required|string|max:255',
+            'business_type_id' => 'sometimes|required|string|max:255',
             'business_description' => 'nullable|string',
             // 'company_address' => 'sometimes|required|string',
             // 'license_number' => 'sometimes|required|string|unique:merchants,license_number,' . $id,
@@ -584,7 +585,7 @@ class MerchantController extends Controller
             $merchantData = [];
 
             $updateableFields = [
-                'business_name', 'business_type', 'business_description',
+                'business_name', 'business_type_id', 'business_description',
                 'company_address', 'status', 'license_number',
                 'bank_name', 'account_holder_name', 'account_number',
                 'preferred_payment_method', 'routing_number', 'swift_code',
@@ -631,7 +632,7 @@ class MerchantController extends Controller
                 ->where('type', 'merchant')
                 ->first();
 
-            if ($merchantStaff && ($request->has('phone') || $request->has('email') || $request->has('gender'))) {
+            if ($merchantStaff && ($request->has('phone') || $request->has('email') || $request->has('gender') || $request->has('designation'))) {
                 $merchantStaffData = [];
 
                 if ($request->has('phone')) {
@@ -642,6 +643,9 @@ class MerchantController extends Controller
                 }
                 if ($request->has('gender')) {
                     $merchantStaffData['gender_type'] = $request->gender;
+                }
+                if ($request->has('designation')) {
+                    $merchantStaffData['designation'] = $request->designation;
                 }
 
                 if (!empty($merchantStaffData)) {

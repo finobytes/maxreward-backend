@@ -24,6 +24,7 @@ class MerchantStaff extends Authenticatable implements JWTSubject
         'type',
         'status',
         'gender_type',
+        'designation',
         'image',
         'image_cloudinary_id',
     ];
