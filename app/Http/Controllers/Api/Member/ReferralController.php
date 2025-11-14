@@ -705,11 +705,11 @@ class ReferralController extends Controller
 
 
     /**
-     * Get list of directly referred members
+     * Get list of parent node members
      * 
-     * GET /api/referred-members
+     * GET /api/parent-node-members
      */
-    public function getReferredMembers(Request $request)
+    public function parentNodeMembers(Request $request)
     {
         try {
             $member = auth()->user();
@@ -761,6 +761,103 @@ class ReferralController extends Controller
     }
 
 
+    /**
+     * Get upline members (up to 30 levels) for a specific member
+     * 
+     * GET /api/member/{memberId}/upline
+     * or
+     * GET /api/member/upline?level=30
+     */
+
+    public function getUplineMembers(Request $request, $memberId = null)
+    {
+        try {
+            // If memberId not provided in URL, use authenticated user
+            $targetMemberId = $memberId ?? auth()->user()->id;
+ 
+            // Get level limit from request (default: 30)
+            $levelLimit = $request->get('level', 30);
+
+            $levelLimit = min($levelLimit, 30); // Max 30 levels
+
+            Log::info("Getting upline members for member", [
+                'member_id' => $targetMemberId,
+                'level_limit' => $levelLimit
+            ]);
+    
+            // Get upline path using the same method as distributeCommunityPoints
+            $uplinePath = Referral::getReferralPath($targetMemberId, $levelLimit);
+    
+            Log::info("Upline path retrieved", [
+                'member_id' => $targetMemberId,
+                'upline_levels_count' => count($uplinePath)
+            ]);
+            // dd(count($uplinePath));
+            // Format response with member details
+            $formattedUpline = [];
+            $totalUplineMembers = 0;
+    
+            foreach ($uplinePath as $node) {
+                $level = $node['level'];
+                $uplineMemberId = $node['member_id'];
+    
+                // Get member details
+                $uplineMember = Member::find($uplineMemberId);
+                
+                if (!$uplineMember) {
+                    continue;
+                }
+    
+                $formattedUpline[] = [
+                    'level' => $level,
+                    'member' => [
+                        'id' => $uplineMember->id,
+                        'name' => $uplineMember->name,
+                        'user_name' => $uplineMember->user_name,
+                        'phone' => $uplineMember->phone,
+                        'email' => $uplineMember->email,
+                        'member_type' => $uplineMember->member_type,
+                        'referral_code' => $uplineMember->referral_code,
+                        'status' => $uplineMember->status
+                    ],
+                    'distance_from_target' => $level . ' level' . ($level > 1 ? 's' : '') . ' up'
+                ];
+    
+                $totalUplineMembers++;
+            }
+    
+            // Sort by level (closest first)
+            usort($formattedUpline, function($a, $b) {
+                return $a['level'] <=> $b['level'];
+            });
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Upline members retrieved successfully',
+                'data' => [
+                    'target_member' => [
+                        'id' => $targetMemberId,
+                        'name' => Member::find($targetMemberId)->name ?? 'Unknown',
+                    ],
+                    'upline_statistics' => [
+                        'total_upline_members' => $totalUplineMembers,
+                        'levels_retrieved' => count($uplinePath),
+                        'max_levels_possible' => 30,
+                    ],
+                    'upline_members' => $formattedUpline
+                ]
+            ]);
+    
+        } catch (\Exception $e) {
+            Log::error('Failed to retrieve upline members: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve upline members',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 }

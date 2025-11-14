@@ -340,11 +340,17 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Get referral tree
     Route::get('/referral-tree', [ReferralController::class, 'getReferralTree'])->middleware('role:member');
 
-    // Get directly referred members
-    Route::get('/referred-members', [ReferralController::class, 'getReferredMembers'])->middleware('role:member');
+    // Get parent node members
+    Route::get('/parent-node-members', [ReferralController::class, 'parentNodeMembers'])->middleware('role:member');
 
     // Get my sponsored members
     Route::get('/sponsored-members', [ReferralController::class, 'getMySponsoredMembers'])->middleware('role:member');
+
+    // Get upline members (up to 30 levels) for a specific member
+    Route::get('/{memberId}/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:admin');
+
+    // Get upline members (up to 30 levels) for a authenticated member
+    Route::get('/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:member');
 
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
