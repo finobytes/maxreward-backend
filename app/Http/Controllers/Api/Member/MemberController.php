@@ -20,6 +20,13 @@ use App\Services\CommunityTreeService;
 
 class MemberController extends Controller
 {
+
+    protected $treeService;
+
+    public function __construct(CommunityTreeService $treeService) {
+        $this->treeService = $treeService;
+    }
+
     /**
      * Get all members with pagination
      * 
@@ -132,6 +139,10 @@ class MemberController extends Controller
 
             $member->active_referrals = CommonFunctionHelper::sponsoredMembers($member->id);
 
+            // Load statistics from your tree service
+            $statistics = $this->treeService->getTreeStatistics($member->id);
+            $member->community_members = $statistics['total_members'];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Member retrieved successfully',
@@ -189,6 +200,8 @@ class MemberController extends Controller
                         'name' => $member->name,
                         'user_name' => $member->user_name,
                         'referral_code' => $member->referral_code,
+                        'image' => $member->image,
+                        'phone' => $member->phone
                     ],
                     'statistics' => [
                         'total_members' => $data['statistics']['total_members'],
