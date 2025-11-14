@@ -534,4 +534,59 @@ class AdminStaffController extends Controller
             ], 500);
         }
     }
+
+
+    public function changePassword(Request $request)
+    {
+        try {
+            $admin = auth()->user();
+
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'password' => 'required|string',
+                'new_password' => 'required|string|min:6|max:255',
+                'confirmation_password' => 'required|string|same:new_password',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Check if current password is correct
+            if (!Hash::check($request->password, $admin->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Current password is incorrect'
+                ], 401);
+            }
+
+            // Check if new password is same as current password
+            if (Hash::check($request->new_password, $admin->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'New password cannot be the same as current password'
+                ], 400);
+            }
+
+            // Update password
+            $admin->password = Hash::make($request->new_password);
+            $admin->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Password changed successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to change password',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

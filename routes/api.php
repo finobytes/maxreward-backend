@@ -38,6 +38,7 @@ Route::prefix('member')->group(function () {
         Route::post('refresh', [MemberAuthController::class, 'refresh']);
         Route::post('me', [MemberAuthController::class, 'me']);
         Route::post('update-profile', [MemberController::class, 'updateProfile']);
+        Route::post('change-password', [MemberController::class, 'changePassword']);
     });
 });
 
@@ -50,12 +51,13 @@ Route::prefix('member')->group(function () {
 Route::prefix('merchant')->group(function () {
     // Public route - login for both Merchant Owner and Staff
     Route::post('login', [MerchantAuthController::class, 'login']);
-    
+
     // Protected routes - require JWT authentication
     Route::middleware('auth:merchant')->group(function () {
         Route::post('me', [MerchantAuthController::class, 'me']);
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
+        Route::post('change-password', [MerchantController::class, 'changePassword']);
     });
 });
 
@@ -77,9 +79,10 @@ Route::prefix('admin')->group(function () {
         Route::post('logout', [AdminAuthController::class, 'logout']);
         Route::post('refresh', [AdminAuthController::class, 'refresh']);
         Route::post('me', [AdminAuthController::class, 'me']);
+        Route::post('change-password', [AdminStaffController::class, 'changePassword']);
 
 
-       
+
 
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
