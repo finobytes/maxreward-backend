@@ -327,7 +327,7 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
 
-    Route::get('/vouchers/${id}', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
+    Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
 
     // Make purchase
     Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');
