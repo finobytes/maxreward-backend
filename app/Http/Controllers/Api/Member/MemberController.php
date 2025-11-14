@@ -189,6 +189,8 @@ class MemberController extends Controller
                         'name' => $member->name,
                         'user_name' => $member->user_name,
                         'referral_code' => $member->referral_code,
+                        'image' => $member->image,
+                        'phone' => $member->phone
                     ],
                     'statistics' => [
                         'total_members' => $data['statistics']['total_members'],
