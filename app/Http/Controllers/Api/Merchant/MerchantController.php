@@ -162,6 +162,7 @@ class MerchantController extends Controller
                 'state' => $request->state,
                 'country' => $request->country ?? null,
                 'products_services' => $request->products_services,
+                'designation' => $request->designation,
                 // 'merchant_created_by' => 'api', // or auth()->user()->id if authenticated
                 'merchant_created_by' => $request->merchant_created_by,
                 'business_logo' => $businessLogoUrl,
@@ -524,6 +525,7 @@ class MerchantController extends Controller
             'country' => 'nullable|string|max:255',
             'products_services' => 'nullable|string',
             'authorized_person_name' => 'nullable|string|max:255',
+            'designation' => 'nullable|string|max:255',
 
             // Business Logo
             'business_logo' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
@@ -589,7 +591,7 @@ class MerchantController extends Controller
                 'owner_name', 'phone', 'gender', 'address', 'email',
                 'reward_budget', 'annual_sales_turnover', 'state',
                 'country', 'products_services', 'reward_budget',
-                'annual_sales_turnover', 'authorized_person_name'
+                'annual_sales_turnover', 'authorized_person_name', 'designation'
             ];
 
             foreach ($updateableFields as $field) {

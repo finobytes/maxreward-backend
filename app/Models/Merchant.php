@@ -43,6 +43,7 @@ class Merchant extends Model
         'tax_certificate',
         'approved_by',
         'suspended_by',
+        'designation',
         'suspended_reason',
         'corporate_member_id',
         'verification_documents',

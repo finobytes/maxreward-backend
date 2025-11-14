@@ -40,6 +40,7 @@ return new class extends Migration
             $table->string('tax_certificate')->nullable();
             $table->integer('reward_budget')->nullable();
             $table->string('annual_sales_turnover')->nullable();
+            $table->string('designation')->nullable();
             $table->unsignedBigInteger('approved_by')->nullable()->comment('Admin ID who approved');
             $table->unsignedBigInteger('suspended_by')->nullable()->comment('Admin ID who suspended');
             $table->string('suspended_reason')->nullable()->comment('Reason for suspending');
