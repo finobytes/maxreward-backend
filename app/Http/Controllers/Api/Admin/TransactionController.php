@@ -200,7 +200,7 @@ class TransactionController extends Controller
     public function getMemberTransactions($id)
     {
         try {
-            $transactions = Transaction::with(['member', 'merchant', 'referralMember'])
+            $transactions = Transaction::with(['member.wallet'])
                 ->where('member_id', $id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
