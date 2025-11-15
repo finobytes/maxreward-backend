@@ -6,10 +6,19 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;  
 use Illuminate\Routing\Controllers\Middleware;     
-use Illuminate\Support\Facades\Validator;          
+use Illuminate\Support\Facades\Validator;    
+use App\Services\CommunityTreeService;
+use App\Models\Purchase;      
 
 class AuthController extends Controller implements HasMiddleware
 {
+
+    protected $treeService;
+
+    public function __construct(CommunityTreeService $treeService) {
+        $this->treeService = $treeService;
+    }
+
     
     // ✅ Laravel 12 এর নতুন পদ্ধতি
     public static function middleware(): array
@@ -46,6 +55,21 @@ class AuthController extends Controller implements HasMiddleware
     
         // Load merchant relationship (full data)
         $user->load('merchant.wallet', 'merchant.corporateMember.wallet');
+
+        $corporateMemberId = $user->merchant->corporateMember->id;
+
+        if (!$corporateMemberId) {
+            return response()->json(['error' => 'User not found'], 404);
+        }
+        
+        // Load statistics from your tree service
+        $statistics = $this->treeService->getTreeStatistics($corporateMemberId);
+        $user->community_members = $statistics['total_members'];
+
+        // Calculate lifetime purchase total for this member
+        $user->lifetime_purchase = Purchase::where('member_id', $corporateMemberId)
+        ->approved() // include this if you want only approved purchases
+        ->sum('transaction_amount');
         
         return response()->json($user);
     }
