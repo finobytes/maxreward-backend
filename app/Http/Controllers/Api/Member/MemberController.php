@@ -704,7 +704,7 @@ class MemberController extends Controller
 
             // Query builder for purchases
             $query = Purchase::where('member_id', $id)
-                ->with(['merchant:id,business_name,business_unique_number,business_type_id']);
+                ->with(['merchant:id,business_name,unique_number,business_type_id']);
 
             // Filter by status (optional)
             if ($request->has('status')) {

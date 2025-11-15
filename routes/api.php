@@ -112,7 +112,7 @@ Route::prefix('transactions')->middleware('auth:admin,member')->group(function (
     Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin');
     Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin');
     Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member');
-    Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member,admin');
+    Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member,admin,merchant');
 });
 
 // Notification Management (Admin only)
