@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\Admin\CpLevelConfigController;
 use App\Http\Controllers\Api\Admin\TransactionController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\WhatsAppLogController;
+use App\Http\Controllers\Api\Admin\CountryController;
 
 
 /*
@@ -129,6 +130,10 @@ Route::prefix('whatsapp-logs')->middleware('auth:admin')->group(function () {
     Route::get('/{id}', [WhatsAppLogController::class, 'show']);
     Route::delete('/{id}', [WhatsAppLogController::class, 'destroy']);
 });
+
+
+
+Route::post('/countries/fetch-and-save', [CountryController::class, 'fetchAndSaveCountries']);
 
 
 /*
@@ -328,6 +333,9 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
 
     Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
+
+    // Get all purchases by member ID
+    Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');
 
     // Make purchase
     Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');

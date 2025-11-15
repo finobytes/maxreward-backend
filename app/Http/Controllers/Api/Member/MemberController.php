@@ -699,6 +699,93 @@ class MemberController extends Controller
     }
 
     /**
+     * Get all purchases for a member
+     *
+     * @param Request $request
+     * @param int $id Member ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPurchases(Request $request, $id)
+    {
+        try {
+            $authenticatedUser = auth()->user();
+
+            // dd($authenticatedUser);
+
+            if ($authenticatedUser instanceof Member && $authenticatedUser->id != $id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized to view this member\'s purchases'
+                ], 403);
+            }
+
+            // Query builder for purchases
+            $query = Purchase::where('member_id', $id)
+                ->with(['merchant:id,business_name,business_unique_number,business_type_id']);
+
+            // Filter by status (optional)
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by merchant (optional)
+            if ($request->has('merchant_id')) {
+                $query->where('merchant_id', $request->merchant_id);
+            }
+
+            // Filter by date range (optional)
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date,
+                    $request->end_date
+                ]);
+            }
+
+            // Search by transaction ID (optional)
+            if ($request->has('transaction_id')) {
+                $query->where('transaction_id', 'LIKE', '%' . $request->transaction_id . '%');
+            }
+
+            // Get pagination limit (default: 10)
+            $perPage = $request->get('per_page', 10);
+
+            // Order by created_at descending (latest first)
+            $query->orderBy('created_at', 'desc');
+
+            // Fetch purchases with pagination
+            $purchases = $query->paginate($perPage);
+
+            // Calculate summary statistics
+            $summary = [
+                'total_purchases' => Purchase::where('member_id', $id)->count(),
+                'approved_purchases' => Purchase::where('member_id', $id)->approved()->count(),
+                'pending_purchases' => Purchase::where('member_id', $id)->pending()->count(),
+                'rejected_purchases' => Purchase::where('member_id', $id)->rejected()->count(),
+                'total_spent' => Purchase::where('member_id', $id)
+                    ->approved()
+                    ->sum('transaction_amount'),
+                'total_redeemed' => Purchase::where('member_id', $id)
+                    ->approved()
+                    ->sum('redeem_amount'),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchases retrieved successfully',
+                'data' => $purchases,
+                'summary' => $summary
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Update member profile (for authenticated member)
      *
      * @param Request $request
