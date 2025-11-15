@@ -66,7 +66,7 @@ class AuthController extends Controller implements HasMiddleware
         $statistics = $this->treeService->getTreeStatistics($corporateMemberId);
         $user->community_members = $statistics['total_members'];
 
-        // Calculate lifetime pending purchase total for this merchant 
+        // Calculate total pending purchase total for this merchant 
         $user->total_pending_purchase = Purchase::where('merchant_id', $user->merchant->id)
         ->pending()  // scopePending() is pending from Purchase model 
         ->count();
