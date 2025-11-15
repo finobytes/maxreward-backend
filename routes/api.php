@@ -293,7 +293,7 @@ Route::prefix('staffs')->middleware('auth:merchant,admin')->group(function () {
 | Member Data Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('members')->middleware('auth:member,admin')->group(function () {
+Route::prefix('members')->middleware('auth:member,admin,merchant')->group(function () {
     // Get all members (with optional filters)
     Route::get('/', [MemberController::class, 'index'])->middleware('role:admin');
 
@@ -332,7 +332,7 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
     Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
 
-    Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
+    Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
 
     // Get all purchases by member ID
     Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');
@@ -367,7 +367,7 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant');
 
     // Get all vouchers
-    Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member');
+    Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member,merchant');
 
     // Get member all vouchers
     Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member');
