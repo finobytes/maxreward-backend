@@ -334,6 +334,9 @@ Route::prefix('members')->middleware('auth:member,admin')->group(function () {
 
     Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin');
 
+    // Get all purchases by member ID
+    Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');
+
     // Make purchase
     Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');
 });
