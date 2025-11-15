@@ -954,6 +954,7 @@ class MerchantController extends Controller
 
             if ($purchase->merchant->wallet->total_points < $totalPoints) {
                 if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
+                    DB::rollBack();
                     return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
                 }
             }
