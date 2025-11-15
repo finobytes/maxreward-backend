@@ -31,7 +31,7 @@ class AuthController extends Controller implements HasMiddleware
 
         $validator = Validator::make($request->all(), [
             'user_name' => 'required|string',
-            'password' => 'required|string',
+            'password' => 'required|string|min:6',
         ]);
 
         if ($validator->fails()) {
