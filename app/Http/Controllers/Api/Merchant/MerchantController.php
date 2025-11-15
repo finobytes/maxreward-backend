@@ -457,7 +457,7 @@ class MerchantController extends Controller
                 'staffs'
             ])->where(function($query) use ($uniqueNumber) {
                 $query->where('unique_number', $uniqueNumber)
-                      ->orWhere('owner_name', $uniqueNumber);
+                      ->orWhere('business_name', $uniqueNumber);
             })->firstOrFail();
 
             return response()->json([
