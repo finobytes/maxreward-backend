@@ -421,18 +421,25 @@ class MerchantController extends Controller
         try {
             $merchant = Merchant::with([
                 'wallet',
-                'corporateMember.wallet',
-                'staffs'
+                'corporateMember.wallet'
             ])->findOrFail($id);
 
             // Load statistics from your tree service
             $statistics = $this->treeService->getTreeStatistics($merchant->corporateMember->id);
             $merchant->community_members = $statistics['total_members'];
 
+            $staffs = $merchant->staffs()->paginate(20); 
+
+            $referred_members = CommonFunctionHelper::sponsoredMembers($merchant->corporateMember->id);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant retrieved successfully',
-                'data' => $merchant
+                'data' => [
+                    'merchant' => $merchant,
+                    'staffs' => $staffs,
+                    'referred_members' => $referred_members
+                ]
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
