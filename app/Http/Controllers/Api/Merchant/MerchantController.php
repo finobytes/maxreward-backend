@@ -848,6 +848,16 @@ class MerchantController extends Controller
                 ], 400);
             }
 
+            $rewardBudget = $purchase->merchant?->reward_budget;
+
+            $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
+
+            if ($purchase->merchant->wallet->total_points < $totalPoints) {
+                if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
+                    return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
+                }
+            }
+
             // Step 3: Update purchase status to approved
             $purchase->update(['status' => 'approved']);
 
@@ -947,17 +957,6 @@ class MerchantController extends Controller
                     'approved_at' => now()->toDateTimeString()
                 ]
             ]);
-
-            $rewardBudget = $purchase->merchant?->reward_budget;
-
-            $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
-
-            if ($purchase->merchant->wallet->total_points < $totalPoints) {
-                if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
-                    DB::rollBack();
-                    return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
-                }
-            }
 
             // Step 13: Deduct total points from Merchant wallet
             if ($purchase->merchant && $purchase->merchant->wallet) {
