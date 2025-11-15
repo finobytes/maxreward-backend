@@ -356,7 +356,7 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     Route::get('/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:member');
 
     // Voucher routes
-    Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member');
+    Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant');
 
     // Get all vouchers
     Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member');
