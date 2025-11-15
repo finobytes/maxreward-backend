@@ -23,15 +23,18 @@ use App\Models\Referral;
 use App\Models\CompanyInfo;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CommonFunctionHelper;
+use App\Services\CommunityTreeService;
 
 class MerchantController extends Controller
 {
     use MerchantHelperTrait, PointDistributionTrait;
 
     protected $settingAttributes;
+    protected $treeService;
 
-    public function __construct(CommonFunctionHelper $commonFunctionHelper) {
+    public function __construct(CommonFunctionHelper $commonFunctionHelper, CommunityTreeService $treeService) {
         $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
+        $this->treeService = $treeService;
     }
 
     /**
@@ -422,6 +425,10 @@ class MerchantController extends Controller
                 'staffs'
             ])->findOrFail($id);
 
+            // Load statistics from your tree service
+            $statistics = $this->treeService->getTreeStatistics($merchant->corporateMember->id);
+            $merchant->community_members = $statistics['total_members'];
+
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant retrieved successfully',
@@ -457,7 +464,7 @@ class MerchantController extends Controller
                 'staffs'
             ])->where(function($query) use ($uniqueNumber) {
                 $query->where('unique_number', $uniqueNumber)
-                      ->orWhere('owner_name', $uniqueNumber);
+                      ->orWhere('business_name', $uniqueNumber);
             })->firstOrFail();
 
             return response()->json([
