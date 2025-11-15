@@ -366,11 +366,8 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant');
 
-    // Get all vouchers
-    Route::get('/vouchers', [VoucherController::class, 'index'])->middleware('role:admin,member,merchant');
-
     // Get member all vouchers
-    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member');
+    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member,merchant');
 
 });
 

@@ -11,6 +11,7 @@ use App\Helpers\CloudinaryHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Merchant;
 
 class VoucherController extends Controller
 {
@@ -336,8 +337,16 @@ class VoucherController extends Controller
 
     public function getMemberVouchers(){
         try{
-            $Auth = auth('member')->user();
-            $vouchers = Voucher::with('denomination')->where('member_id', $Auth->id)->get();
+            $Auth = auth()->user();
+            $member_id = '';
+            if ($Auth->member_type == 'general' || $Auth->member_type == 'corporate') {
+                $member_id = $Auth->id;
+            } 
+            if ($Auth->type == "merchant" || $Auth->type == "staff") {
+                $merchant = Merchant::where('id', $Auth->merchant_id)->first();
+                $member_id = $merchant->corporateMember->id;
+            }
+            $vouchers = Voucher::with('denomination')->where('member_id', $member_id)->paginate(20);
             if (count($vouchers) == 0) {
                 return response()->json([
                     'success' => false,
