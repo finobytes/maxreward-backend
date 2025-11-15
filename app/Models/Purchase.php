@@ -69,7 +69,7 @@ class Purchase extends Model
     }
 
     /**
-     * Scope to get pending purchases
+     * Scope to get pending purchases pending()
      */
     public function scopePending($query)
     {
@@ -77,7 +77,7 @@ class Purchase extends Model
     }
 
     /**
-     * Scope to get approved purchases
+     * Scope to get approved purchases approved()
      */
     public function scopeApproved($query)
     {

@@ -825,7 +825,7 @@ class MerchantController extends Controller
         try {
             // Step 1: Find the purchase record
             $purchase = Purchase::with(['member.wallet', 'merchant.wallet'])->find($id);
-
+            // dd($purchase->merchant->corporateMember->id);
             if (!$purchase) {
                 return response()->json([
                     'success' => false,
@@ -852,7 +852,7 @@ class MerchantController extends Controller
             // Step 5: Transaction history - Member points deducted
             Transaction::create([
                 'member_id' => $purchase->member_id,
-                'merchant_id' => $purchase->merchant_id,
+                'merchant_id' => null,
                 'transaction_points' => $purchase->redeem_amount,
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
@@ -883,7 +883,7 @@ class MerchantController extends Controller
 
             // Step 8: Transaction history - Merchant points credited
             Transaction::create([
-                'member_id' => $purchase->member_id,
+                'member_id' => null,
                 'merchant_id' => $purchase->merchant_id,
                 'transaction_points' => $purchase->redeem_amount,
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
@@ -909,23 +909,108 @@ class MerchantController extends Controller
                 'is_read' => false
             ]);
 
+            // Step 10: Add redeem amount to merchant corporate member wallet
+            if ($purchase->merchant && $purchase->merchant->corporateMember->wallet) {
+                $purchase->merchant->corporateMember->wallet->increment('available_points', $purchase->redeem_amount);
+                $purchase->merchant->corporateMember->wallet->increment('total_points', $purchase->redeem_amount);
+            }
+
+            // Step 11: Transaction history - Merchant corporate member points credited
+            Transaction::create([
+                'member_id' => $purchase->merchant->corporateMember->id,
+                'merchant_id' => null,
+                'transaction_points' => $purchase->redeem_amount,
+                'transaction_type' => Transaction::TYPE_AP, // Added Points
+                'points_type' => Transaction::POINTS_CREDITED,
+                'transaction_reason' => "Purchase approved from member {$purchase->member->name}. Purchase ID: {$purchase->id}"
+            ]);
+
+            // Step 12: Notification for merchant corporate member - Purchase approved
+            Notification::create([
+                'member_id' => $purchase->merchant->corporateMember->id,
+                'type' => 'purchase_approved',
+                'title' => 'Purchase Transaction Completed',
+                'message' => "Purchase from {$purchase->member->name} has been completed. Points {$purchase->redeem_amount} credited to your wallet.",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'member_name' => $purchase->member->name,
+                    'member_phone' => $purchase->member->phone,
+                    'redeem_amount' => $purchase->redeem_amount,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'approved_at' => now()->toDateTimeString()
+                ]
+            ]);
+
             $rewardBudget = $purchase->merchant?->reward_budget;
 
             $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
 
-            // Step 10: Deduct total points from Merchant wallet
-            $merchantWallet = $purchase->merchant->wallet;
-            $merchantWallet->total_points -= $totalPoints;
-            $merchantWallet->save();
+            if ($purchase->merchant->wallet->total_points < $totalPoints) {
+                if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
+                    return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
+                }
+            }
 
-            // Step 11: Deduct total points from Merchant wallet transaction
+            // Step 13: Deduct total points from Merchant wallet
+            if ($purchase->merchant && $purchase->merchant->wallet) {
+                $purchase->merchant->wallet->decrement('total_points', $totalPoints);
+            }
+
+            // Step 14: Deduct total points from Merchant wallet transaction
             Transaction::create([
-                'member_id' => $purchase->member_id,
+                'member_id' => null,
                 'merchant_id' => $purchase->merchant_id,
                 'transaction_points' => $totalPoints,
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
-                'transaction_reason' => "Points redeemed for purchase at {$purchase->merchant->business_name}. Purchase ID: {$purchase->id}"
+                'transaction_reason' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%"
+            ]);
+
+            // Step 15: Notification for deduct total points from Merchant wallet
+            Notification::create([
+                'merchant_id' => $purchase->merchant_id,
+                'type' => 'redemption',
+                'title' => 'Points Deducted',
+                'message' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'member_name' => $purchase->member->name,
+                    'member_phone' => $purchase->member->phone,
+                    'deducted_amount' => $totalPoints,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'approved_at' => now()->toDateTimeString()
+                ]
+            ]);
+
+            // Step 16: Deduct total points from Merchant corporate member wallet
+            if ($purchase->merchant && $purchase->merchant->corporateMember->wallet) {
+                $purchase->merchant->corporateMember->wallet->decrement('available_points', $totalPoints);
+            }
+
+            // Step 17: Transaction history - Merchant corporate member points debited
+            Transaction::create([
+                'member_id' => $purchase->merchant->corporateMember->id,
+                'merchant_id' => null,
+                'transaction_points' => $totalPoints,
+                'transaction_type' => Transaction::TYPE_DP, // Deducted Points
+                'points_type' => Transaction::POINTS_DEBITED,
+                'transaction_reason' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%"
+            ]);
+
+            // Step 18: Notification for merchant corporate member - Points Deducted
+            Notification::create([
+                'member_id' => $purchase->merchant->corporateMember->id,
+                'type' => 'redemption',
+                'title' => 'Points Deducted',
+                'message' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'member_name' => $purchase->member->name,
+                    'member_phone' => $purchase->member->phone,
+                    'deducted_amount' => $totalPoints,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'approved_at' => now()->toDateTimeString()
+                ]
             ]);
 
             Log::info('1️ PP: total pp points add to PURCHASE MEMBER');
