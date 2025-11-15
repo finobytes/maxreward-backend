@@ -332,7 +332,7 @@ Route::prefix('members')->middleware('auth:member,admin,merchant')->group(functi
     Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
 
-    Route::get('/{id}/vouchers', [MemberController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
+    Route::get('/{id}/vouchers', [VoucherController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
 
     // Get all purchases by member ID
     Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');

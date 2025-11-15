@@ -335,6 +335,8 @@ class VoucherController extends Controller
     }
 
 
+
+
     public function getMemberVouchers(){
         try{
             $Auth = auth()->user();
@@ -368,4 +370,23 @@ class VoucherController extends Controller
         }
        
     }
+
+
+    public function getSingleVoucher(Request $request){
+        try {
+            $voucher = Voucher::with(['denomination', 'member', 'merchant'])->findOrFail($request->id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher retrieved successfully',
+                'data' => $voucher
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Voucher not found'
+            ], 404);
+        }
+    }
+
+
 }

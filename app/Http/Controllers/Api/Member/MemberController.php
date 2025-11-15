@@ -680,23 +680,6 @@ class MemberController extends Controller
             ], 404);
         }
     }
-    
-
-    public function getSingleVoucher(Request $request){
-        try {
-            $voucher = Voucher::with('merchant')->findOrFail($request->id);
-            return response()->json([
-                'success' => true,
-                'message' => 'Voucher retrieved successfully',
-                'data' => $voucher
-            ], 200);
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Voucher not found'
-            ], 404);
-        }
-    }
 
     /**
      * Get all purchases for a member
