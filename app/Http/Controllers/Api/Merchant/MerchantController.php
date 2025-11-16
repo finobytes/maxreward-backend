@@ -24,10 +24,11 @@ use App\Models\CompanyInfo;
 use Illuminate\Support\Facades\Log;
 use App\Helpers\CommonFunctionHelper;
 use App\Services\CommunityTreeService;
+use App\Traits\MemberHelperTrait;
 
 class MerchantController extends Controller
 {
-    use MerchantHelperTrait, PointDistributionTrait;
+    use MerchantHelperTrait, PointDistributionTrait, MemberHelperTrait;
 
     protected $settingAttributes;
     protected $treeService;
