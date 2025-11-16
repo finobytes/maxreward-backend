@@ -43,7 +43,7 @@ class DashboardController extends Controller
                     'approved_merchants' => $approvedMerchants,
                     'total_transactions' => $totalTransactions,
                     'pending_merchants' => $pendingMerchants,
-                    'total_merchant_approvals' => $totalPendingVouchers
+                    'total_pending_vouchers' => $totalPendingVouchers
                 ]
             ], 200);
 
