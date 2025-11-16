@@ -1038,7 +1038,7 @@ class MerchantController extends Controller
                 'transaction_points' => $purchase->redeem_amount,
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
-                'transaction_reason' => "Points redeemed for purchase at {$purchase->merchant->business_name}. Purchase ID: {$purchase->id}"
+                'transaction_reason' => "Points redeemed for purchase at {$purchase->merchant->business_name}."
             ]);
 
             // Step 6: Notification for member - Points redeemed
@@ -1070,7 +1070,7 @@ class MerchantController extends Controller
                 'transaction_points' => $purchase->redeem_amount,
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
                 'points_type' => Transaction::POINTS_CREDITED,
-                'transaction_reason' => "Purchase approved from member {$purchase->member->name}. Purchase ID: {$purchase->id}"
+                'transaction_reason' => "Purchase approved from member {$purchase->member->name}."
             ]);
 
             // Step 9: Notification for merchant - Purchase approved
@@ -1104,7 +1104,7 @@ class MerchantController extends Controller
                 'transaction_points' => $purchase->redeem_amount,
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
                 'points_type' => Transaction::POINTS_CREDITED,
-                'transaction_reason' => "Purchase approved from member {$purchase->member->name}. Purchase ID: {$purchase->id}"
+                'transaction_reason' => "Purchase approved from member {$purchase->member->name}."
             ]);
 
             // Step 12: Notification for merchant corporate member - Purchase approved
