@@ -23,6 +23,12 @@ use App\Http\Controllers\Api\Admin\TransactionController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\WhatsAppLogController;
 use App\Http\Controllers\Api\Admin\CountryController;
+use App\Http\Controllers\Api\Admin\CpTransactionController as AdminCpTransactionController;
+use App\Http\Controllers\Api\Member\CpTransactionController as MemberCpTransactionController;
+use App\Http\Controllers\Api\Merchant\CpTransactionController as MerchantCpTransactionController;
+use App\Http\Controllers\Api\Admin\MemberCommunityPointController as AdminMemberCommunityPointController;
+use App\Http\Controllers\Api\Member\MemberCommunityPointController as MemberMemberCommunityPointController;
+use App\Http\Controllers\Api\Merchant\MemberCommunityPointController as MerchantMemberCommunityPointController;
 
 
 /*
@@ -40,6 +46,18 @@ Route::prefix('member')->group(function () {
         Route::post('me', [MemberAuthController::class, 'me']);
         Route::post('update-profile', [MemberController::class, 'updateProfile']);
         Route::post('change-password', [MemberController::class, 'changePassword']);
+
+        // CP Transaction routes for Member
+        Route::prefix('cp-transactions')->group(function () {
+            Route::get('/', [MemberCpTransactionController::class, 'index']);
+            Route::get('/{id}', [MemberCpTransactionController::class, 'show']);
+        });
+
+        // Member Community Points routes for Member
+        Route::prefix('community-points')->group(function () {
+            Route::get('/', [MemberMemberCommunityPointController::class, 'index']);
+            Route::get('/{id}', [MemberMemberCommunityPointController::class, 'show']);
+        });
     });
 });
 
@@ -59,6 +77,18 @@ Route::prefix('merchant')->group(function () {
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
         Route::post('change-password', [MerchantController::class, 'changePassword']);
+
+        // CP Transaction routes for Merchant
+        Route::prefix('cp-transactions')->group(function () {
+            Route::get('/', [MerchantCpTransactionController::class, 'index']);
+            Route::get('/{id}', [MerchantCpTransactionController::class, 'show']);
+        });
+
+        // Member Community Points routes for Merchant
+        Route::prefix('community-points')->group(function () {
+            Route::get('/', [MerchantMemberCommunityPointController::class, 'index']);
+            Route::get('/{id}', [MerchantMemberCommunityPointController::class, 'show']);
+        });
     });
 });
 
@@ -101,7 +131,19 @@ Route::prefix('admin')->group(function () {
             Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
             Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
         });
-        
+
+        // CP Transaction Management (Admin only)
+        Route::prefix('cp-transactions')->group(function () {
+            Route::get('/', [AdminCpTransactionController::class, 'index']);
+            Route::get('/{id}', [AdminCpTransactionController::class, 'show']);
+        });
+
+        // Member Community Points Management (Admin only)
+        Route::prefix('community-points')->group(function () {
+            Route::get('/', [AdminMemberCommunityPointController::class, 'index']);
+            Route::get('/{id}', [AdminMemberCommunityPointController::class, 'show']);
+        });
+
     });
 });
 
