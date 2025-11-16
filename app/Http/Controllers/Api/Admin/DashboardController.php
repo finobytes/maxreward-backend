@@ -8,6 +8,7 @@ use App\Models\Member;
 use App\Models\Merchant;
 use App\Models\Transaction;
 use App\Models\MemberWallet;
+use App\Models\Voucher;
  
 class DashboardController extends Controller
 {
@@ -32,7 +33,7 @@ class DashboardController extends Controller
             $totalTransactions = Transaction::count();
 
             // Get total merchant approvals (merchants with 'approved' status)
-            $totalMerchantApprovals = Merchant::where('status', 'approved')->count();
+            $totalPendingVouchers = Voucher::where('status', 'pending')->count();
 
             return response()->json([
                 'success' => true,
@@ -40,9 +41,9 @@ class DashboardController extends Controller
                 'data' => [
                     'total_members' => $totalMembers,
                     'approved_merchants' => $approvedMerchants,
-                    'pending_merchants' => $pendingMerchants,
                     'total_transactions' => $totalTransactions,
-                    'total_merchant_approvals' => $totalMerchantApprovals
+                    'pending_merchants' => $pendingMerchants,
+                    'total_merchant_approvals' => $totalPendingVouchers
                 ]
             ], 200);
 
