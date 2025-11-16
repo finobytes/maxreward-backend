@@ -26,10 +26,12 @@ use App\Models\Setting;
 use App\Helpers\CommonFunctionHelper;
 use App\Models\Merchant;
 use App\Traits\PointDistributionTrait; 
+use App\Traits\DistributeReferralPointsTrait;
+use App\Traits\CheckAndUnlockCpLevelsTrait;
 
 class ReferralController extends Controller
 {
-    use MemberHelperTrait, PointDistributionTrait;
+    use MemberHelperTrait, PointDistributionTrait, DistributeReferralPointsTrait, CheckAndUnlockCpLevelsTrait;
 
     protected $treeService;
     protected $whatsappService;
@@ -115,7 +117,7 @@ class ReferralController extends Controller
             // Step 2: Generate credentials for new member
             // $password = Str::random(8); // Random password
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
-            $userName = $this->formatPhoneNumber($request->phone);
+            $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
             $lastSix = substr($userName, -6);
             // $prefix = Str::upper(Str::random(2));
             // $password = $prefix . $lastSix;
@@ -164,7 +166,7 @@ class ReferralController extends Controller
 
             Transaction::createTransaction([
                 'member_id' => $referrer->id,
-                'transaction_points' => 100,
+                'transaction_points' => $this->settingAttributes['deductable_points'],
                 'transaction_type' => Transaction::TYPE_RP,
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Referred new member: {$newMember->name}",
@@ -264,88 +266,88 @@ class ReferralController extends Controller
      * CP: 50 (distributed across 30 levels)
      * CR: 20 (to company reserve)
      */
-    private function distributeReferralPoints($referrer, $newMember, $totalPoints = 100)
-    {
-        Log::info('1️ PP: 10 points to NEW MEMBER');
+    // private function distributeReferralPoints($referrer, $newMember, $totalPoints = 100)
+    // {
+    //     Log::info('1️ PP: 10 points to NEW MEMBER');
 
-        // 1️ PP: 10 points to NEW MEMBER
-        $ppAmount = $totalPoints * ($this->settingAttributes['pp_points']/100); // 10 points
-        $newMemberWallet = $newMember->wallet;
-        $newMemberWallet->total_pp += $ppAmount;
-        $newMemberWallet->available_points += $ppAmount;
-        $newMemberWallet->total_points += $ppAmount;
-        $newMemberWallet->save();
+    //     // 1️ PP: 10 points to NEW MEMBER
+    //     $ppAmount = $totalPoints * ($this->settingAttributes['pp_points']/100); // 10 points
+    //     $newMemberWallet = $newMember->wallet;
+    //     $newMemberWallet->total_pp += $ppAmount;
+    //     $newMemberWallet->available_points += $ppAmount;
+    //     $newMemberWallet->total_points += $ppAmount;
+    //     $newMemberWallet->save();
 
-        Log::info('transaction_reason: Personal Points from registration');
+    //     Log::info('transaction_reason: Personal Points from registration');
 
-        Transaction::createTransaction([
-            'member_id' => $newMember->id,
-            'transaction_points' => $ppAmount,
-            'transaction_type' => Transaction::TYPE_PP,
-            'points_type' => Transaction::POINTS_CREDITED,
-            'transaction_reason' => 'Personal Points from registration',
-        ]);
+    //     Transaction::createTransaction([
+    //         'member_id' => $newMember->id,
+    //         'transaction_points' => $ppAmount,
+    //         'transaction_type' => Transaction::TYPE_PP,
+    //         'points_type' => Transaction::POINTS_CREDITED,
+    //         'transaction_reason' => 'Personal Points from registration',
+    //     ]);
 
-        Log::info('2️ RP: 20 points to who Directly sponsored');
+    //     Log::info('2️ RP: 20 points to who Directly sponsored');
 
-        // 2️ RP: 20 points to who Directly sponsored
-        $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); // 20 points
-        $sponsor = Member::where('id', $referrer->id)->first();
+    //     // 2️ RP: 20 points to who Directly sponsored
+    //     $rpAmount = $totalPoints * ($this->settingAttributes['rp_points']/100); // 20 points
+    //     $sponsor = Member::where('id', $referrer->id)->first();
         
-        if ($sponsor) {
+    //     if ($sponsor) {
 
-            Log::info('Step :: sponsor');
+    //         Log::info('Step :: sponsor');
 
-            $sponsorWallet = $sponsor->wallet;
-            // $sponsorWallet->total_rp += $rpAmount;
-            $sponsorWallet->available_points += $rpAmount;
-            $sponsorWallet->total_points += $rpAmount;
-            $sponsorWallet->save();
+    //         $sponsorWallet = $sponsor->wallet;
+    //         // $sponsorWallet->total_rp += $rpAmount;
+    //         $sponsorWallet->available_points += $rpAmount;
+    //         $sponsorWallet->total_points += $rpAmount;
+    //         $sponsorWallet->save();
 
-            Log::info('Step :: createTransaction for sponsor');
+    //         Log::info('Step :: createTransaction for sponsor');
 
-            Transaction::createTransaction([
-                'member_id' => $sponsor->id,
-                'referral_member_id' => $newMember->id,
-                'transaction_points' => $rpAmount,
-                'transaction_type' => Transaction::TYPE_RP,
-                'points_type' => Transaction::POINTS_CREDITED,
-                'transaction_reason' => "Referral Points from {$newMember->name}'s registration",
-            ]);
+    //         Transaction::createTransaction([
+    //             'member_id' => $sponsor->id,
+    //             'referral_member_id' => $newMember->id,
+    //             'transaction_points' => $rpAmount,
+    //             'transaction_type' => Transaction::TYPE_RP,
+    //             'points_type' => Transaction::POINTS_CREDITED,
+    //             'transaction_reason' => "Referral Points from {$newMember->name}'s registration",
+    //         ]);
 
-            Log::info('Step :: Referral points earned notification');
+    //         Log::info('Step :: Referral points earned notification');
 
-            Notification::createForMember([
-                'member_id' => $sponsor->id,
-                'type' => 'referral_points_earned',
-                'title' => 'Referral Points Earned!',
-                'message' => "You earned {$rpAmount} RP from {$newMember->name}'s registration.",
-            ]);
-        }
+    //         Notification::createForMember([
+    //             'member_id' => $sponsor->id,
+    //             'type' => 'referral_points_earned',
+    //             'title' => 'Referral Points Earned!',
+    //             'message' => "You earned {$rpAmount} RP from {$newMember->name}'s registration.",
+    //         ]);
+    //     }
 
-        Log::info('3️ CP: 50 points distributed across 30-level community tree');
+    //     Log::info('3️ CP: 50 points distributed across 30-level community tree');
 
-        // 3️ CP: 50 points distributed across 30-level community tree
-        $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
-        $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount, 'registration');
+    //     // 3️ CP: 50 points distributed across 30-level community tree
+    //     $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
+    //     $this->distributeCommunityPoints($referrer->id, $newMember->id, $cpAmount, 'registration');
 
-        Log::info('4️ CR: 20 points to Company Reserve');
+    //     Log::info('4️ CR: 20 points to Company Reserve');
 
-        // 4️ CR: 20 points to Company Reserve
-        $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); // 20 points
-        $company = CompanyInfo::getCompany();
-        $company->incrementCrPoint($crAmount);
+    //     // 4️ CR: 20 points to Company Reserve
+    //     $crAmount = $totalPoints * ($this->settingAttributes['cr_points']/100); // 20 points
+    //     $company = CompanyInfo::getCompany();
+    //     $company->incrementCrPoint($crAmount);
 
-        Log::info('Company Reserve from '.$newMember->name.'s registration');
+    //     Log::info('Company Reserve from '.$newMember->name.'s registration');
         
-        Transaction::createTransaction([
-            'member_id' => null,
-            'transaction_points' => $crAmount,
-            'transaction_type' => Transaction::TYPE_CR,
-            'points_type' => Transaction::POINTS_CREDITED,
-            'transaction_reason' => "Company Reserve from {$newMember->name}'s registration",
-        ]);
-    }
+    //     Transaction::createTransaction([
+    //         'member_id' => null,
+    //         'transaction_points' => $crAmount,
+    //         'transaction_type' => Transaction::TYPE_CR,
+    //         'points_type' => Transaction::POINTS_CREDITED,
+    //         'transaction_reason' => "Company Reserve from {$newMember->name}'s registration",
+    //     ]);
+    // }
 
     /**
      * Distribute Community Points (CP) across 30 levels
@@ -441,67 +443,67 @@ class ReferralController extends Controller
      * - 4 referrals: Level 1-25
      * - 5+ referrals: Level 1-30
      */
-    private function checkAndUnlockCpLevels($memberId)
-    {
-        Log::info('Start :: Check and unlock CP levels based on referral count');
+    // private function checkAndUnlockCpLevels($memberId)
+    // {
+    //     Log::info('Start :: Check and unlock CP levels based on referral count');
 
-        $wallet = MemberWallet::where('member_id', $memberId)->first();
+    //     $wallet = MemberWallet::where('member_id', $memberId)->first();
         
-        if (!$wallet) {
-            return;
-        }
+    //     if (!$wallet) {
+    //         return;
+    //     }
 
-        $totalReferrals = $wallet->total_referrals;
-        $currentUnlockedLevel = $wallet->unlocked_level;
+    //     $totalReferrals = $wallet->total_referrals;
+    //     $currentUnlockedLevel = $wallet->unlocked_level;
 
-        // Determine new unlock level
-        $newUnlockedLevel = match(true) {
-            $totalReferrals >= 5 => 30,
-            $totalReferrals == 4 => 25,
-            $totalReferrals == 3 => 20,
-            $totalReferrals == 2 => 15,
-            $totalReferrals == 1 => 10,
-            default => 5,
-        };
+    //     // Determine new unlock level
+    //     $newUnlockedLevel = match(true) {
+    //         $totalReferrals >= 5 => 30,
+    //         $totalReferrals == 4 => 25,
+    //         $totalReferrals == 3 => 20,
+    //         $totalReferrals == 2 => 15,
+    //         $totalReferrals == 1 => 10,
+    //         default => 5,
+    //     };
 
-        // If new level is higher, unlock
-        if ($newUnlockedLevel > $currentUnlockedLevel) {
-            $previousLevel = $currentUnlockedLevel;
-            $wallet->unlocked_level = $newUnlockedLevel;
-            $wallet->save();
+    //     // If new level is higher, unlock
+    //     if ($newUnlockedLevel > $currentUnlockedLevel) {
+    //         $previousLevel = $currentUnlockedLevel;
+    //         $wallet->unlocked_level = $newUnlockedLevel;
+    //         $wallet->save();
 
-            // Release locked CP for newly unlocked levels
-            $releasedCp = MemberCommunityPoint::unlockLevels(
-                $memberId,
-                $previousLevel + 1,
-                $newUnlockedLevel
-            );
+    //         // Release locked CP for newly unlocked levels
+    //         $releasedCp = MemberCommunityPoint::unlockLevels(
+    //             $memberId,
+    //             $previousLevel + 1,
+    //             $newUnlockedLevel
+    //         );
 
-            // Update wallet: move from onhold to available
-            if ($releasedCp > 0) {
-                $wallet->onhold_points -= $releasedCp;
-                $wallet->available_points += $releasedCp;
-                $wallet->save();
+    //         // Update wallet: move from onhold to available
+    //         if ($releasedCp > 0) {
+    //             $wallet->onhold_points -= $releasedCp;
+    //             $wallet->available_points += $releasedCp;
+    //             $wallet->save();
 
-                // Create unlock history
-                CpUnlockHistory::createUnlockRecord([
-                    'member_id' => $memberId,
-                    'previous_referrals' => $totalReferrals - 1,
-                    'new_referrals' => $totalReferrals,
-                    'previous_unlocked_level' => $previousLevel,
-                    'new_unlocked_level' => $newUnlockedLevel,
-                    'released_cp_amount' => $releasedCp,
-                ]);
+    //             // Create unlock history
+    //             CpUnlockHistory::createUnlockRecord([
+    //                 'member_id' => $memberId,
+    //                 'previous_referrals' => $totalReferrals - 1,
+    //                 'new_referrals' => $totalReferrals,
+    //                 'previous_unlocked_level' => $previousLevel,
+    //                 'new_unlocked_level' => $newUnlockedLevel,
+    //                 'released_cp_amount' => $releasedCp,
+    //             ]);
 
-                // Notification
-                Notification::notifyCpUnlock($memberId, [
-                    'from_level' => $previousLevel + 1,
-                    'to_level' => $newUnlockedLevel,
-                    'released_cp' => $releasedCp,
-                ]);
-            }
-        }
-    }
+    //             // Notification
+    //             Notification::notifyCpUnlock($memberId, [
+    //                 'from_level' => $previousLevel + 1,
+    //                 'to_level' => $newUnlockedLevel,
+    //                 'released_cp' => $releasedCp,
+    //             ]);
+    //         }
+    //     }
+    // }
 
 
     /**
@@ -510,18 +512,18 @@ class ReferralController extends Controller
     /**
      * Validate and format Malaysian phone number (must start with 01 and be 10–11 digits, no hyphens)
      */
-    private function formatPhoneNumber($phone)
-    {
-        // Remove any non-digit characters
-        $cleaned = preg_replace('/[^0-9]/', '', $phone);
+    // private function formatPhoneNumber($phone)
+    // {
+    //     // Remove any non-digit characters
+    //     $cleaned = preg_replace('/[^0-9]/', '', $phone);
 
-        // Validate: must start with 01 and have 10 or 11 digits
-        if (!preg_match('/^01\d{8,9}$/', $cleaned)) {
-            throw new \InvalidArgumentException('Invalid Malaysian phone number. Must start with 01 and be 10–11 digits.');
-        }
+    //     // Validate: must start with 01 and have 10 or 11 digits
+    //     if (!preg_match('/^01\d{8,9}$/', $cleaned)) {
+    //         throw new \InvalidArgumentException('Invalid Malaysian phone number. Must start with 01 and be 10–11 digits.');
+    //     }
 
-        return $cleaned;
-    }
+    //     return $cleaned;
+    // }
 
 
     /**

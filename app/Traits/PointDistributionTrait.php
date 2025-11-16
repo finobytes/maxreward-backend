@@ -21,14 +21,14 @@ trait PointDistributionTrait
     private function distributeCommunityPoints($sourceMemberId, $newMemberId, $totalCp, $reason, $purchase_id = null)
     {
         Log::info('Start :: Distribute Community Points (CP) across 30 levels for: ' . $reason);
-        
+
         // Get upline path from NEW MEMBER up to 30 levels
-        $uplinePath = Referral::getReferralPath($newMemberId, 30);
+        $uplinePath = Referral::getReferralPath($sourceMemberId, 30);
 
         Log::info("Upline path for CP distribution", [
             'source_member_id' => $sourceMemberId,
             'new_member_id' => $newMemberId,
-            'upline_path' => $uplinePath,
+            'upline_path' => count($uplinePath),
             'total_cp' => $totalCp,
             'reason' => $reason
         ]);
@@ -123,5 +123,7 @@ trait PointDistributionTrait
                 'message' => $message . ($isLocked ? ' (On Hold - unlock more levels to access)' : ''),
             ]);
         }
+
+        Log::info("CP distribution completed");
     }
 }
