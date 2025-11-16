@@ -128,6 +128,44 @@ class MerchantController extends Controller
             // Generate unique number for merchant
             $uniqueNumber = $this->generateUniqueNumber();
 
+            $referrer = '';
+            $auth = auth()->user(); // Can be general or corporate member
+
+            if ($auth->member_type == "corporate") {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not authorized to create a merchant',
+                    'error' => 'You are not authorized to create a merchant'
+                ], 401);
+            }
+
+            if ($auth->type == "admin" || $auth->type == "staff") {
+                if ($request->has('member_id')) {
+                    $referrer = Member::where("id", $request->member_id)->first();
+                }  
+            }
+
+            if ($auth->member_type == "general") {
+                $findReferrer = Referral::where("child_member_id", $auth->id)->first();
+                if (!$findReferrer) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your referred member is not found in referral database',
+                        'error' => 'Your referred member is not found in referral database'
+                    ], 401);
+                }
+                $referrer = Member::where("id", $findReferrer->sponsor_member_id)->first();
+                if (!$referrer) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Your referred member is not found',
+                        'error' => 'Your referred member is not found'
+                    ], 401);
+                }
+            }
+
+            dd($referrer);
+
             // Handle business logo upload to Cloudinary
             $businessLogoUrl = null;
             $logoCloudinaryId = null;
@@ -176,6 +214,10 @@ class MerchantController extends Controller
 
             // Generate corporate member username
             $corporateUsername = $this->generateCorporateMemberUsername();
+            $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
+            $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
+            $lastSix = substr($userName, -6);
+            $password = $lastSix;
 
             // Create Corporate Member
             $corporateMember = Member::create([
@@ -189,7 +231,7 @@ class MerchantController extends Controller
                 'status' => 'active',
                 'merchant_id' => $merchant->id,
                 'member_created_by' => 'merchant',
-                'referral_code' => strtoupper(Str::random(8)),
+                'referral_code' => $referralCode,
             ]);
 
             // Update merchant with corporate_member_id

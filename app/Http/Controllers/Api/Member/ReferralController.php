@@ -115,7 +115,7 @@ class ReferralController extends Controller
             // Step 2: Generate credentials for new member
             // $password = Str::random(8); // Random password
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
-            $userName = $this->formatPhoneNumber($request->phone);
+            $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
             $lastSix = substr($userName, -6);
             // $prefix = Str::upper(Str::random(2));
             // $password = $prefix . $lastSix;
@@ -510,18 +510,18 @@ class ReferralController extends Controller
     /**
      * Validate and format Malaysian phone number (must start with 01 and be 10–11 digits, no hyphens)
      */
-    private function formatPhoneNumber($phone)
-    {
-        // Remove any non-digit characters
-        $cleaned = preg_replace('/[^0-9]/', '', $phone);
+    // private function formatPhoneNumber($phone)
+    // {
+    //     // Remove any non-digit characters
+    //     $cleaned = preg_replace('/[^0-9]/', '', $phone);
 
-        // Validate: must start with 01 and have 10 or 11 digits
-        if (!preg_match('/^01\d{8,9}$/', $cleaned)) {
-            throw new \InvalidArgumentException('Invalid Malaysian phone number. Must start with 01 and be 10–11 digits.');
-        }
+    //     // Validate: must start with 01 and have 10 or 11 digits
+    //     if (!preg_match('/^01\d{8,9}$/', $cleaned)) {
+    //         throw new \InvalidArgumentException('Invalid Malaysian phone number. Must start with 01 and be 10–11 digits.');
+    //     }
 
-        return $cleaned;
-    }
+    //     return $cleaned;
+    // }
 
 
     /**
