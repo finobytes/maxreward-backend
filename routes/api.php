@@ -29,6 +29,9 @@ use App\Http\Controllers\Api\Merchant\CpTransactionController as MerchantCpTrans
 use App\Http\Controllers\Api\Admin\MemberCommunityPointController as AdminMemberCommunityPointController;
 use App\Http\Controllers\Api\Member\MemberCommunityPointController as MemberMemberCommunityPointController;
 use App\Http\Controllers\Api\Merchant\MemberCommunityPointController as MerchantMemberCommunityPointController;
+use App\Http\Controllers\Api\Admin\CpUnlockHistoryController as AdminCpUnlockHistoryController;
+use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockHistoryController;
+use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
 
 
 /*
@@ -57,6 +60,12 @@ Route::prefix('member')->group(function () {
         Route::prefix('community-points')->group(function () {
             Route::get('/', [MemberMemberCommunityPointController::class, 'index']);
             Route::get('/{id}', [MemberMemberCommunityPointController::class, 'show']);
+        });
+
+        // CP Unlock History routes for Member
+        Route::prefix('unlock-history')->group(function () {
+            Route::get('/', [MemberCpUnlockHistoryController::class, 'index']);
+            Route::get('/{id}', [MemberCpUnlockHistoryController::class, 'show']);
         });
     });
 });
@@ -88,6 +97,12 @@ Route::prefix('merchant')->group(function () {
         Route::prefix('community-points')->group(function () {
             Route::get('/', [MerchantMemberCommunityPointController::class, 'index']);
             Route::get('/{id}', [MerchantMemberCommunityPointController::class, 'show']);
+        });
+
+        // CP Unlock History routes for Merchant
+        Route::prefix('unlock-history')->group(function () {
+            Route::get('/', [MerchantCpUnlockHistoryController::class, 'index']);
+            Route::get('/{id}', [MerchantCpUnlockHistoryController::class, 'show']);
         });
     });
 });
@@ -142,6 +157,12 @@ Route::prefix('admin')->group(function () {
         Route::prefix('community-points')->group(function () {
             Route::get('/', [AdminMemberCommunityPointController::class, 'index']);
             Route::get('/{id}', [AdminMemberCommunityPointController::class, 'show']);
+        });
+
+        // CP Unlock History Management (Admin only)
+        Route::prefix('unlock-history')->group(function () {
+            Route::get('/', [AdminCpUnlockHistoryController::class, 'index']);
+            Route::get('/{id}', [AdminCpUnlockHistoryController::class, 'show']);
         });
 
     });
