@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CpTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
+use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
 
 class CpTransactionController extends Controller
 {
@@ -19,7 +19,8 @@ class CpTransactionController extends Controller
     public function index(Request $request)
     {
         try {
-            $member = JWTAuth::user();
+            // $member = JWTAuth::user();
+            $member = auth()->user();
 
             $validator = Validator::make($request->all(), [
                 'per_page' => 'nullable|integer|min:1|max:100',
