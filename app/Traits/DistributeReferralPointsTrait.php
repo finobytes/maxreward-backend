@@ -53,6 +53,7 @@ trait DistributeReferralPointsTrait
             'transaction_type' => Transaction::TYPE_PP,
             'points_type' => Transaction::POINTS_CREDITED,
             'transaction_reason' => 'Personal Points from registration',
+            'balance' => $newMemberWallet->available_points
         ]);
 
         Log::info('2️ RP: 20 points to who Directly sponsored');
@@ -80,6 +81,7 @@ trait DistributeReferralPointsTrait
                 'transaction_type' => Transaction::TYPE_RP,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Referral Points from {$newMember->name}'s registration",
+                'balance' => $sponsorWallet->available_points
             ]);
 
             Log::info('Step :: Referral points earned notification');
@@ -113,6 +115,7 @@ trait DistributeReferralPointsTrait
             'transaction_type' => Transaction::TYPE_CR,
             'points_type' => Transaction::POINTS_CREDITED,
             'transaction_reason' => "Company Reserve from {$newMember->name}'s registration",
+            'balance' => $company->cr_points
         ]);
 
         Log::info('🎯 Referral Points Distributed');

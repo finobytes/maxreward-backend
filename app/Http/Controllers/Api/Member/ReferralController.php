@@ -170,6 +170,7 @@ class ReferralController extends Controller
                 'transaction_type' => Transaction::TYPE_RP,
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Referred new member: {$newMember->name}",
+                'balance' => $referrerWallet->total_rp
             ]);
 
             Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
