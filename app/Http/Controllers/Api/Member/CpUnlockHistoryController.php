@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\Member;
 use App\Http\Controllers\Controller;
 use App\Models\CpUnlockHistory;
 use Illuminate\Http\Request;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class CpUnlockHistoryController extends Controller
 {
@@ -17,7 +16,6 @@ class CpUnlockHistoryController extends Controller
     public function index()
     {
         try {
-            // $member = JWTAuth::user();
              $member = auth()->user();
 
             $unlockHistory = CpUnlockHistory::getMemberHistory($member->id);
@@ -48,7 +46,7 @@ class CpUnlockHistoryController extends Controller
     public function show($id)
     {
         try {
-            $member = JWTAuth::user();
+            $member = auth()->user();
 
             $unlockHistory = CpUnlockHistory::where('member_id', $member->id)
                 ->findOrFail($id);
