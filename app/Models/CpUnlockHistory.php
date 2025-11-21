@@ -12,7 +12,7 @@ class CpUnlockHistory extends Model
     /**
      * The table associated with the model.
      */
-    protected $table = 'cp_unlock_history';
+    protected $table = 'cp_unlock_histories';
 
     /**
      * Only created_at, no updated_at for history records

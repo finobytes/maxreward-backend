@@ -17,7 +17,8 @@ class CpUnlockHistoryController extends Controller
     public function index()
     {
         try {
-            $member = JWTAuth::user();
+            // $member = JWTAuth::user();
+             $member = auth()->user();
 
             $unlockHistory = CpUnlockHistory::getMemberHistory($member->id);
             $stats = CpUnlockHistory::getMemberUnlockStats($member->id);
