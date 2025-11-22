@@ -25,6 +25,7 @@ class Transaction extends Model
         'transaction_type',
         'points_type',
         'transaction_reason',
+        'balance',
     ];
 
     /**
