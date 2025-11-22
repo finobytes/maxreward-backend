@@ -20,7 +20,9 @@ class CountryController extends Controller
     {
         try {
             // Fetch data from external API
-            $response = Http::get('https://api.first.org/data/v1/countries');
+            $response = Http::get('https://api.first.org/data/v1/countries', [
+                'limit' => 250
+            ]);
 
             if (!$response->successful()) {
                 return response()->json([
@@ -30,6 +32,8 @@ class CountryController extends Controller
             }
 
             $data = $response->json();
+
+            // dd($data);
 
             if (!isset($data['data']) || !is_array($data['data'])) {
                 return response()->json([
@@ -91,6 +95,31 @@ class CountryController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'An error occurred while processing countries',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Get all countries from database
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getAllCountries()
+    {
+        try {
+            $countries = Country::all();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Countries retrieved successfully',
+                'data' => $countries,
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while retrieving countries',
                 'error' => $e->getMessage(),
             ], 500);
         }

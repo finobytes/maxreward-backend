@@ -197,6 +197,7 @@ Route::prefix('whatsapp-logs')->middleware('auth:admin')->group(function () {
 
 
 Route::post('/countries/fetch-and-save', [CountryController::class, 'fetchAndSaveCountries']);
+Route::get('/countries', [CountryController::class, 'getAllCountries']);
 
 
 /*
