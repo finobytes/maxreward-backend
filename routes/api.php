@@ -50,6 +50,9 @@ Route::prefix('member')->group(function () {
         Route::post('update-profile', [MemberController::class, 'updateProfile']);
         Route::post('change-password', [MemberController::class, 'changePassword']);
 
+        // Notifications count
+        Route::get('notifications/count', [MemberController::class, 'getNotificationsCount']);
+
         // CP Transaction routes for Member
         Route::prefix('cp-transactions')->group(function () {
             Route::get('/', [MemberCpTransactionController::class, 'index']);
@@ -86,6 +89,9 @@ Route::prefix('merchant')->group(function () {
         Route::post('logout', [MerchantAuthController::class, 'logout']);
         Route::post('refresh', [MerchantAuthController::class, 'refresh']);
         Route::post('change-password', [MerchantController::class, 'changePassword']);
+
+        // Notifications count
+        Route::get('notifications/count', [MerchantController::class, 'getNotificationsCount']);
 
         // CP Transaction routes for Merchant
         Route::prefix('cp-transactions')->group(function () {

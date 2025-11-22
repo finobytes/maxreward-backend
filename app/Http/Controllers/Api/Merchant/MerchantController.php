@@ -1566,4 +1566,36 @@ class MerchantController extends Controller
         }
     }
 
+    /**
+     * Get unread notifications count for authenticated merchant
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getNotificationsCount()
+    {
+        try {
+            $merchantStaff = auth()->user();
+            $merchantId = $merchantStaff->merchant_id;
+
+            $unreadCount = Notification::where('merchant_id', $merchantId)
+                ->where('is_count_read', false)
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications count retrieved successfully',
+                'data' => [
+                    'unread_count' => $unreadCount
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve notifications count',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
