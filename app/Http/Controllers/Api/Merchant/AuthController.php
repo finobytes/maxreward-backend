@@ -8,7 +8,8 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;     
 use Illuminate\Support\Facades\Validator;    
 use App\Services\CommunityTreeService;
-use App\Models\Purchase;      
+use App\Models\Purchase; 
+use App\Helpers\CommonFunctionHelper;     
 
 class AuthController extends Controller implements HasMiddleware
 {
@@ -70,6 +71,8 @@ class AuthController extends Controller implements HasMiddleware
         $user->total_pending_purchase = Purchase::where('merchant_id', $user->merchant->id)
         ->pending()  // scopePending() is pending from Purchase model 
         ->count();
+
+        $user->referred_members = CommonFunctionHelper::sponsoredMembers($corporateMemberId);
         
         return response()->json($user);
     }
