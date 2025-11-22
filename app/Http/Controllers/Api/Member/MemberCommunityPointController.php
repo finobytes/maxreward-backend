@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\MemberCommunityPoint;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
 class MemberCommunityPointController extends Controller
 {
@@ -19,7 +18,7 @@ class MemberCommunityPointController extends Controller
     public function index(Request $request)
     {
         try {
-            $member = JWTAuth::user();
+            $member = auth()->user();
 
             $validator = Validator::make($request->all(), [
                 'level' => 'nullable|integer|min:1|max:30',
@@ -73,7 +72,7 @@ class MemberCommunityPointController extends Controller
     public function show($id)
     {
         try {
-            $member = JWTAuth::user();
+            $member = auth()->user();
 
             $communityPoint = MemberCommunityPoint::where('member_id', $member->id)
                 ->findOrFail($id);
