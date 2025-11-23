@@ -177,7 +177,7 @@ Route::prefix('admin')->group(function () {
 
 
 // Transaction Management (Admin only)
-Route::prefix('transactions')->middleware('auth:admin,member')->group(function () {
+Route::prefix('transactions')->middleware('auth:admin,member,merchant')->group(function () {
     Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin');
     Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin');
     Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member');
