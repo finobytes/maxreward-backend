@@ -439,6 +439,8 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Get single voucher by ID
     Route::get('/{id}/vouchers', [VoucherController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
 
+    // Get maxreward corporate member
+    Route::get('/maxreward-corporate-{id}', [MemberController::class, 'getMaxrewardCorporateMember'])->middleware('role:admin,member');
 });
 
 

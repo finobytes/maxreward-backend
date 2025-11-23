@@ -926,4 +926,22 @@ class MemberController extends Controller
             ], 500);
         }
     }
+
+
+    public function getMaxrewardCorporateMember($id) {
+        try {
+            $member = Member::findOrFail($id);
+            return response()->json([
+                'success' => true,
+                'message' => 'Maxreward Corporate Member retrieved successfully',
+                'data' => $member
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve Maxreward Corporate Member',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
