@@ -377,7 +377,7 @@ Route::prefix('members')->middleware('auth:member,admin,merchant')->group(functi
     Route::get('/{id}', [MemberController::class, 'show'])->middleware('role:admin,member');
 
     // Get single members referrals list
-    Route::get('/{id}/referrals', [MemberController::class, 'getReferrals'])->middleware('role:admin,member');
+    Route::get('/{id}/referrals', [MemberController::class, 'getReferrals'])->middleware('role:admin,member,merchant');
 
     // Get single member community tree
     Route::get('/{id}/community-tree', [MemberController::class, 'getCommunityTree'])->middleware('role:admin,member');
