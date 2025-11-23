@@ -15,6 +15,7 @@ use App\Models\Notification;
 use App\Models\CpUnlockHistory;
 use App\Services\CommunityTreeService;
 use App\Services\WhatsAppService;
+use App\Services\EmailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -35,11 +36,13 @@ class ReferralController extends Controller
 
     protected $treeService;
     protected $whatsappService;
+    protected $emailService;
     protected $settingAttributes;
 
-    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper) {
+    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, EmailService $emailService, CommonFunctionHelper $commonFunctionHelper) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
+        $this->emailService = $emailService;
         $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
     }
 
@@ -197,9 +200,25 @@ class ReferralController extends Controller
             // Step 9: Check and unlock CP levels if needed
             $this->checkAndUnlockCpLevels($referrer->id);
 
-            Log::info('Step 10: Send WhatsApp message to new member');
 
-            // Step 10: Send WhatsApp message to new member
+            Log::info('Step 10: Send Email to new member if email exists');
+
+            // Step 10: Send Email to new member if email exists
+            if (!empty($newMember->email)) {
+                $this->emailService->sendWelcomeEmail([
+                    'member_id' => $newMember->id,
+                    'referrer_id' => $referrer->id,
+                    'name' => $newMember->name,
+                    'email' => $newMember->email,
+                    'user_name' => $userName,
+                    'password' => $password,
+                    'login_url' => env('APP_URL') . '/login',
+                ]);
+            }
+
+            Log::info('Step 11: Send WhatsApp message to new member');
+
+            // Step 11: Send WhatsApp message to new member
             $this->whatsappService->sendWelcomeMessage([
                 'member_id' => $newMember->id,
                 'referrer_id' => $referrer->id,
@@ -210,9 +229,9 @@ class ReferralController extends Controller
                 'login_url' => env('APP_URL') . '/login',
             ]);
 
-            Log::info('Step 11: Create notifications');
+            Log::info('Step 12: Create notifications');
 
-            // Step 11: Create notifications
+            // Step 12: Create notifications
             Notification::notifyReferralInvite($referrer->id, [
                 'new_member_name' => $newMember->name,
                 'new_member_phone' => $newMember->phone,
@@ -244,7 +263,7 @@ class ReferralController extends Controller
                     'credentials' => [
                         'user_name' => $userName,
                         'password' => $password,
-                        'message' => 'Login credentials sent via WhatsApp',
+                        'message' => 'Login credentials sent via ' . (!empty($newMember->email) ? 'Email and WhatsApp' : 'WhatsApp'),
                     ]
                 ]
             ], 201);
