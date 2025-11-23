@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('transaction_amount', 10, 2)->comment('Total purchase amount');
             $table->decimal('redeem_amount', 10, 2)->default(0)->comment('Points redeemed');
             $table->decimal('cash_redeem_amount', 10, 2)->default(0)->comment('Cash equivalent');
-            $table->enum('payment_method', ['online', 'offline'])->default('offline');
+            $table->enum('payment_method', ['online', 'manual'])->default('manual');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->unsignedBigInteger('rejected_by')->nullable();
             $table->string('rejected_reason')->nullable();

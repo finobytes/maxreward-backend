@@ -559,7 +559,7 @@ class MemberController extends Controller
                 'transaction_amount' => 'required|numeric|min:0.01',
                 'redeem_amount'      => 'required|numeric|min:0',
                 'cash_redeem_amount' => 'nullable|numeric|min:0',
-                'payment_method'     => 'required|in:online,offline',
+                'payment_method'     => 'required|in:online,manual',
                 'status'             => 'required|in:pending,approved,rejected',
                 'merchant_selection_type' => 'required|in:qrcode,unique_number,merchant_name',
             ]);
@@ -891,6 +891,37 @@ class MemberController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to change password',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get unread notifications count for authenticated member
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getNotificationsCount()
+    {
+        try {
+            $member = auth()->user();
+
+            $unreadCount = \App\Models\Notification::where('member_id', $member->id)
+                ->where('is_count_read', false)
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications count retrieved successfully',
+                'data' => [
+                    'unread_count' => $unreadCount
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve notifications count',
                 'error' => $e->getMessage()
             ], 500);
         }
