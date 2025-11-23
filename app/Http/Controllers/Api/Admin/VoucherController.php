@@ -122,7 +122,8 @@ class VoucherController extends Controller
                     'transaction_points' => $totalAmount,
                     'transaction_type' => Transaction::TYPE_VRP, // vrp = voucher referral points
                     'points_type' => Transaction::POINTS_CREDITED,
-                    'transaction_reason' => 'Voucher approved - Referral Points (Voucher ID: ' . $voucher->id . ')',
+                    'transaction_reason' => 'Voucher approved - Referral Points',
+                    'balance' => $memberWallet->total_rp
                 ]);
 
             } elseif ($voucher->voucher_type === 'max') {
@@ -137,7 +138,8 @@ class VoucherController extends Controller
                     'transaction_points' => $totalAmount,
                     'transaction_type' => Transaction::TYPE_VAP, // vap = voucher available points
                     'points_type' => Transaction::POINTS_CREDITED,
-                    'transaction_reason' => 'Voucher approved - Available Points (Voucher ID: ' . $voucher->id . ')',
+                    'transaction_reason' => 'Voucher approved - Available Points',
+                    'balance' => $memberWallet->available_points
                 ]);
             }
 
