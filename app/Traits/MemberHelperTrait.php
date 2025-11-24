@@ -26,9 +26,9 @@ trait MemberHelperTrait
         $cleaned = preg_replace('/[^0-9]/', '', $phone);
 
         // Validate: must start with 01 (no digit-length restriction)
-        if (!preg_match('/^01/', $cleaned)) {
-            throw new \InvalidArgumentException('Invalid phone number. Must start with 01.');
-        }
+        // if (!preg_match('/^01/', $cleaned)) {
+        //     throw new \InvalidArgumentException('Invalid phone number. Must start with 01.');
+        // }
 
         return $cleaned;
     }

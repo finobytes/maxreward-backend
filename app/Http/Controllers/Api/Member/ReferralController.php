@@ -73,6 +73,9 @@ class ReferralController extends Controller
             ], 422);
         }
 
+
+        
+
         try {
 
             DB::beginTransaction();
@@ -115,18 +118,25 @@ class ReferralController extends Controller
                 ], 400);
             }
 
+            
             Log::info('Step 2: Generate credentials for new member');
 
             // Step 2: Generate credentials for new member
             // $password = Str::random(8); // Random password
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
+          
+           
             $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
+            
+            
             $lastSix = substr($userName, -6);
             // $prefix = Str::upper(Str::random(2));
             // $password = $prefix . $lastSix;
             $password = $lastSix;
 
             Log::info('Step 3: Create new member');
+
+            
 
             // Step 3: Create new member
             $newMember = Member::create([
@@ -145,6 +155,9 @@ class ReferralController extends Controller
                 'country_id' => $request->country_id,
                 'country_code' => $request->country_code,
             ]);
+
+            //  dd($request->all());
+
 
             Log::info('Step 4: Create wallet for new member');
 
