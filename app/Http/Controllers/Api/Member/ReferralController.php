@@ -59,7 +59,7 @@ class ReferralController extends Controller
         // Validation
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:11|unique:members,phone',
+            'phone' => 'required|string|unique:members,phone',
             'email' => 'nullable|email|unique:members,email',
             'gender_type' => 'nullable|in:male,female,others',
             'address' => 'nullable|string|max:500',
@@ -142,6 +142,8 @@ class ReferralController extends Controller
                 'merchant_id' => null,
                 'member_created_by' => $referrer->member_type, // 'general' or 'corporate'
                 'referral_code' => $referralCode,
+                'country_id' => $request->country_id,
+                'country_code' => $request->country_code,
             ]);
 
             Log::info('Step 4: Create wallet for new member');

@@ -86,7 +86,8 @@ class MerchantController extends Controller
 
             // Owner Details
             // 'owner_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone',
+            // 'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone',
+            'phone' => 'required|string|max:20|unique:merchants,phone',
             // 'gender' => 'required|in:male,female,others',
             'address' => 'required|string',
             'email' => 'required|email|max:255|unique:merchants,email',
@@ -228,7 +229,9 @@ class MerchantController extends Controller
                 'merchant_created_by' => $request->merchant_created_by,
                 'business_logo' => $businessLogoUrl,
                 'logo_cloudinary_id' => $logoCloudinaryId,
-                'authorized_person_name' => $request->authorized_person_name
+                'authorized_person_name' => $request->authorized_person_name,
+                'country_id' => $request->country_id,
+                'country_code' => $request->country_code,
             ]);
 
             Log::info('Step 2: Generate corporate member username');
@@ -255,6 +258,8 @@ class MerchantController extends Controller
                 'merchant_id' => $merchant->id,
                 'member_created_by' => 'merchant', /// here to be considered
                 'referral_code' => $referralCode,
+                'country_id' => $request->country_id,
+                'country_code' => $request->country_code
             ]);
 
             // Update merchant with corporate_member_id
@@ -362,6 +367,8 @@ class MerchantController extends Controller
                 'type' => 'merchant',
                 'status' => 'active',
                 'gender_type' => $request->gender,
+                'country_id' => $request->country_id,
+                'country_code' => $request->country_code
             ]);
 
             // Commit transaction

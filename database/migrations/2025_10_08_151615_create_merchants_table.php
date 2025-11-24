@@ -41,6 +41,8 @@ return new class extends Migration
             $table->integer('reward_budget')->nullable();
             $table->string('annual_sales_turnover')->nullable();
             $table->string('designation')->nullable();
+            $table->integer('country_id')->nullable();
+            $table->string('country_code')->nullable();
             $table->unsignedBigInteger('approved_by')->nullable()->comment('Admin ID who approved');
             $table->unsignedBigInteger('suspended_by')->nullable()->comment('Admin ID who suspended');
             $table->string('suspended_reason')->nullable()->comment('Reason for suspending');

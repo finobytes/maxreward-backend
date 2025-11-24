@@ -27,6 +27,8 @@ class MerchantStaff extends Authenticatable implements JWTSubject
         'designation',
         'image',
         'image_cloudinary_id',
+        'country_id',
+        'country_code'
     ];
 
     protected $hidden = [

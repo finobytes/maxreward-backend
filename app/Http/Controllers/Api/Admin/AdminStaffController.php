@@ -34,8 +34,10 @@ class AdminStaffController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
+            'user_name' => 'required|string|max:255|unique:admin,user_name',
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone',
+            // 'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone',
+            'phone' => 'required|string|max:20|unique:admin,phone',
             'email' => 'required|email|max:255|unique:admin,email',
             'password' => 'required|string|min:6',
             'address' => 'nullable|string|max:500',
@@ -60,7 +62,7 @@ class AdminStaffController extends Controller
             DB::beginTransaction();
 
             // Generate unique username for staff
-            $staffUsername = $this->generateStaffUsername();
+            // $staffUsername = $this->generateStaffUsername();
 
             // Handle profile picture upload to Cloudinary
             $profilePictureUrl = null;
@@ -101,7 +103,8 @@ class AdminStaffController extends Controller
 
             // Create Admin Staff
             $staff = Admin::create([
-                'user_name' => $staffUsername,
+                // 'user_name' => $staffUsername,
+                'user_name' => $request->user_name,
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'email' => $request->email,
