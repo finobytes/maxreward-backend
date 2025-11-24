@@ -28,6 +28,8 @@ return new class extends Migration
             $table->string('referral_code', 8)->unique()->nullable()->comment('8 character unique code');
             $table->string('block_reason')->nullable();
             $table->string('suspended_reason')->nullable();
+            $table->integer('country_id')->nullable();
+            $table->string('country_code')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->timestamps();
             $table->softDeletes();

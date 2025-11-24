@@ -51,7 +51,9 @@ class Merchant extends Model
         'verification_cloudinary_id',
         'iamge',
         'image_cloudinary_id',
-        'authorized_person_name'
+        'authorized_person_name',
+        'country_id',
+        'country_code'
     ];
 
     protected $casts = [

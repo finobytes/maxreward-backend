@@ -24,6 +24,8 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->string('designation')->nullable();
             $table->enum('type', ['merchant', 'staff']);
+            $table->integer('country_id')->nullable();
+            $table->string('country_code')->nullable();
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('gender_type', ['male', 'female', 'others'])->nullable();
             $table->foreign('merchant_id')->references('id')->on('merchants');
