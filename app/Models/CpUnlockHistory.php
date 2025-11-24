@@ -246,7 +246,7 @@ class CpUnlockHistory extends Model
             ->where('new_unlocked_level', $level)
             ->whereIn('id', function($query) {
                 $query->selectRaw('MAX(id)')
-                    ->from('cp_unlock_history')
+                    ->from('cp_unlock_histories')
                     ->groupBy('member_id');
             })
             ->get();
@@ -287,7 +287,7 @@ class CpUnlockHistory extends Model
             ->where('new_unlocked_level', 30)
             ->whereIn('id', function($query) {
                 $query->selectRaw('MAX(id)')
-                    ->from('cp_unlock_history')
+                    ->from('cp_unlock_histories')
                     ->groupBy('member_id');
             })
             ->get();

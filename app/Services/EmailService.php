@@ -56,9 +56,7 @@ class EmailService
                "Login Details:\n" .
                "Username: {$data['user_name']}\n" .
                "Password: {$data['password']}\n" .
-               "Login Link: {$data['login_url']}\n\n" .
-               "Start earning rewards today! \n\n" .
-               "Need help? Contact support.";
+               "Login Link: {$data['login_url']}\n\n";
     }
 
     /**
