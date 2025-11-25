@@ -162,6 +162,7 @@ Route::prefix('admin')->group(function () {
         // Member Community Points Management (Admin only)
         Route::prefix('community-points')->group(function () {
             Route::get('/', [AdminMemberCommunityPointController::class, 'index']);
+            Route::get('/member/{memberId}', [AdminMemberCommunityPointController::class, 'getMemberPoints']);
             Route::get('/{id}', [AdminMemberCommunityPointController::class, 'show']);
         });
 
