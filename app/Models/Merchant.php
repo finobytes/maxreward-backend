@@ -53,7 +53,8 @@ class Merchant extends Model
         'image_cloudinary_id',
         'authorized_person_name',
         'country_id',
-        'country_code'
+        'country_code',
+        'town'
     ];
 
     protected $casts = [

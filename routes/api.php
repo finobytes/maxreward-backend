@@ -302,6 +302,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     // Get all merchants - members, merchants, and admins can view
     Route::get('/', [MerchantController::class, 'index'])->middleware('role:member,merchant,admin');
 
+    // Locate merchants by state, town, company_address, business_type_id
+    Route::get('/locate-merchants', [MerchantController::class, 'locateMerchants'])->middleware('role:member,merchant,admin');
+
     // Get single merchant by ID - members, merchants, and admins can view
     Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
 

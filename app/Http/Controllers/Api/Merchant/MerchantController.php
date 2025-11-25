@@ -232,6 +232,7 @@ class MerchantController extends Controller
                 'authorized_person_name' => $request->authorized_person_name,
                 'country_id' => $request->country_id,
                 'country_code' => $request->country_code,
+                'town' => $request->town
             ]);
 
             Log::info('Step 2: Generate corporate member username');
@@ -515,6 +516,7 @@ class MerchantController extends Controller
             if ($request->has('business_type_id')) {
                 $query->where('business_type_id', $request->business_type_id);
             }
+
 
             // Search by merchant_id (optional)
             if ($request->has('merchant_id')) {
@@ -1600,6 +1602,67 @@ class MerchantController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve notifications count',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Locate merchants by state, town, company_address, and business_type_id
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function locateMerchants(Request $request)
+    {
+        try {
+            // Query builder
+            $query = Merchant::query();
+
+            // Filter by state (optional)
+            if ($request->filled('state')) {
+                $query->where('state', 'LIKE', '%' . $request->state . '%');
+            }
+
+            // Filter by town (optional)
+            if ($request->filled('town')) {
+                $query->where('town', 'LIKE', '%' . $request->town . '%');
+            }
+
+            // Filter by company_address (optional)
+            if ($request->filled('company_address')) {
+                $query->where('company_address', 'LIKE', '%' . $request->company_address . '%');
+            }
+
+            // Filter by business_type_id (optional)
+            if ($request->filled('business_type_id')) {
+                $query->where('business_type_id', $request->business_type_id);
+            }
+
+            // Only get approved and active merchants
+            $query->where('status', 'approved');
+
+            // Get pagination limit (default: 15)
+            $perPage = $request->get('per_page', 15);
+
+            // Fetch merchants with relationships
+            $merchants = $query->with([
+                'wallet',
+                'corporateMember:id,user_name,name,phone,email'
+            ])
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Merchants located successfully',
+                'data' => $merchants
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to locate merchants',
                 'error' => $e->getMessage()
             ], 500);
         }
