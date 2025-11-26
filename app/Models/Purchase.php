@@ -29,6 +29,8 @@ class Purchase extends Model
         'rejected_by',
         'rejected_reason',
         'status',
+        'reward_fee',
+        'balance',
     ];
 
     /**

@@ -25,7 +25,8 @@ class Transaction extends Model
         'transaction_type',
         'points_type',
         'transaction_reason',
-        'balance',
+        'bap', // Balance Available Points
+        'brp', // Balance Referral Points
     ];
 
     /**

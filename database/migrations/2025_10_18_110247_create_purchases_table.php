@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('redeem_amount', 10, 2)->default(0)->comment('Points redeemed');
             $table->decimal('cash_redeem_amount', 10, 2)->default(0)->comment('Cash equivalent');
             $table->enum('payment_method', ['online', 'manual'])->default('manual');
+            $table->decimal('reward_fee', 10, 2)->default(0);
+            $table->decimal('balance', 10, 2)->default(0);
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->unsignedBigInteger('rejected_by')->nullable();
             $table->string('rejected_reason')->nullable();

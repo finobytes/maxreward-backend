@@ -152,25 +152,20 @@ class MerchantController extends Controller
             }
 
             if ($auth->member_type == "general") {
-                $findReferrer = Referral::where("child_member_id", $auth->id)->first();
-                if (!$findReferrer) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Your referred member is not found in referral database',
-                        'error' => 'Your referred member is not found in referral database'
-                    ], 401);
-                }
-                $referrer = Member::where("id", $findReferrer->sponsor_member_id)->first();
-                if (!$referrer) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Your referred member is not found',
-                        'error' => 'Your referred member is not found'
-                    ], 401);
-                }
+                if ($request->has('member_id')) {
+                    $referrer = Member::where("id", $request->member_id)->first();
+                }  
             }
 
             // dd($referrer);
+
+            if (!$referrer || $referrer == '') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your referred member is not found',
+                    'error' => 'Your referred member is not found'
+                ], 401);
+            }
 
             $referrerWallet = $referrer->wallet;
 
