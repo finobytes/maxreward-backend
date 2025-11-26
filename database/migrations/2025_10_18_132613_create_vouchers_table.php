@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('member_id')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
+            $table->string('voucher_id')->unique();
             $table->enum('voucher_type', ['max', 'refer'])->comment('max=available points, refer=referral points');
             $table->text('denomination_history');
             $table->integer('quantity')->default(1);

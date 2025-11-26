@@ -24,7 +24,7 @@ class VoucherController extends Controller
 
 
 
-    public function createVoucher(Request $request)
+    public function createVoucherOld2(Request $request)
     {
 
        
@@ -134,6 +134,8 @@ class VoucherController extends Controller
                 $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
             }
 
+            // Use DB transaction to keep voucher creation atomic (good practice)
+
             // Create voucher
             $voucher = Voucher::create([
                 'member_id' => $request->member_id,
@@ -160,6 +162,138 @@ class VoucherController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function createVoucher(Request $request)
+    {
+        // Validate request
+        $validator = Validator::make($request->all(), [
+            'member_id' => 'required|exists:members,id',
+            'voucher_type' => 'required|in:max,refer',
+            'denomination_history' => 'required|array|min:1',
+            'denomination_history.*.denomination_id' => 'required|exists:denominations,id',
+            'denomination_history.*.quantity' => 'required|integer|min:1',
+            'payment_method' => 'required|in:online,manual',
+            'total_amount' => 'required|numeric|min:0',
+            'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+
+            // SINGLE ATOMIC DATABASE TRANSACTION (like purchase)
+            $voucher = DB::transaction(function () use ($request) {
+
+                // Load settings
+                $setting = Setting::first();
+                if (!$setting) {
+                    throw new \Exception("Settings not found");
+                }
+
+                $settingAttribute = is_string($setting->setting_attribute)
+                    ? json_decode($setting->setting_attribute, true)
+                    : $setting->setting_attribute;
+
+                if (!isset($settingAttribute['maxreward']['rm_points'])) {
+                    throw new \Exception("rm_points not configured in settings");
+                }
+
+                $rmPoints = $settingAttribute['maxreward']['rm_points'];
+
+                // Build denomination data
+                $denominationHistoryData = [];
+                $calculatedTotalAmount = 0;
+                $totalQuantity = 0;
+
+                foreach ($request->denomination_history as $item) {
+                    $denomination = Denomination::find($item['denomination_id']);
+
+                    if (!$denomination) {
+                        throw new \Exception("Denomination not found: " . $item['denomination_id']);
+                    }
+
+                    $quantity = $item['quantity'];
+                    $totalAmount = $denomination->value * $quantity;
+
+                    $denominationHistoryData[] = [
+                        'denomination_id' => $item['denomination_id'],
+                        'value' => $denomination->value,
+                        'quantity' => $quantity,
+                        'totalAmount' => $totalAmount,
+                    ];
+
+                    $calculatedTotalAmount += $totalAmount;
+                    $totalQuantity += $quantity;
+                }
+
+                // Check total amount
+                if ($request->total_amount != $calculatedTotalAmount) {
+                    throw new \Exception("Total amount mismatch. Expected: $calculatedTotalAmount Received: " . $request->total_amount);
+                }
+
+                $finalTotalAmount = $calculatedTotalAmount * $rmPoints;
+
+                // Handle manual payment docs (Cloudinary upload)
+                $manualPaymentDocsUrl = null;
+                $manualPaymentDocsCloudinaryId = null;
+
+                if ($request->payment_method === 'manual' && $request->hasFile('manual_payment_docs')) {
+                    $uploadResult = CloudinaryHelper::uploadImage(
+                        $request->file('manual_payment_docs'),
+                        'maxreward/vouchers/payment-docs'
+                    );
+                    $manualPaymentDocsUrl = $uploadResult['url'];
+                    $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
+                }
+
+                // INSERT COUNTER ROW → GET auto voucher number
+                $counterId = DB::table('voucher_counters')->insertGetId([
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // start from 2001
+                $voucherNumber = $counterId + 2000;
+                $voucher_id = 'VID-' . str_pad($voucherNumber, 4, '0', STR_PAD_LEFT);
+
+                // 🔥 CREATE voucher with auto-number
+                $voucher = Voucher::create([
+                    'voucher_id' => $voucher_id,  
+                    'member_id' => $request->member_id,
+                    'voucher_type' => $request->voucher_type,
+                    'denomination_history' => $denominationHistoryData,
+                    'quantity' => $totalQuantity,
+                    'payment_method' => $request->payment_method,
+                    'total_amount' => $finalTotalAmount,
+                    'manual_payment_docs_url' => $manualPaymentDocsUrl,
+                    'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
+                    'status' => 'pending',
+                ]);
+
+                return $voucher;
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher created successfully',
+                'data' => $voucher
+            ], 201);
+
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create voucher',
