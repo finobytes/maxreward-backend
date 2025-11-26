@@ -400,7 +400,7 @@ class MerchantController extends Controller
                     'credentials' => [
                         'user_name' => $corporateUsername,
                         'password' => $request->merchant_password,
-                        'message' => 'Login credentials sent via WhatsApp',
+                        'message' => 'Login credentials sent via Email',
                     ]
                 ]
             ], 201);

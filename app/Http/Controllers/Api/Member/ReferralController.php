@@ -278,7 +278,7 @@ class ReferralController extends Controller
                     'credentials' => [
                         'user_name' => $userName,
                         'password' => $password,
-                        'message' => 'Login credentials sent via ' . (!empty($newMember->email) ? 'Email and WhatsApp' : 'WhatsApp'),
+                        'message' => 'Login credentials sent via Email',
                     ]
                 ]
             ], 201);
