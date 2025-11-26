@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\Admin\CpLevelConfigController;
 use App\Http\Controllers\Api\Admin\TransactionController;
 use App\Http\Controllers\Api\Admin\NotificationController;
 use App\Http\Controllers\Api\Admin\WhatsAppLogController;
+use App\Http\Controllers\Api\Admin\EmailLogController;
 use App\Http\Controllers\Api\Admin\CountryController;
 use App\Http\Controllers\Api\Admin\CpTransactionController as AdminCpTransactionController;
 use App\Http\Controllers\Api\Member\CpTransactionController as MemberCpTransactionController;
@@ -201,6 +202,16 @@ Route::prefix('whatsapp-logs')->middleware('auth:admin')->group(function () {
     Route::get('/all', [WhatsAppLogController::class, 'getAllLogs']);
     Route::get('/{id}', [WhatsAppLogController::class, 'show']);
     Route::delete('/{id}', [WhatsAppLogController::class, 'destroy']);
+});
+
+// Email Message Log Management (Admin only)
+Route::prefix('email-logs')->middleware('auth:admin')->group(function () {
+    Route::get('/', [EmailLogController::class, 'index']);
+    Route::get('/all', [EmailLogController::class, 'getAllLogs']);
+    Route::get('/statistics', [EmailLogController::class, 'getStatistics']);
+    Route::get('/{id}', [EmailLogController::class, 'show']);
+    Route::post('/{id}/retry', [EmailLogController::class, 'retry']);
+    Route::delete('/{id}', [EmailLogController::class, 'destroy']);
 });
 
 
