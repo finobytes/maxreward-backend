@@ -227,6 +227,7 @@ class Recharge extends Model
                     'transaction_type' => $this->voucher_type === 'max' ? 'vap' : 'vrp',
                     'points_type' => 'credited',
                     'transaction_reason' => 'Recharge voucher purchase',
+                    $this->voucher_type === 'max' ? 'bap' : 'brp' => $this->voucher_type === 'max' ? $wallet->available_points : $wallet->total_rp
                 ]);
             }
         } elseif ($this->merchant_id) {

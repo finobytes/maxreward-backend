@@ -17,8 +17,11 @@ return new class extends Migration
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->unsignedBigInteger('referral_member_id')->nullable()->comment('Who receives the invite/points');
             $table->decimal('transaction_points', 10, 2);
-            $table->decimal('bap', 10, 2)->default(0)->comment('Balance available points');
-            $table->decimal('brp', 10, 2)->default(0)->comment('Balance referral points');
+            $table->decimal('bap', 10, 2)->default(0)->comment('Balance available points for member');
+            $table->decimal('brp', 10, 2)->default(0)->comment('Balance referral points for member');
+            $table->decimal('bop', 10, 2)->default(0)->comment('Balance onhold points for member');
+            $table->decimal('merchant_balance', 10, 2)->default(0);
+            $table->decimal('cr_balance', 10, 2)->default(0)->comment('Company reserve balance');
             $table->enum('transaction_type', ['pp', 'rp', 'cp', 'cr', 'dp', 'ap', 'vrp', 'vap'])
                 ->comment('pp=personal, rp=referral, cp=community, cr=company reserve, dp=deducted, ap=added points, vrp=voucher referral, vap=voucher available');
             $table->enum('points_type', ['debited', 'credited']);

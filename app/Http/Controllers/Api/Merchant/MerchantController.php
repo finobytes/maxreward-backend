@@ -290,7 +290,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_RP,
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Referred new member: {$corporateMember->name}",
-                'balance' => $referrerWallet->total_rp
+                'brp' => $referrerWallet->total_rp
             ]);
 
             Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
@@ -1099,7 +1099,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Points redeemed for purchase at {$purchase->merchant->business_name}.",
-                'balance' => $purchase->member->wallet->available_points
+                'bap' => $purchase->member->wallet->available_points
             ]);
 
             // Step 6: Notification for member - Points redeemed
@@ -1132,7 +1132,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Purchase approved from member {$purchase->member->name}.",
-                'balance' => $purchase->merchant->wallet->total_points
+                'merchant_balance' => $purchase->merchant->wallet->total_points
             ]);
 
             // Step 9: Notification for merchant - Purchase approved
@@ -1167,7 +1167,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_AP, // Added Points
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Purchase approved from member {$purchase->member->name}.",
-                'balance' => $purchase->merchant->corporateMember->wallet->available_points
+                'bap' => $purchase->merchant->corporateMember->wallet->available_points
             ]);
 
             // Step 12: Notification for merchant corporate member - Purchase approved
@@ -1199,7 +1199,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%",
-                'balance' => $purchase->merchant->wallet->total_points
+                'merchant_balance' => $purchase->merchant->wallet->total_points
             ]);
 
             // Step 15: Notification for deduct total points from Merchant wallet
@@ -1231,7 +1231,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_DP, // Deducted Points
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Points deducted for purchase from {$purchase->member->name}. Points: {$totalPoints}. Reward Budget: {$rewardBudget}%",
-                'balance' => $purchase->merchant->corporateMember->wallet->available_points
+                'bap' => $purchase->merchant->corporateMember->wallet->available_points
             ]);
 
             // Step 18: Notification for merchant corporate member - Points Deducted
@@ -1268,7 +1268,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_PP,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => 'Personal Points from purchase approval',
-                'balance' => $purchaseMemberWallet->available_points
+                'bap' => $purchaseMemberWallet->available_points
             ]);
 
             Log::info('2️ RP: total rp points add to who Directly sponsored');
@@ -1297,7 +1297,7 @@ class MerchantController extends Controller
                     'transaction_type' => Transaction::TYPE_RP,
                     'points_type' => Transaction::POINTS_CREDITED,
                     'transaction_reason' => "Reward Points from {$purchase->member->name}'s purchase approval",
-                    'balance' => $sponsorMemberWallet->available_points
+                    'bap' => $sponsorMemberWallet->available_points
                 ]);
 
                 Log::info('Step :: Reward points earned notification');
@@ -1339,7 +1339,7 @@ class MerchantController extends Controller
                 'transaction_type' => Transaction::TYPE_CR,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Company Reserve from {$purchase->member->name}'s purchase approval",
-                'balance' => $company->cr_points
+                'cr_balance' => $company->cr_points
             ]);
 
             DB::commit();
