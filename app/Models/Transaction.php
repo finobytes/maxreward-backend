@@ -147,7 +147,11 @@ class Transaction extends Model
             'transaction_type' => $data['transaction_type'],
             'points_type' => $data['points_type'],
             'transaction_reason' => $data['transaction_reason'] ?? null,
-            'balance' => $data['balance'] ?? null,
+            'brp' => $data['brp'] ?? null,
+            'bap' => $data['bap'] ?? null,
+            'bop' => $data['bop'] ?? null,
+            'cr_balance' => $data['cr_balance'] ?? null,
+            'merchant_balance' => $data['merchant_balance'] ?? null
         ]);
     }
 
