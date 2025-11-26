@@ -108,7 +108,7 @@ class CountryController extends Controller
     public function getAllCountries()
     {
         try {
-            $countries = Country::all();
+            $countries = Country::orderBy('country', 'asc')->get();
 
             return response()->json([
                 'success' => true,
