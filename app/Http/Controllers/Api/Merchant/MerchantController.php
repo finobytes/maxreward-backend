@@ -1084,7 +1084,7 @@ class MerchantController extends Controller
             }
 
             // Step 3: Update purchase status to approved
-            $purchase->update(['status' => 'approved']);
+            $purchase->update(['status' => 'approved', 'reward_fee' => $totalPoints]);
 
             // Step 4: Deduct points from member wallet
             if ($purchase->member && $purchase->member->wallet) {
@@ -1190,6 +1190,8 @@ class MerchantController extends Controller
             if ($purchase->merchant && $purchase->merchant->wallet) {
                 $purchase->merchant->wallet->decrement('total_points', $totalPoints);
             }
+
+            $purchase->update(['balance' => $purchase->merchant->wallet->total_points]);
 
             // Step 14: Deduct total points from Merchant wallet transaction
             Transaction::create([
