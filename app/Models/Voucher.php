@@ -30,6 +30,7 @@ class Voucher extends Model
         'rejected_reason',
         'rejected_by',
         'status',
+        'voucher_id'
     ];
 
     /**
