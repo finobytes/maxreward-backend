@@ -172,6 +172,8 @@ Route::prefix('admin')->group(function () {
             Route::get('/{id}', [AdminCpUnlockHistoryController::class, 'show']);
         });
 
+        Route::get('get-all-merchants-purchases-data', [MerchantController::class, 'getAllMerchantsPurchasesData']);
+
     });
 });
 
@@ -323,6 +325,9 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
 
     // Get all purchases by merchant ID
     Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant');
+
+    // Get all daily purchases by merchant ID
+    Route::get('/{id}/purchases/daily', [MerchantController::class, 'getDailyPurchases'])->middleware('role:merchant');
 
     // Get all pending purchases by merchant ID
     Route::get('/{id}/pending/purchases', [MerchantController::class, 'getPendingPurchases'])->middleware('role:merchant');

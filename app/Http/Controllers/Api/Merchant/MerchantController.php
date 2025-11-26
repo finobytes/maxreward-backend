@@ -969,6 +969,60 @@ class MerchantController extends Controller
     }
 
 
+    public function getDailyPurchases($id)
+    {
+        try {
+            $purchases = Purchase::where('merchant_id', $id)
+                ->whereDate('created_at', today())
+                ->with(['member:id,name,email', 'merchant:id,business_name'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Daily purchases retrieved successfully',
+                'data' => $purchases,
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function getAllMerchantsPurchasesData()
+    {
+        try {
+            // Fetch all purchases for all merchants (latest first)
+            $purchases = Purchase::with(['member:id,name,email', 'merchant:id,business_name'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20); 
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Purchases retrieved successfully',
+                'data' => $purchases,
+            ]);
+    
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch purchases',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     public function getPendingPurchases($id) 
     {
         try {
@@ -1027,10 +1081,11 @@ class MerchantController extends Controller
 
             $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
 
-            if ($purchase->merchant->wallet->total_points < $totalPoints) {
-                if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
+            if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
+                if ($purchase->merchant->wallet->total_points < $totalPoints) {
                     return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
                 }
+                return response()->json(['error' => 'Insufficient points for reward budget points. Please purchase vouchers.'], 400);
             }
 
             // Step 3: Update purchase status to approved
