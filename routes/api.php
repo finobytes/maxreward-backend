@@ -188,11 +188,13 @@ Route::prefix('transactions')->middleware('auth:admin,member,merchant')->group(f
     Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member,admin,merchant');
 });
 
-// Notification Management (Admin only)
-Route::prefix('notifications')->middleware('auth:admin,member')->group(function () {
+// Notification Management
+Route::prefix('notifications')->middleware('auth:admin,member,merchant')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->middleware('role:admin');
     Route::get('/all', [NotificationController::class, 'getAllNotifications'])->middleware('role:admin');
-    Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member');
+    Route::get('/member/all', [NotificationController::class, 'getMemberNotifications'])->middleware('role:member');
+    Route::get('/merchant/all', [NotificationController::class, 'getMerchantNotifications'])->middleware('role:merchant');
+    Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member,merchant');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin');
 });
 
