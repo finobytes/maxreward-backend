@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\Merchant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -320,6 +321,11 @@ class NotificationController extends Controller
         try {
             $merchant = $request->user();
 
+            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
+
+
+            
+
             if (!$merchant) {
                 return response()->json([
                     'success' => false,
@@ -351,7 +357,7 @@ class NotificationController extends Controller
             $sortOrder = $request->input('sort_order', 'desc');
 
             // Build query for authenticated merchant's notifications
-            $query = Notification::where('merchant_id', $merchant->id)
+            $query = Notification::where('member_id', $merchantData->corporateMember->id)
                 ->with(['member']);
 
             // Apply filters
@@ -380,12 +386,16 @@ class NotificationController extends Controller
             // Get paginated results
             $notifications = $query->paginate($perPage);
 
+            
+
             // Get statistics for this merchant
             $statistics = [
-                'total_notifications' => Notification::where('merchant_id', $merchant->id)->count(),
-                'total_read' => Notification::where('merchant_id', $merchant->id)->where('status', 'read')->count(),
-                'total_unread' => Notification::where('merchant_id', $merchant->id)->where('status', 'unread')->count(),
+                'total_notifications' => Notification::where('member_id', $merchantData->corporateMember->id)->count(),
+                'total_read' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'read')->count(),
+                'total_unread' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'unread')->count(),
             ];
+
+            // dd($notifications);
 
             return response()->json([
                 'success' => true,
