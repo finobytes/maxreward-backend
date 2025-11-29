@@ -340,5 +340,43 @@ class VoucherController extends Controller
         }
     }
 
+
+    public function changeVoucherStatus(Request $request, $voucherId) {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required',
+            'reason' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $voucher = Voucher::findOrFail($voucherId);
+            $voucher->status = $request->status;
+            if ($request->has('reason')) {
+                $voucher->rejected_reason = $request->reason;
+            }
+            $voucher->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher status updated successfully',
+                'data' => $voucher
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update voucher status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
    
 }

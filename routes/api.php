@@ -135,8 +135,9 @@ Route::prefix('admin')->group(function () {
         Route::post('change-password', [AdminStaffController::class, 'changePassword']);
 
 
-
-
+        Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
+        Route::post('/merchant-suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
+// 
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
             Route::get('details', [CompanyInfoController::class, 'getFullDetails']);
@@ -151,6 +152,7 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminVoucherController::class, 'getAllVouchers']);
             Route::post('/{voucherId}/approve', [AdminVoucherController::class, 'approveVoucher']);
             Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
+            Route::post('/{voucherId}/status-change', [AdminVoucherController::class, 'changeVoucherStatus']);
             Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
         });
 
@@ -188,11 +190,15 @@ Route::prefix('transactions')->middleware('auth:admin,member,merchant')->group(f
     Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member,admin,merchant');
 });
 
-// Notification Management (Admin only)
-Route::prefix('notifications')->middleware('auth:admin,member')->group(function () {
+// Notification Management
+Route::prefix('notifications')->middleware('auth:admin,member,merchant')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->middleware('role:admin');
     Route::get('/all', [NotificationController::class, 'getAllNotifications'])->middleware('role:admin');
-    Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member');
+    Route::get('/member/all', [NotificationController::class, 'getMemberNotifications'])->middleware('role:member');
+    Route::get('/merchant/all', [NotificationController::class, 'getMerchantNotifications'])->middleware('role:merchant');
+    Route::post('/member/save-count', [NotificationController::class, 'saveMemberNotificationSaveCount'])->middleware('role:member');
+    Route::get('/merchant/save-count', [NotificationController::class, 'saveMerchantNotificationSaveCount'])->middleware('role:merchant');
+    Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member,merchant');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin');
 });
 
@@ -329,7 +335,7 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
     Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');
 
     // Suspend/Activate merchant - only admin can suspend
-    Route::post('/suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
+    // Route::post('/suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
 
     // Get merchant by unique number - members, merchants, and admins can view
     Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
@@ -419,7 +425,7 @@ Route::prefix('members')->middleware('auth:member,admin,merchant')->group(functi
     
     Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:admin');
 
-    Route::get('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
+    // Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
     // Get all purchases by member ID
     Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');

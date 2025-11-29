@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Notification;
+use App\Models\Merchant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -83,8 +84,8 @@ class NotificationController extends Controller
             // Get statistics
             $statistics = [
                 'total_notifications' => Notification::count(),
-                'total_read' => Notification::where('status', 'read')->count(),
-                'total_unread' => Notification::where('status', 'unread')->count(),
+                'total_read' => Notification::where('is_count_read', 1)->count(),
+                'total_unread' => Notification::where('is_count_read', 0)->count(),
                 'by_type' => Notification::selectRaw('type, COUNT(*) as count')
                     ->groupBy('type')
                     ->pluck('count', 'type')
@@ -102,6 +103,37 @@ class NotificationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function saveMemberNotificationSaveCount(Request $request)
+    {
+        try {
+            $member = $request->user();
+
+            if (!$member) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Member not authenticated'
+                ], 401);
+            }
+
+            Notification::where('member_id', $member->id)
+                ->where('is_count_read', 0)
+                ->update(['is_count_read' => 1]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Member notification count saved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save member notification count',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -212,6 +244,203 @@ class NotificationController extends Controller
                 'message' => 'Notification not found',
                 'error' => $e->getMessage()
             ], 404);
+        }
+    }
+
+    /**
+     * Get notifications for authenticated member
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMemberNotifications(Request $request)
+    {
+        try {
+            $member = $request->user();
+
+            if (!$member) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Member not authenticated'
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'per_page' => 'nullable|integer|min:1|max:100',
+                'page' => 'nullable|integer|min:1',
+                'type' => 'nullable|string',
+                'status' => 'nullable|string|in:read,unread',
+                'is_read' => 'nullable|boolean',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'sort_by' => 'nullable|string|in:created_at,read_at',
+                'sort_order' => 'nullable|string|in:asc,desc',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $perPage = $request->input('per_page', 15);
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            // Build query for authenticated member's notifications
+            $query = Notification::where('member_id', $member->id)
+                ->with(['merchant']);
+
+            // Apply filters
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('is_read')) {
+                $query->where('is_read', $request->is_read);
+            }
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            // Apply sorting
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Get paginated results
+            $notifications = $query->paginate($perPage);
+
+            // Get statistics for this member
+            $statistics = [
+                'total_notifications' => Notification::where('member_id', $member->id)->count(),
+                'total_read' => Notification::where('member_id', $member->id)->where('is_count_read', 1)->count(),
+                'total_unread' => Notification::where('member_id', $member->id)->where('is_count_read', 0)->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications retrieved successfully',
+                'data' => $notifications,
+                'statistics' => $statistics
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get notifications for authenticated merchant
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMerchantNotifications(Request $request)
+    {
+        try {
+            $merchant = $request->user();
+
+            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
+
+
+            
+
+            if (!$merchant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Merchant not authenticated'
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'per_page' => 'nullable|integer|min:1|max:100',
+                'page' => 'nullable|integer|min:1',
+                'type' => 'nullable|string',
+                'status' => 'nullable|string|in:read,unread',
+                'is_read' => 'nullable|boolean',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'sort_by' => 'nullable|string|in:created_at,read_at',
+                'sort_order' => 'nullable|string|in:asc,desc',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $perPage = $request->input('per_page', 15);
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            // Build query for authenticated merchant's notifications
+            $query = Notification::where('member_id', $merchantData->corporateMember->id)
+                ->with(['member']);
+
+            // Apply filters
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('is_read')) {
+                $query->where('is_read', $request->is_read);
+            }
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            // Apply sorting
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Get paginated results
+            $notifications = $query->paginate($perPage);
+
+            
+
+            // Get statistics for this merchant
+            $statistics = [
+                'total_notifications' => Notification::where('member_id', $merchantData->corporateMember->id)->count(),
+                'total_read' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'read')->count(),
+                'total_unread' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'unread')->count(),
+            ];
+
+            // dd($notifications);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications retrieved successfully',
+                'data' => $notifications,
+                'statistics' => $statistics
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve notifications',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 
