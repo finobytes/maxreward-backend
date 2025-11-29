@@ -578,10 +578,14 @@ class MemberController extends Controller
                 return response()->json(['success'=>false,'message'=>'Setting info not found'], 400);
             }
 
-            $cashRedeemAmount = $validatedData['transaction_amount'] - $validatedData['redeem_amount'];
-            $cashRedeemAmount = $cashRedeemAmount * $settingInfo['maxreward']['rm_points'];
-            if ($validatedData['cash_redeem_amount'] != $cashRedeemAmount) {
-                return response()->json(['success'=>false,'message'=>'Cash redeem amount does not match']);
+            // $cashRedeemAmount = $validatedData['transaction_amount'] - $validatedData['redeem_amount'];
+            // $cashRedeemAmount = $cashRedeemAmount * $settingInfo['maxreward']['rm_points'];
+            // if ($validatedData['cash_redeem_amount'] != $cashRedeemAmount) {
+            //     return response()->json(['success'=>false,'message'=>'Cash redeem amount does not match']);
+            // }
+
+            if ($validatedData['redeem_amount'] > $validatedData['transaction_amount']) {
+                return response()->json(['success'=>false,'message'=>'Redeem amount cannot be greater than transaction amount'], 400);
             }
 
             // 4. Generate transaction id safely using TransactionCounter
