@@ -84,8 +84,8 @@ class NotificationController extends Controller
             // Get statistics
             $statistics = [
                 'total_notifications' => Notification::count(),
-                'total_read' => Notification::where('status', 'read')->count(),
-                'total_unread' => Notification::where('status', 'unread')->count(),
+                'total_read' => Notification::where('is_read', 1)->count(),
+                'total_unread' => Notification::where('is_read', 0)->count(),
                 'by_type' => Notification::selectRaw('type, COUNT(*) as count')
                     ->groupBy('type')
                     ->pluck('count', 'type')
