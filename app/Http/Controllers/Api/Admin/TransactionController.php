@@ -147,7 +147,7 @@ class TransactionController extends Controller
             }
 
             // Get limited results
-            $transactions = $query->orderBy('created_at', 'desc')
+            $transactions = $query->orderBy('id', 'desc')
                                   ->limit($limit)
                                   ->get();
 
@@ -202,7 +202,7 @@ class TransactionController extends Controller
         try {
             $transactions = Transaction::with(['member.wallet'])
                 ->where('member_id', $id)
-                ->orderBy('created_at', 'desc')
+                ->orderBy('id', 'desc')
                 ->paginate(20);
 
             return response()->json([
