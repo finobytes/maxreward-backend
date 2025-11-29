@@ -658,26 +658,70 @@ class MemberController extends Controller
 
 
     public function statusBlockSuspend(Request $request){
+        \Log::info('statusBlockSuspend method called', ['request_data' => $request->all()]);
+
         try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'member_id' => 'required|exists:members,id',
+                'status' => 'required|in:blocked,suspended,active',
+                'reason' => 'required_if:status,blocked,suspended|string|max:500',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Find member
             $member = Member::findOrFail($request->member_id);
+
+            // Update status
             $member->status = $request->status;
+
+            // Handle block reason
             if($request->status == 'blocked'){
                 $member->block_reason = $request->reason;
+                $member->suspended_reason = null; // Clear suspended reason if blocked
             }
+
+            // Handle suspended reason
             if($request->status == 'suspended'){
                 $member->suspended_reason = $request->reason;
+                $member->block_reason = null; // Clear block reason if suspended
             }
+
+            // Clear both reasons if status is active
+            if($request->status == 'active'){
+                $member->block_reason = null;
+                $member->suspended_reason = null;
+            }
+
             $member->save();
+
+            // Reload member with relationships
+            $member->load(['wallet', 'merchant']);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Member status updated successfully',
                 'data' => $member
             ], 200);
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Member not found'
             ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update member status',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 

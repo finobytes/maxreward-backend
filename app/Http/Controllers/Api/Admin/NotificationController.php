@@ -84,8 +84,8 @@ class NotificationController extends Controller
             // Get statistics
             $statistics = [
                 'total_notifications' => Notification::count(),
-                'total_read' => Notification::where('is_read', 1)->count(),
-                'total_unread' => Notification::where('is_read', 0)->count(),
+                'total_read' => Notification::where('is_count_read', 1)->count(),
+                'total_unread' => Notification::where('is_count_read', 0)->count(),
                 'by_type' => Notification::selectRaw('type, COUNT(*) as count')
                     ->groupBy('type')
                     ->pluck('count', 'type')
@@ -103,6 +103,37 @@ class NotificationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function saveMemberNotificationSaveCount(Request $request)
+    {
+        try {
+            $member = $request->user();
+
+            if (!$member) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Member not authenticated'
+                ], 401);
+            }
+
+            Notification::where('member_id', $member->id)
+                ->where('is_count_read', 0)
+                ->update(['is_count_read' => 1]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Member notification count saved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save member notification count',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -290,8 +321,8 @@ class NotificationController extends Controller
             // Get statistics for this member
             $statistics = [
                 'total_notifications' => Notification::where('member_id', $member->id)->count(),
-                'total_read' => Notification::where('member_id', $member->id)->where('status', 'read')->count(),
-                'total_unread' => Notification::where('member_id', $member->id)->where('status', 'unread')->count(),
+                'total_read' => Notification::where('member_id', $member->id)->where('is_count_read', 1)->count(),
+                'total_unread' => Notification::where('member_id', $member->id)->where('is_count_read', 0)->count(),
             ];
 
             return response()->json([

@@ -26,6 +26,8 @@ class Member extends Authenticatable implements JWTSubject
         'merchant_id',
         'member_created_by',
         'referral_code',
+        'suspended_reason',
+        'block_reason',
         'image',
         'image_cloudinary_id',
         'country_id',
