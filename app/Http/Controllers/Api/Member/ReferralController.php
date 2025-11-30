@@ -229,7 +229,7 @@ class ReferralController extends Controller
                     'email' => $newMember->email,
                     'user_name' => $userName,
                     'password' => $password,
-                    'login_url' => env('APP_URL') . '/login',
+                    'login_url' => 'https://maxreward.finobytes.com',
                 ]);
             }
 
