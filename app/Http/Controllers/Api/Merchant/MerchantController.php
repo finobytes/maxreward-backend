@@ -1076,7 +1076,11 @@ class MerchantController extends Controller
 
             $rewardBudget = $purchase->merchant?->reward_budget;
 
-            $totalPoints = ($purchase->transaction_amount * $rewardBudget) / 100;
+            $totalRewardAmount = ($purchase->transaction_amount * $rewardBudget) / 100;
+
+            $rmPoints = $this->settingAttributes['rm_points'];
+
+            $totalPoints = $totalRewardAmount * $rmPoints;
 
             if ($purchase->merchant->corporateMember->wallet->available_points < $totalPoints) {
                 if ($purchase->merchant->wallet->total_points < $totalPoints) {
