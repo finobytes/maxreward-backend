@@ -104,10 +104,10 @@ class EmailService
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; }
-                .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+                .header { background-color: #ff5a29; color: white; padding: 20px; text-align: center; }
                 .content { background-color: white; padding: 30px; margin-top: 20px; border-radius: 5px; }
-                .credentials { background-color: #f0f0f0; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0; }
-                .button { display: inline-block; padding: 12px 30px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
+                .credentials { background-color: #f0f0f0; padding: 15px; border-left: 4px solid #ff5a29; margin: 20px 0; }
+                .button { display: inline-block; padding: 12px 30px; background-color: #ff5a29; color: white !important; text-decoration: none; border-radius: 5px; margin-top: 20px; }
                 .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
             </style>
         </head>
@@ -126,10 +126,10 @@ class EmailService
                         <p><strong>Password:</strong> {$data['password']}</p>
                     </div>
 
-                    <p>Click the button below to login and start earning rewards:</p>
-                    <a href='{$data['login_url']}' class='button'>Login Now</a>
+                    <p>Click the button below to login into MaxReward:</p>
+                    <a href='{$data['login_url']}' style='color:#fff; background-color: #ff5a29;' class='button'>Login Now</a>
 
-                    <p style='margin-top: 30px;'>Start earning rewards today! </p>
+                    <p style='margin-top: 30px;'>Please change your password after you login.</p>
 
                     <p style='margin-top: 20px; color: #666; font-size: 14px;'>
                         <strong>Need help?</strong> Contact our support team.

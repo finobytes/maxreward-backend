@@ -109,7 +109,9 @@ trait PointDistributionTrait
                 'transaction_type' => Transaction::TYPE_CP,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => $transactionReason . ($isLocked ? ' [ON HOLD]' : ''),
-                $isLocked ? 'bop' : 'bap' => $isLocked ? $receiverWallet->onhold_points : $receiverWallet->available_points
+                'bap' => $receiverWallet->available_points,
+                'brp' => $receiverWallet->total_rp,
+                'bop' => $receiverWallet->onhold_points
             ]);
 
             // Notification

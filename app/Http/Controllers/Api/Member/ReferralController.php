@@ -188,7 +188,9 @@ class ReferralController extends Controller
                 'transaction_type' => Transaction::TYPE_RP,
                 'points_type' => Transaction::POINTS_DEBITED,
                 'transaction_reason' => "Referred new member: {$newMember->name}",
-                'brp' => $referrerWallet->total_rp
+                'brp' => $referrerWallet->total_rp,
+                'bap' => $referrerWallet->available_points,
+                'bop' => $referrerWallet->onhold_points
             ]);
 
             Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
@@ -227,7 +229,7 @@ class ReferralController extends Controller
                     'email' => $newMember->email,
                     'user_name' => $userName,
                     'password' => $password,
-                    'login_url' => env('APP_URL') . '/login',
+                    'login_url' => 'https://maxreward.finobytes.com',
                 ]);
             }
 

@@ -8,6 +8,7 @@ use App\Models\MemberCommunityPoint;
 use App\Models\CpUnlockHistory;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
+use App\Models\Transaction;
 
 trait CheckAndUnlockCpLevelsTrait
 {
@@ -63,6 +64,17 @@ trait CheckAndUnlockCpLevelsTrait
                 $wallet->onhold_points -= $releasedCp;
                 $wallet->available_points += $releasedCp;
                 $wallet->save();
+
+                Transaction::createTransaction([
+                    'member_id' => $memberId,
+                    'transaction_points' => $releasedCp,
+                    'transaction_type' => Transaction::TYPE_AP,
+                    'points_type' => Transaction::POINTS_CREDITED,
+                    'transaction_reason' => "Onhold CP released",
+                    'brp' => $wallet->total_rp,
+                    'bap' => $wallet->available_points,
+                    'bop' => $wallet->onhold_points
+                ]);
 
                 // Create unlock history
                 CpUnlockHistory::createUnlockRecord([
