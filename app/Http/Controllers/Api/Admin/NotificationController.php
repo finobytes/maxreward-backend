@@ -139,6 +139,48 @@ class NotificationController extends Controller
         }
     }
 
+
+
+
+    public function saveMerchantNotificationSaveCount(Request $request)
+    {
+        try {
+            $merchant = $request->user();
+
+            if (!$merchant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Merchant not authenticated'
+                ], 401);
+            }
+
+            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
+
+            if (!$merchantData || !$merchantData->corporateMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Corporate member not found for this merchant'
+                ], 404);
+            }
+
+            Notification::where('member_id', $merchantData->corporateMember->id)
+                ->where('is_count_read', 0)
+                ->update(['is_count_read' => 1]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Merchant notification count saved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save merchant notification count',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     /**
      * Get all notifications without pagination
      *
@@ -352,18 +394,21 @@ class NotificationController extends Controller
         try {
             $merchant = $request->user();
 
-            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
-
-
-            
-
             if (!$merchant) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Merchant not authenticated'
                 ], 401);
             }
+            
 
+           
+            
+            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
+
+
+            //  dd($merchantData);
+            
             $validator = Validator::make($request->all(), [
                 'per_page' => 'nullable|integer|min:1|max:100',
                 'page' => 'nullable|integer|min:1',
@@ -422,8 +467,8 @@ class NotificationController extends Controller
             // Get statistics for this merchant
             $statistics = [
                 'total_notifications' => Notification::where('member_id', $merchantData->corporateMember->id)->count(),
-                'total_read' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'read')->count(),
-                'total_unread' => Notification::where('member_id', $merchantData->corporateMember->id)->where('status', 'unread')->count(),
+                'total_read' => Notification::where('member_id', $merchantData->corporateMember->id)->where('is_count_read', 1)->count(),
+                'total_unread' => Notification::where('member_id', $merchantData->corporateMember->id)->where('is_count_read', 0)->count(),
             ];
 
             // dd($notifications);

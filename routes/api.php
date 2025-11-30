@@ -197,7 +197,7 @@ Route::prefix('notifications')->middleware('auth:admin,member,merchant')->group(
     Route::get('/member/all', [NotificationController::class, 'getMemberNotifications'])->middleware('role:member');
     Route::get('/merchant/all', [NotificationController::class, 'getMerchantNotifications'])->middleware('role:merchant');
     Route::post('/member/save-count', [NotificationController::class, 'saveMemberNotificationSaveCount'])->middleware('role:member');
-    Route::get('/merchant/save-count', [NotificationController::class, 'saveMerchantNotificationSaveCount'])->middleware('role:merchant');
+    Route::post('/merchant/save-count', [NotificationController::class, 'saveMerchantNotificationSaveCount'])->middleware('role:merchant');
     Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member,merchant');
     Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin');
 });
