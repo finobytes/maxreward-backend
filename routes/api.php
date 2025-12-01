@@ -137,7 +137,8 @@ Route::prefix('admin')->group(function () {
 
         Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
         Route::post('/merchant-suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
-// 
+        Route::post('/merchant-rejected', [MerchantController::class, 'rejectMerchant'])->middleware('role:admin');
+//
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
             Route::get('details', [CompanyInfoController::class, 'getFullDetails']);

@@ -94,6 +94,6 @@ class Merchant extends Model
      */
     public function suspendedBy()
     {
-        return $this->belongsTo(Member::class, 'suspended_by');
+        return $this->belongsTo(Admin::class, 'suspended_by');
     }
 }

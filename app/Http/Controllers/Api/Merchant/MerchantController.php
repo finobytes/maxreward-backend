@@ -1489,6 +1489,72 @@ class MerchantController extends Controller
         }
     }
 
+    /**
+     * Reject or activate a merchant
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function rejectMerchant(Request $request)
+    {
+        try {
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'merchant_id' => 'required|exists:merchants,id',
+                'status' => 'required|in:rejected,active',
+                'rejected_reason' => 'required_if:status,rejected|string|max:500',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Find merchant
+            $merchant = Merchant::findOrFail($request->merchant_id);
+
+            // Update merchant status and reason
+            $merchant->status = $request->status;
+
+            if ($request->status == 'rejected') {
+                $merchant->rejected_reason = $request->rejected_reason;
+                $merchant->rejected_by = auth()->id(); // Store admin who rejected
+            } else {
+                // If activating, clear rejection reason
+                $merchant->rejected_reason = null;
+                $merchant->rejected_by = null;
+            }
+
+            $merchant->save();
+
+            // Load relationships
+            $merchant->load(['wallet', 'corporateMember', 'staffs', 'rejectedBy']);
+
+            return response()->json([
+                'success' => true,
+                'message' => $request->status == 'rejected'
+                    ? 'Merchant rejected successfully'
+                    : 'Merchant activated successfully',
+                'data' => $merchant
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update merchant status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function rejectedPurchase(Request $request)
     {
