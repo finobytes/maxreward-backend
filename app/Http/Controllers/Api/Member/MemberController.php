@@ -129,7 +129,9 @@ class MemberController extends Controller
         try {
             $member = Member::with([
                 'wallet',
-                'merchant.wallet'  // Include merchant and its wallet
+                'merchant.wallet',  // Include merchant and its wallet
+                'suspendedBy',
+                'blockedBy'
             ])->findOrFail($id);
 
             // Calculate lifetime purchase (sum of approved transaction amounts)
@@ -662,8 +664,6 @@ class MemberController extends Controller
 
 
     public function statusBlockSuspend(Request $request){
-        \Log::info('statusBlockSuspend method called', ['request_data' => $request->all()]);
-
         try {
             // Validate request
             $validator = Validator::make($request->all(), [
@@ -689,12 +689,14 @@ class MemberController extends Controller
             // Handle block reason
             if($request->status == 'blocked'){
                 $member->block_reason = $request->reason;
+                $member->blocked_by = auth()->id();
                 $member->suspended_reason = null; // Clear suspended reason if blocked
             }
 
             // Handle suspended reason
             if($request->status == 'suspended'){
                 $member->suspended_reason = $request->reason;
+                $member->suspended_by = auth()->id();
                 $member->block_reason = null; // Clear block reason if suspended
             }
 
@@ -707,7 +709,7 @@ class MemberController extends Controller
             $member->save();
 
             // Reload member with relationships
-            $member->load(['wallet', 'merchant']);
+            $member->load(['wallet', 'merchant', 'suspendedBy', 'blockedBy']);
 
             return response()->json([
                 'success' => true,

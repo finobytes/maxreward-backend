@@ -31,6 +31,8 @@ return new class extends Migration
             $table->integer('country_id')->nullable();
             $table->string('country_code')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
+            $table->unsignedBigInteger('suspended_by')->nullable()->comment('Admin ID who suspended');
+            $table->unsignedBigInteger('blocked_by')->nullable()->comment('Admin ID who blocked');
             $table->timestamps();
             $table->softDeletes();
 

@@ -38,7 +38,7 @@ class MerchantStaffController extends Controller
         $validator = Validator::make($request->all(), [
             'merchant_id' => 'required|integer|exists:merchants,id',
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone',
+            'phone' => 'required|string|unique:merchant_staffs,phone',
             'email' => 'required|email|max:255|unique:merchant_staffs,email',
             'password' => 'required|string|min:6',
             'gender_type' => 'required|in:male,female,others',
@@ -263,7 +263,7 @@ class MerchantStaffController extends Controller
         // Validate request
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchant_staffs,phone,' . $id,
+            'phone' => 'sometimes|required|string|max:20|unique:merchant_staffs,phone,' . $id,
             'email' => 'sometimes|required|email|max:255|unique:merchant_staffs,email,' . $id,
             'password' => 'nullable|string|min:6',
             'gender_type' => 'sometimes|required|in:male,female,others',

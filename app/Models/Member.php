@@ -31,7 +31,9 @@ class Member extends Authenticatable implements JWTSubject
         'image',
         'image_cloudinary_id',
         'country_id',
-        'country_code'
+        'country_code',
+        'suspended_by',
+        'blocked_by'
     ];
 
     protected $hidden = [
@@ -84,6 +86,22 @@ class Member extends Authenticatable implements JWTSubject
     public function purchases()
     {
         return $this->hasMany(Purchase::class, 'member_id');
+    }
+
+    /**
+     * Get the admin/user who suspended this merchant
+     */
+    public function suspendedBy()
+    {
+        return $this->belongsTo(Admin::class, 'suspended_by');
+    }
+
+    /**
+     * Get the admin/user who blocked this member
+     */
+    public function blockedBy()
+    {
+        return $this->belongsTo(Admin::class, 'blocked_by');
     }
 
 }

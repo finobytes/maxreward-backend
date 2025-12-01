@@ -695,7 +695,7 @@ class MerchantController extends Controller
 
             // Owner Details
             // 'owner_name' => 'sometimes|required|string|max:255',
-            'phone' => 'sometimes|required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:merchants,phone,' . $id,
+            'phone' => 'sometimes|required|string|max:20|unique:merchants,phone,' . $id,
             // 'gender' => 'sometimes|required|in:male,female,others',
             'address' => 'sometimes|required|string',
             'email' => 'sometimes|required|email|max:255|unique:merchants,email,' . $id,
