@@ -45,6 +45,8 @@ class Merchant extends Model
         'suspended_by',
         'designation',
         'suspended_reason',
+        'rejected_by',
+        'rejected_reason',
         'corporate_member_id',
         'verification_documents',
         'verification_docs_url',
@@ -85,5 +87,13 @@ class Merchant extends Model
     public function wallet()
     {
         return $this->hasOne(MerchantWallet::class, 'merchant_id');
+    }
+
+    /**
+     * Get the admin/user who suspended this merchant
+     */
+    public function suspendedBy()
+    {
+        return $this->belongsTo(Member::class, 'suspended_by');
     }
 }

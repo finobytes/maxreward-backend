@@ -1464,7 +1464,7 @@ class MerchantController extends Controller
             $merchant->save();
 
             // Load relationships
-            $merchant->load(['wallet', 'corporateMember', 'staffs']);
+            $merchant->load(['wallet', 'corporateMember', 'staffs', 'suspendedBy']);
 
             return response()->json([
                 'success' => true,

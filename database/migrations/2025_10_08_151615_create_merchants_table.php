@@ -48,6 +48,9 @@ return new class extends Migration
             $table->unsignedBigInteger('suspended_by')->nullable()->comment('Admin ID who suspended');
             $table->string('suspended_reason')->nullable()->comment('Reason for suspending');
             
+            $table->unsignedBigInteger('rejected_by')->nullable()->comment('Admin ID who rejected');
+            $table->string('rejected_reason')->nullable()->comment('Reason for rejecting');
+
             $table->string('state')->nullable();
             $table->string('country')->nullable();
             $table->text('products_services')->nullable();
