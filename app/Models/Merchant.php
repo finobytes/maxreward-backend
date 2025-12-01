@@ -96,4 +96,12 @@ class Merchant extends Model
     {
         return $this->belongsTo(Admin::class, 'suspended_by');
     }
+
+    /**
+     * Get the admin/user who rejected this merchant
+     */
+    public function rejectedBy()
+    {
+        return $this->belongsTo(Admin::class, 'rejected_by');
+    }
 }

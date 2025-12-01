@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('business_type_id')->nullable()->comment('Business type ID');
             $table->text('business_description')->nullable();
             $table->text('company_address')->nullable();
-            $table->enum('status', ['pending', 'approved', 'suspended', 'blocked'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'suspended', 'blocked','rejected'])->default('pending');
             $table->string('license_number')->nullable();
             $table->string('business_logo')->nullable()->comment('Cloudinary base URL');
             $table->string('logo_cloudinary_id')->nullable();
