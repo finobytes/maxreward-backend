@@ -586,7 +586,8 @@ class MerchantController extends Controller
         try {
             $merchant = Merchant::with([
                 'wallet',
-                'corporateMember.wallet'
+                'corporateMember.wallet',
+                'suspendedBy'
             ])->findOrFail($id);
 
             // Load statistics from your tree service
