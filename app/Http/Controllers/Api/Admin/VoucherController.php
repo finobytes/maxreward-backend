@@ -358,6 +358,7 @@ class VoucherController extends Controller
         try {
             $voucher = Voucher::findOrFail($voucherId);
             $voucher->status = $request->status;
+            $voucher->rejected_by = auth()->user()->id; // Assuming authentication is set up
             if ($request->has('reason')) {
                 $voucher->rejected_reason = $request->reason;
             }

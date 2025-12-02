@@ -420,4 +420,10 @@ class Voucher extends Model
             ->groupBy('voucher_type')
             ->get();
     }
+
+
+    public function rejectedBy()
+    {
+        return $this->belongsTo(Admin::class, 'rejected_by');
+    }
 }

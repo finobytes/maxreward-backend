@@ -508,7 +508,7 @@ class VoucherController extends Controller
 
     public function getSingleVoucher(Request $request){
         try {
-            $voucher = Voucher::with(['denomination', 'member', 'merchant'])->findOrFail($request->id);
+            $voucher = Voucher::with(['denomination', 'member', 'merchant', 'rejectedBy'])->findOrFail($request->id);
             return response()->json([
                 'success' => true,
                 'message' => 'Voucher retrieved successfully',
