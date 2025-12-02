@@ -87,7 +87,7 @@ class MerchantSeeder extends Seeder
         $corporateMember1 = Member::create([
             'user_name' => $corporateUsername1,
             'name' => $merchant1->business_name,
-            'phone' => '01712345678',
+            'phone' => '8801712345678',
             'email' => 'contact@shwapno.com',
             'password' => Hash::make('password123'),
             'address' => 'Dhanmondi, Dhaka',
@@ -180,7 +180,7 @@ class MerchantSeeder extends Seeder
         $corporateMember2 = Member::create([
             'user_name' => $corporateUsername2,
             'name' => $merchant2->business_name,
-            'phone' => '01812345679',
+            'phone' => '8801812345679',
             'email' => 'info@techzone.com',
             'password' => Hash::make('password123'),
             'address' => 'Panthapath, Dhaka',

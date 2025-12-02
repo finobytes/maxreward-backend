@@ -135,10 +135,12 @@ trait PointDistributionTrait
             $total_distributed_cp += $cpAmount;
         }
 
+        Log::info('total_distributed_cp: ' . $total_distributed_cp);
+
         $cpDistributionPool = CpDistributionPool::create([
             'transaction_id' => $transaction_id ?? 'Ref-' . $sourceMember->phone,
             'source_member_id' => $sourceMemberId,
-            'total_distributed_cp' => $total_distributed_cp,
+            'total_cp_amount' => $total_distributed_cp,
             'total_transaction_amount' => $totalCp,
             'phone' => $sourceMember->phone,
             'total_referrals' => $sourceMember->wallet->total_referrals,
@@ -147,6 +149,8 @@ trait PointDistributionTrait
 
         // Update all related transactions with the pool ID
         CpTransaction::whereIn('id', $cpTransactionIds)->update(['cp_distribution_pools_id' => $cpDistributionPool->id]);
+
+        session(['cp_distribution_pool_id' => $cpDistributionPool->id]);
 
         Log::info("CP distribution completed");
     }
