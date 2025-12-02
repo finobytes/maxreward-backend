@@ -490,6 +490,116 @@ class NotificationController extends Controller
     }
 
     /**
+     * Mark single member notification as read
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function readSingleMemberNotification(Request $request, $id)
+    {
+        try {
+            // $member = $request->user();
+
+            // if (!$member) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Member not authenticated'
+            //     ], 401);
+            // }
+
+            // Find notification by ID and ensure it belongs to the authenticated member
+            $notification = Notification::where('id', $id)
+                // ->where('member_id', $member->id)
+                ->first();
+
+            if (!$notification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notification not found'
+                ], 404);
+            }
+
+            // Mark as read
+            $notification->is_read = 1;
+            $notification->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification marked as read successfully',
+                'data' => $notification
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark notification as read',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mark single merchant notification as read
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function readSingleMerchnatNotification(Request $request, $id)
+    {
+        try {
+            $merchant = $request->user();
+
+            if (!$merchant) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Merchant not authenticated'
+                ], 401);
+            }
+
+            // Get merchant with corporate member relation
+            $merchantData = Merchant::with(['corporateMember'])->find($merchant->id);
+
+            if (!$merchantData || !$merchantData->corporateMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Corporate member not found for this merchant'
+                ], 404);
+            }
+
+            // Find notification by ID and ensure it belongs to the merchant's corporate member
+            $notification = Notification::where('id', $id)
+                ->where('member_id', $merchantData->corporateMember->id)
+                ->first();
+
+            if (!$notification) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Notification not found'
+                ], 404);
+            }
+
+            // Mark as read
+            $notification->is_read = 1;
+            $notification->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification marked as read successfully',
+                'data' => $notification
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark notification as read',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Delete notification
      *
      * @param int $id
