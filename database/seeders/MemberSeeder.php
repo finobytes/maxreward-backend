@@ -87,6 +87,8 @@ class MemberSeeder extends Seeder
                 'merchant_id' => null,
                 'member_created_by' => 'admin',
                 'referral_code' => $this->generateUniqueReferralCode(),
+                'country_id' => 67,
+                'country_code' => '880',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);
@@ -141,6 +143,8 @@ class MemberSeeder extends Seeder
             'merchant_id' => null,  // ✅ Not linked to any merchant
             'member_created_by' => 'admin',
             'referral_code' => $this->generateUniqueReferralCode(), // this function coming from MemberHelperTrait
+            'country_id' => 67,
+            'country_code' => '880',
             'created_at' => $now,
             'updated_at' => $now,
         ]);
