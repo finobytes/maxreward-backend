@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('purchase_id')->nullable()->comment('References PURCHASES table');
             $table->unsignedBigInteger('source_member_id')->comment('Member who made the purchase');
             $table->unsignedBigInteger('receiver_member_id')->comment('Member receiving CP');
+            $table->unsignedBigInteger('cp_distribution_pools_id')->nullable()->comment('References CP_DISTRIBUTION_POOLS table');
             $table->integer('level')->comment('Community level (1-30)');
             $table->decimal('cp_percentage', 5, 2)->comment('CP % for this level');
             $table->double('cp_amount')->comment('CP amount credited');
