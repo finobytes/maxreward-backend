@@ -23,6 +23,7 @@ class CpTransaction extends Model
         'transaction_type',
         'released_at',
         'locked_at',
+        'cp_distribution_pools_id'
     ];
 
     protected $casts = [
@@ -61,6 +62,14 @@ class CpTransaction extends Model
     public function receiverMember()
     {
         return $this->belongsTo(Member::class, 'receiver_member_id');
+    }
+
+    /**
+     * Get the CP distribution pool
+     */
+    public function cpDistributionPools()
+    {
+        return $this->belongsTo(CpDistributionPool::class, 'cp_distribution_pools_id');
     }
 
     /**

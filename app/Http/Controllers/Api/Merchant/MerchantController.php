@@ -1342,7 +1342,7 @@ class MerchantController extends Controller
             // 3️ CP: CP points add to distributed across 30-level community tree
             $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); 
             // ✅ For purchase, source and new member are the same for distributeCommunityPoints
-            $this->distributeCommunityPoints($purchase->member_id, $purchase->member_id, $cpAmount, 'purchase', $purchase->id);
+            $this->distributeCommunityPoints($purchase->member, $purchase->member_id, $purchase->member_id, $cpAmount, 'purchase', $purchase->id, $purchase->transaction_id);
 
             Log::info('4️ CR: CR points add to Company Reserve');
 

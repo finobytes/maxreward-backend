@@ -10,6 +10,7 @@ use App\Models\MemberCommunityPoint;
 use App\Models\CpLevelConfig;
 use App\Models\Notification;
 use Illuminate\Support\Facades\Log;
+use App\Models\CpDistributionPool;
 
 trait PointDistributionTrait
 {
@@ -18,7 +19,7 @@ trait PointDistributionTrait
      * Based on CpLevelConfig distribution rules
      * ✅ SHARED TRAIT FOR BOTH CONTROLLERS 1. ReferralController 2. MerchantController
      */
-    private function distributeCommunityPoints($sourceMemberId, $newMemberId, $totalCp, $reason, $purchase_id = null)
+    private function distributeCommunityPoints($sourceMember, $sourceMemberId, $newMemberId, $totalCp, $reason, $purchase_id = null, $transaction_id = null)
     {
         Log::info('Start :: Distribute Community Points (CP) across 30 levels for: ' . $reason);
 
@@ -32,6 +33,9 @@ trait PointDistributionTrait
             'total_cp' => $totalCp,
             'reason' => $reason
         ]);
+
+        $total_distributed_cp = 0;
+        $cpTransactionIds = [];
 
         foreach ($uplinePath as $node) {
             $level = $node['level'];
@@ -71,7 +75,7 @@ trait PointDistributionTrait
             ]);
 
             // Create CP transaction record
-            CpTransaction::createCpTransaction([
+            $cpTransaction = CpTransaction::createCpTransaction([
                 'purchase_id' => $purchase_id ?? null,
                 'source_member_id' => $sourceMemberId,
                 'receiver_member_id' => $receiverMemberId,
@@ -80,6 +84,8 @@ trait PointDistributionTrait
                 'cp_amount' => $cpAmount,
                 'is_locked' => $isLocked,
             ]);
+
+            $cpTransactionIds[] = $cpTransaction->id;
 
             // Update member's CP wallet
             $mcp = MemberCommunityPoint::getOrCreateForLevel($receiverMemberId, $level, $isLocked);
@@ -125,7 +131,22 @@ trait PointDistributionTrait
                 'title' => 'Community Points Earned!',
                 'message' => $message . ($isLocked ? ' (On Hold - unlock more levels to access)' : ''),
             ]);
+
+            $total_distributed_cp += $cpAmount;
         }
+
+        $cpDistributionPool = CpDistributionPool::create([
+            'transaction_id' => $transaction_id ?? 'Ref-' . $sourceMember->phone,
+            'source_member_id' => $sourceMemberId,
+            'total_distributed_cp' => $total_distributed_cp,
+            'total_transaction_amount' => $totalCp,
+            'phone' => $sourceMember->phone,
+            'total_referrals' => $sourceMember->wallet->total_referrals,
+            'unlocked_level' => $sourceMember->wallet->unlocked_level
+        ]);
+
+        // Update all related transactions with the pool ID
+        CpTransaction::whereIn('id', $cpTransactionIds)->update(['cp_distribution_pools_id' => $cpDistributionPool->id]);
 
         Log::info("CP distribution completed");
     }
