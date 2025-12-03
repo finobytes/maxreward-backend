@@ -16,8 +16,90 @@ class NotificationController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request)
+
+     public function index(Request $request)
     {
+        try {
+            $validator = Validator::make($request->all(), [
+                'per_page' => 'nullable|integer|min:1|max:100',
+                'page' => 'nullable|integer|min:1',
+                'type' => 'nullable|string',
+                'status' => 'nullable|string|in:read,unread',
+                'is_read' => 'nullable|boolean',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'sort_by' => 'nullable|string|in:created_at,read_at',
+                'sort_order' => 'nullable|string|in:asc,desc',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $perPage = $request->input('per_page', 15);
+            $sortBy = $request->input('sort_by', 'created_at');
+            $sortOrder = $request->input('sort_order', 'desc');
+
+            // Build query for admin notifications (where member_id and merchant_id are null)
+            $query = Notification::whereNull('member_id')
+                ->whereNull('merchant_id');
+
+            // Apply filters
+            if ($request->has('type')) {
+                $query->where('type', $request->type);
+            }
+
+            if ($request->has('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->has('is_read')) {
+                $query->where('is_read', $request->is_read);
+            }
+
+            if ($request->has('start_date') && $request->has('end_date')) {
+                $query->whereBetween('created_at', [
+                    $request->start_date . ' 00:00:00',
+                    $request->end_date . ' 23:59:59'
+                ]);
+            }
+
+            // Apply sorting
+            $query->orderBy($sortBy, $sortOrder);
+
+            // Get paginated results
+            $notifications = $query->paginate($perPage);
+
+            // Get statistics for admin notifications
+            $statistics = [
+                'total_notifications' => Notification::whereNull('member_id')->whereNull('merchant_id')->count(),
+                'total_read' => Notification::whereNull('member_id')->whereNull('merchant_id')->where('is_count_read', 1)->count(),
+                'total_unread' => Notification::whereNull('member_id')->whereNull('merchant_id')->where('is_count_read', 0)->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin notifications retrieved successfully',
+                'data' => $notifications,
+                'statistics' => $statistics
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve admin notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function indexOld(Request $request)
+    {
+        dd("ok");
         try {
             $validator = Validator::make($request->all(), [
                 'per_page' => 'nullable|integer|min:1|max:100',
@@ -103,6 +185,29 @@ class NotificationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve notifications',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function saveAdminNotificationSaveCount(Request $request)
+    {
+        try {
+            Notification::whereNull('member_id')
+                ->whereNull('merchant_id')
+                ->where('is_count_read', 0)
+                ->update(['is_count_read' => 1]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Admin notification count saved successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save admin notification count',
                 'error' => $e->getMessage()
             ], 500);
         }
