@@ -179,6 +179,7 @@ Route::prefix('admin')->group(function () {
 
         // CP Distribution pool 
         Route::get('get-cp-distribution-pool', [CpDistributionPoolController::class, 'getCpDistributionPool']);
+        Route::get('get-single-cp-distribution-pool-{id}', [CpDistributionPoolController::class, 'getSingleCpDistributionPool']);
 
         Route::get('get-all-merchants-purchases-data', [MerchantController::class, 'getAllMerchantsPurchasesData']);
 

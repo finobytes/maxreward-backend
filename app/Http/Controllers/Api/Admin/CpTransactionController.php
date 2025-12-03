@@ -157,4 +157,22 @@ class CpTransactionController extends Controller
             ], 500);
         }
     }
+
+    public function getSingleCpDistributionPool($id)
+    {
+        try{
+            $getSingleCpDistributionPool = CpTransaction::where('cp_distribution_pools_id', $id)->get();
+            return response()->json([
+                'success' => true,
+                'message' => 'Single CP distribution pool retrieved successfully',
+                'data' => $getSingleCpDistributionPool
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve CP distribution pool',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
