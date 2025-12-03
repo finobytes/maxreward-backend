@@ -162,7 +162,7 @@ class CpTransactionController extends Controller
     {
         try{
             $getSingleCpDistributionPool = CpDistributionPool::with(['member'])->findOrFail($id);
-            $getSingleCpDistributionPoolData = CpTransaction::where('cp_distribution_pools_id', $id)->get();
+            $getSingleCpDistributionPoolData = CpTransaction::with('receiverMember')->where('cp_distribution_pools_id', $id)->get();
             return response()->json([
                 'success' => true,
                 'message' => 'Single CP distribution pool retrieved successfully',
