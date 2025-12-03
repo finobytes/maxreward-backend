@@ -161,11 +161,15 @@ class CpTransactionController extends Controller
     public function getSingleCpDistributionPool($id)
     {
         try{
-            $getSingleCpDistributionPool = CpTransaction::where('cp_distribution_pools_id', $id)->get();
+            $getSingleCpDistributionPool = CpDistributionPool::with(['member'])->findOrFail($id);
+            $getSingleCpDistributionPoolData = CpTransaction::where('cp_distribution_pools_id', $id)->get();
             return response()->json([
                 'success' => true,
                 'message' => 'Single CP distribution pool retrieved successfully',
-                'data' => $getSingleCpDistributionPool
+                'data' => [
+                    'getSingleCpDistributionPool' => $getSingleCpDistributionPool,
+                    'getSingleCpDistributionPoolData' => $getSingleCpDistributionPoolData
+                ]
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
