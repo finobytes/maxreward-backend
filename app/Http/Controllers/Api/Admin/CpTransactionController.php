@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CpTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Models\CpDistributionPool;
 
 class CpTransactionController extends Controller
 {
@@ -135,6 +136,47 @@ class CpTransactionController extends Controller
                 'message' => 'CP transaction not found',
                 'error' => $e->getMessage()
             ], 404);
+        }
+    }
+
+    public function getCpDistributionPool()
+    {
+        // dd("ok");
+        try {
+            $cpDistributionPool = CpDistributionPool::with(['member'])->orderBy('id', 'desc')->paginate(20);
+            return response()->json([
+                'success' => true,
+                'message' => 'CP distribution pool retrieved successfully',
+                'data' => $cpDistributionPool
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve CP distribution pool',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getSingleCpDistributionPool($id)
+    {
+        try{
+            $getSingleCpDistributionPool = CpDistributionPool::with(['member'])->findOrFail($id);
+            $getSingleCpDistributionPoolData = CpTransaction::with('receiverMember')->where('cp_distribution_pools_id', $id)->get();
+            return response()->json([
+                'success' => true,
+                'message' => 'Single CP distribution pool retrieved successfully',
+                'data' => [
+                    'getSingleCpDistributionPool' => $getSingleCpDistributionPool,
+                    'getSingleCpDistributionPoolData' => $getSingleCpDistributionPoolData
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve CP distribution pool',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\Admin\CountryController;
 use App\Http\Controllers\Api\Admin\CpTransactionController as AdminCpTransactionController;
 use App\Http\Controllers\Api\Member\CpTransactionController as MemberCpTransactionController;
 use App\Http\Controllers\Api\Merchant\CpTransactionController as MerchantCpTransactionController;
+use App\Http\Controllers\Api\Admin\CpTransactionController as CpDistributionPoolController;
 use App\Http\Controllers\Api\Admin\MemberCommunityPointController as AdminMemberCommunityPointController;
 use App\Http\Controllers\Api\Member\MemberCommunityPointController as MemberMemberCommunityPointController;
 use App\Http\Controllers\Api\Merchant\MemberCommunityPointController as MerchantMemberCommunityPointController;
@@ -175,6 +176,10 @@ Route::prefix('admin')->group(function () {
             Route::get('/', [AdminCpUnlockHistoryController::class, 'index']);
             Route::get('/{id}', [AdminCpUnlockHistoryController::class, 'show']);
         });
+
+        // CP Distribution pool 
+        Route::get('get-cp-distribution-pool', [CpDistributionPoolController::class, 'getCpDistributionPool']);
+        Route::get('get-single-cp-distribution-pool-{id}', [CpDistributionPoolController::class, 'getSingleCpDistributionPool']);
 
         Route::get('get-all-merchants-purchases-data', [MerchantController::class, 'getAllMerchantsPurchasesData']);
 
