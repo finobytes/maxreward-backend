@@ -34,6 +34,8 @@ class MerchantStaffController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
+
         // Validate request
         $validator = Validator::make($request->all(), [
             'merchant_id' => 'required|integer|exists:merchants,id',

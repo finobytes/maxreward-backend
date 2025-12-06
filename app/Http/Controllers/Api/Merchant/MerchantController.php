@@ -637,8 +637,42 @@ class MerchantController extends Controller
                 'corporateMember',
                 'staffs'
             ])->where(function($query) use ($uniqueNumber) {
-                $query->where('unique_number', $uniqueNumber)
-                      ->orWhere('business_name', $uniqueNumber);
+                $query->where('unique_number', 'LIKE', '%' . $uniqueNumber . '%')
+                      ->orWhere('business_name', 'LIKE', '%' . $uniqueNumber . '%');
+            })->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Merchant retrieved successfully',
+                'data' => $merchant
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found with this unique number or phone number'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve merchant',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+    public function getByUniqueNumberOld($uniqueNumber)
+    {
+        try {
+            $merchant = Merchant::with([
+                'wallet',
+                'corporateMember',
+                'staffs'
+            ])->where(function($query) use ($uniqueNumber) {
+                $query->where('unique_number', 'LIKE', '%' . $uniqueNumber . '%')
+                      ->orWhere('business_name', 'LIKE', '%' . $uniqueNumber . '%');
             })->firstOrFail();
 
             return response()->json([
