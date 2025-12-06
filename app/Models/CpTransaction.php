@@ -23,7 +23,8 @@ class CpTransaction extends Model
         'transaction_type',
         'released_at',
         'locked_at',
-        'cp_distribution_pools_id'
+        'cp_distribution_pools_id',
+        'total_referrals'
     ];
 
     protected $casts = [

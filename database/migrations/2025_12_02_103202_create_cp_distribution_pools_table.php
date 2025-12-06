@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('source_member_id');
             $table->double('total_cp_amount')->default(0);
             $table->double('total_transaction_amount')->default(0);
+            $table->double('total_cp_distributed')->default(0);
             $table->string('phone');
             $table->integer('total_referrals')->default(0);
             $table->integer('unlocked_level')->default(5);

@@ -102,7 +102,7 @@ trait DistributeReferralPointsTrait
 
         // 3️ CP: 50 points distributed across 30-level community tree
         $cpAmount = $totalPoints * ($this->settingAttributes['cp_points']/100); // 50 points
-        $this->distributeCommunityPoints($referrer, $referrer->id, $newMember->id, $cpAmount, 'registration');
+        $this->distributeCommunityPoints($referrer, $referrer->id, $newMember->id, $cpAmount, 'registration', null, null, $totalPoints);
 
         Log::info('4️ CR: 20 points to Company Reserve');
 
