@@ -45,7 +45,7 @@ Route::prefix('member')->group(function () {
     Route::post('login', [MemberAuthController::class, 'login']);
 
     // Protected routes - require JWT authentication
-    Route::middleware('auth:member')->group(function () {
+    Route::middleware(['auth:member', 'member.status'])->group(function () {
         Route::post('logout', [MemberAuthController::class, 'logout']);
         Route::post('refresh', [MemberAuthController::class, 'refresh']);
         Route::post('me', [MemberAuthController::class, 'me']);

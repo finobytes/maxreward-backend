@@ -33,7 +33,8 @@ class Member extends Authenticatable implements JWTSubject
         'country_id',
         'country_code',
         'suspended_by',
-        'blocked_by'
+        'blocked_by',
+        'last_status_changed_at'
     ];
 
     protected $hidden = [
@@ -45,6 +46,7 @@ class Member extends Authenticatable implements JWTSubject
         'gender_type' => 'string',
         'status' => 'string',
         'member_created_by' => 'string',
+        'last_status_changed_at' => 'datetime',
     ];
 
     public function getJWTIdentifier()
@@ -54,7 +56,9 @@ class Member extends Authenticatable implements JWTSubject
 
     public function getJWTCustomClaims()
     {
-        return [];
+        return [
+            'last_status_changed_at' => $this->last_status_changed_at ? $this->last_status_changed_at->timestamp : null,
+        ];
     }
 
         /**

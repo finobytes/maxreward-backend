@@ -691,6 +691,7 @@ class MemberController extends Controller
                 $member->block_reason = $request->reason;
                 $member->blocked_by = auth()->id();
                 $member->suspended_reason = null; // Clear suspended reason if blocked
+                $member->last_status_changed_at = now(); // Update timestamp to force logout
             }
 
             // Handle suspended reason
@@ -698,6 +699,7 @@ class MemberController extends Controller
                 $member->suspended_reason = $request->reason;
                 $member->suspended_by = auth()->id();
                 $member->block_reason = null; // Clear block reason if suspended
+                $member->last_status_changed_at = now(); // Update timestamp to force logout
             }
 
             // Clear both reasons if status is active
