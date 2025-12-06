@@ -1654,22 +1654,20 @@ class MerchantController extends Controller
             // ]);
 
             // Notification for member - Purchase rejected
-            // Notification::create([
-            //     'member_id' => $purchase->member_id,
-            //     'type' => 'purchase_rejected',
-            //     'title' => 'Purchase Rejected',
-            //     'message' => "Your purchase at {$purchase->merchant->business_name} has been rejected. {$purchase->redeem_amount} points have been refunded. Reason: {$request->reason}",
-            //     'data' => [
-            //         'purchase_id' => $purchase->id,
-            //         'redeem_amount' => $purchase->redeem_amount,
-            //         'transaction_amount' => $purchase->transaction_amount,
-            //         'merchant_name' => $purchase->merchant->business_name,
-            //         'rejected_reason' => $request->reason,
-            //         'rejected_at' => now()->toDateTimeString()
-            //     ],
-            //     'status' => 'unread',
-            //     'is_read' => false
-            // ]);
+            Notification::create([
+                'member_id' => $purchase->member_id,
+                'type' => 'purchase_rejected',
+                'title' => 'Purchase Rejected',
+                'message' => "Your purchase at {$purchase->merchant->business_name} has been rejected. {$purchase->redeem_amount} points have been refunded. Reason: {$request->reason}",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'merchant_name' => $purchase->merchant->business_name,
+                    'rejected_reason' => $request->reason,
+                    'rejected_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
 
             DB::commit();
 
