@@ -33,6 +33,7 @@ return new class extends Migration
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->unsignedBigInteger('suspended_by')->nullable()->comment('Admin ID who suspended');
             $table->unsignedBigInteger('blocked_by')->nullable()->comment('Admin ID who blocked');
+            $table->timestamp('last_status_changed_at')->nullable()->after('status');
             $table->timestamps();
             $table->softDeletes();
 
