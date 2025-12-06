@@ -233,7 +233,8 @@ class MerchantController extends Controller
             Log::info('Step 2: Generate corporate member username');
 
             // Generate corporate member username
-            $corporateUsername = $this->generateCorporateMemberUsername();
+            // $corporateUsername = $this->generateCorporateMemberUsername();
+            $corporateUsername = 'C' . $request->phone;
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
             // $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
             // $lastSix = substr($userName, -6);
@@ -352,7 +353,8 @@ class MerchantController extends Controller
             Log::info('Step 13: Create Merchant Staff');
 
             // Create Merchant Staff (automatically from merchant data)
-            $merchantStaffUsername = $this->generateMerchantStaffUsername();
+            // $merchantStaffUsername = $this->generateMerchantStaffUsername();
+            $merchantStaffUsername = 'M' . $request->phone;
 
             $merchantStaff = MerchantStaff::create([
                 'merchant_id' => $merchant->id,
