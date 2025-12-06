@@ -25,6 +25,7 @@ return new class extends Migration
             $table->enum('transaction_type', ['earned', 'unlocked', 'adjusted'])->default('earned');
             $table->dateTime('released_at')->nullable()->comment('When locked CP was released');
             $table->dateTime('locked_at')->nullable()->comment('When locked CP was locked');
+            $table->integer('total_referrals')->default(0);
             $table->timestamps();
             
             $table->index('purchase_id');

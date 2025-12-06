@@ -12,6 +12,7 @@ class CpDistributionPool extends Model
         'transaction_id',
         'source_member_id',
         'total_cp_amount',
+        'total_cp_distributed',
         'total_transaction_amount',
         'phone',
         'total_referrals',
