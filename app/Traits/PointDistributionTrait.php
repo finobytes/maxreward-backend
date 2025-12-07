@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\Referral;
 use App\Models\MemberWallet;
+use App\Models\Member;
 use App\Models\Transaction;
 use App\Models\CpTransaction;
 use App\Models\MemberCommunityPoint;
