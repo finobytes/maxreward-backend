@@ -34,7 +34,8 @@ class Member extends Authenticatable implements JWTSubject
         'country_code',
         'suspended_by',
         'blocked_by',
-        'last_status_changed_at'
+        'last_status_changed_at',
+        'referred_by',
     ];
 
     protected $hidden = [

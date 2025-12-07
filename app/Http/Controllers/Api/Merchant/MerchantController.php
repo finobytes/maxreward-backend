@@ -708,7 +708,7 @@ class MerchantController extends Controller
 
     public function update(Request $request, $id)
     {
-
+        // return "ok";
         // Validate request
         $validator = Validator::make($request->all(), [
             // Merchant Basic Info
