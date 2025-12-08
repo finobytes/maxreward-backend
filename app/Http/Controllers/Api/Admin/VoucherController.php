@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Voucher;
 use App\Models\MemberWallet;
 use App\Models\Transaction;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -152,6 +153,24 @@ class VoucherController extends Controller
             // Update voucher status to success
             $voucher->status = 'success';
             $voucher->save();
+
+            // Create notification for voucher approval
+            Notification::create([
+                'member_id' => $voucher->member_id,
+                'type' => 'voucher_approved',
+                'title' => 'Voucher Approved',
+                'message' => "Your voucher has been approved successfully. Voucher ID: {$voucher->voucher_id}. Total Amount: {$totalAmount} points. Status: Success",
+                'data' => [
+                    'voucher_id' => $voucher->voucher_id,
+                    'voucher_type' => $voucher->voucher_type,
+                    'total_amount' => $totalAmount,
+                    'quantity' => $voucher->quantity,
+                    'payment_method' => $voucher->payment_method,
+                    'approved_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
 
             DB::commit();
 
