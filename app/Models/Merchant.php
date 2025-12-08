@@ -104,4 +104,10 @@ class Merchant extends Model
     {
         return $this->belongsTo(Admin::class, 'rejected_by');
     }
+
+    //* Get the business type for this merchant
+    public function businessType()
+    {
+        return $this->belongsTo(BusinessType::class, 'business_type_id');
+    }
 }
