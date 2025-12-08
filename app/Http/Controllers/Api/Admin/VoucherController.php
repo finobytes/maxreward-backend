@@ -383,6 +383,36 @@ class VoucherController extends Controller
             }
             $voucher->save();
 
+            // Create notification for voucher status change
+            $notificationMessage = '';
+            if ($request->status === 'success') {
+                $notificationMessage = "Your voucher has been approved successfully. Voucher ID: {$voucher->voucher_id}. Total Amount: {$voucher->total_amount} points. Status: Success";
+            } elseif ($request->status === 'rejected' || $request->status === 'failed') {
+                $reason = $request->reason ?? 'No reason provided';
+                $notificationMessage = "Your voucher has been rejected. Voucher ID: {$voucher->voucher_id}. Reason: {$reason}";
+            } else {
+                $notificationMessage = "Your voucher status has been updated to: {$request->status}";
+            }
+
+            Notification::create([
+                'member_id' => $voucher->member_id,
+                'type' => $request->status === 'rejected' ? 'voucher_rejected' : 'voucher_approved',
+                'title' => $request->status === 'rejected' ? 'Voucher Rejected' : 'Voucher Status Changed',
+                'message' => $notificationMessage,
+                'data' => [
+                    'voucher_id' => $voucher->voucher_id,
+                    'voucher_type' => $voucher->voucher_type,
+                    'total_amount' => $voucher->total_amount,
+                    'quantity' => $voucher->quantity,
+                    'payment_method' => $voucher->payment_method,
+                    'status' => $request->status,
+                    'reason' => $request->reason ?? null,
+                    'updated_at' => now()->toDateTimeString()
+                ],
+                'status' => 'unread',
+                'is_read' => false
+            ]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Voucher status updated successfully',

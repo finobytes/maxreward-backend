@@ -28,6 +28,9 @@ return new class extends Migration
                 'voucher_purchase',
                 'level_unlocked',
                 'system_alert',
+                'voucher_created',
+                'voucher_approved',
+                'voucher_rejected',
             ])->comment('Notification type');
             $table->string('title', 200)->nullable()->comment('Notification title');
             $table->text('message')->comment('Notification message');
