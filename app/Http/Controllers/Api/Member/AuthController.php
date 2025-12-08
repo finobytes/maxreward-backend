@@ -44,11 +44,16 @@ class AuthController extends Controller implements HasMiddleware
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
-        // Check if member is suspended
+        // Check if member is suspended or blocked
         $member = auth('member')->user();
         if ($member->status == 'suspended') {
             auth('member')->logout();
             return response()->json(['error' => 'Your account has been suspended please contact with MaxReward Support!'], 403);
+        }
+
+        if ($member->status == 'blocked') {
+            auth('member')->logout();
+            return response()->json(['error' => 'Your account has been blocked please contact with MaxReward Support!'], 403);
         }
 
         return $this->respondWithToken($token);

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Merchant;
+use App\Models\Notification;
 
 class VoucherController extends Controller
 {
@@ -270,9 +271,9 @@ class VoucherController extends Controller
                 $voucherNumber = $counterId + 2000;
                 $voucher_id = 'VID-' . str_pad($voucherNumber, 4, '0', STR_PAD_LEFT);
 
-                // 🔥 CREATE voucher with auto-number
+                //  CREATE voucher with auto-number
                 $voucher = Voucher::create([
-                    'voucher_id' => $voucher_id,  
+                    'voucher_id' => $voucher_id,
                     'member_id' => $request->member_id,
                     'voucher_type' => $request->voucher_type,
                     'denomination_history' => $denominationHistoryData,
@@ -282,6 +283,24 @@ class VoucherController extends Controller
                     'manual_payment_docs_url' => $manualPaymentDocsUrl,
                     'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
                     'status' => 'pending',
+                ]);
+
+                // Create notification for voucher creation
+                Notification::create([
+                    'member_id' => $request->member_id,
+                    'type' => 'voucher_created',
+                    'title' => 'Voucher Created',
+                    'message' => "Your voucher has been created successfully. Voucher ID: {$voucher_id}. Total Amount: {$finalTotalAmount} points. Status: Pending",
+                    'data' => [
+                        'voucher_id' => $voucher_id,
+                        'voucher_type' => $request->voucher_type,
+                        'total_amount' => $finalTotalAmount,
+                        'quantity' => $totalQuantity,
+                        'payment_method' => $request->payment_method,
+                        'created_at' => now()->toDateTimeString()
+                    ],
+                    'status' => 'unread',
+                    'is_read' => false
                 ]);
 
                 return $voucher;
