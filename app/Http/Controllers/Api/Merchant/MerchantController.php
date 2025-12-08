@@ -28,6 +28,7 @@ use App\Traits\MemberHelperTrait;
 use App\Traits\DistributeReferralPointsTrait;
 use App\Traits\CheckAndUnlockCpLevelsTrait;
 use App\Services\WhatsAppService;
+use App\Services\EmailService;
 
 class MerchantController extends Controller
 {
@@ -37,9 +38,10 @@ class MerchantController extends Controller
     protected $whatsappService;
     protected $settingAttributes;
 
-    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper) {
+    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper, EmailService $emailService) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
+        $this->emailService = $emailService;
         $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
     }
 
@@ -256,7 +258,8 @@ class MerchantController extends Controller
                 'member_created_by' => 'merchant', /// here to be considered
                 'referral_code' => $referralCode,
                 'country_id' => $request->country_id,
-                'country_code' => $request->country_code
+                'country_code' => $request->country_code,
+                'referred_by' => $referrer->id
             ]);
 
             // Update merchant with corporate_member_id
@@ -277,72 +280,21 @@ class MerchantController extends Controller
                 'total_cp' => 0.00,
             ]);
 
-            Log::info('Step 5: Deduct 100 RP from referrer');
+            if ($auth->type == "admin" || $auth->type == "staff") {
+                return "ok";
+                try {
 
-            // Step 5: Deduct 100 RP from referrer
-            $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
-            $referrerWallet->save();
-
-            Log::info('createTransaction for referrer ID');
-
-            Transaction::createTransaction([
-                'member_id' => $referrer->id,
-                'transaction_points' => $this->settingAttributes['deductable_points'],
-                'transaction_type' => Transaction::TYPE_RP,
-                'points_type' => Transaction::POINTS_DEBITED,
-                'transaction_reason' => "Referred new member: {$corporateMember->name}",
-                'brp' => $referrerWallet->total_rp,
-                'bap' => $referrerWallet->available_points,
-                'bop' => $referrerWallet->onhold_points
-            ]);
-
-            Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
-
-            // Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
-            $this->distributeReferralPoints($referrer, $corporateMember, $this->settingAttributes['deductable_points']);
-
-            Log::info('Step 7: Place new member in community tree');
-
-            // Step 7: Place new member in community tree
-            $placement = $this->treeService->placeInCommunityTree($referrer->id, $corporateMember->id);
-
-            if (!$placement['success']) {
-                throw new \Exception('Failed to place member in community tree');
+                    Log::info('Step: newCorporateMemberReferral function start');
+                    $placement = $this->newCorporateMemberReferral($referrer, $referrerWallet, $corporateMember, $corporateUsername, $request->corporate_password);
+                    Log::info('Step: newCorporateMemberReferral function end');
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error in newCorporateMemberReferral function: ' . $e->getMessage());
+                    throw new \Exception('Error in newCorporateMemberReferral function: ' . $e->getMessage());
+                }
             }
 
-            Log::info('Step 8: Update referrers referral count');
-
-            // Step 8: Update referrer's referral count
-            $referrerWallet->increment('total_referrals');
-
-            Log::info('Step 9: Check and unlock CP levels if needed');
-
-            // Step 9: Check and unlock CP levels if needed
-            $this->checkAndUnlockCpLevels($referrer->id);
-
-            Log::info('Step 10: Send WhatsApp message to new member');
-
-             // Step 10: Send WhatsApp message to new member
-             $this->whatsappService->sendWelcomeMessage([
-                'member_id' => $corporateMember->id,
-                'referrer_id' => $referrer->id,
-                'name' => $corporateMember->name,
-                'phone' => $corporateMember->phone,
-                'user_name' => $corporateUsername,
-                'password' => $request->corporate_password,  // $password, // Send plain text password for WhatsApp message
-                'login_url' => env('APP_URL') . '/login',
-            ]);
-
-
-            Log::info('Step 11: Create notifications');
-
-            // Step 11: Create notifications
-            Notification::notifyReferralInvite($referrer->id, [
-                'new_member_name' => $corporateMember->name,
-                'new_member_phone' => $corporateMember->phone,
-            ]);
-
-            Log::info('Step 12: Create Merchant Wallet');
+            Log::info('Step 5: Create Merchant Wallet');
 
             // Create Merchant Wallet
             $merchantWallet = MerchantWallet::create([
@@ -350,7 +302,7 @@ class MerchantController extends Controller
                 'total_points' => 0.00,
             ]);
 
-            Log::info('Step 13: Create Merchant Staff');
+            Log::info('Step 6: Create Merchant Staff');
 
             // Create Merchant Staff (automatically from merchant data)
             // $merchantStaffUsername = $this->generateMerchantStaffUsername();
@@ -384,28 +336,28 @@ class MerchantController extends Controller
                 'message' => 'Merchant created successfully',
                 'data' => [ 
                     'merchant' => $merchant,
-                    'new_member' => [
-                        'id' => $corporateMember->id,
-                        'name' => $corporateMember->name,
-                        'phone' => $corporateMember->phone,
-                        'user_name' => $corporateUsername,
-                        'referral_code' => $referralCode,
-                    ],
-                    'referrer' => [
-                        'id' => $referrer->id,
-                        'name' => $referrer->name,
-                        'remaining_rp_balance' => $referrerWallet->total_rp,
-                        'total_referrals' => $referrerWallet->total_referrals,
-                    ],
-                    'placement' => [
-                        'level' => $placement['level'],
-                        'parent_id' => $placement['placement_parent_id'],
-                    ],
-                    'credentials' => [
-                        'user_name' => $corporateUsername,
-                        'password' => $request->merchant_password,
-                        'message' => 'Login credentials sent via Email',
-                    ]
+                    // 'new_member' => [
+                    //     'id' => $corporateMember->id,
+                    //     'name' => $corporateMember->name,
+                    //     'phone' => $corporateMember->phone,
+                    //     'user_name' => $corporateUsername,
+                    //     'referral_code' => $referralCode,
+                    // ],
+                    // 'referrer' => [
+                    //     'id' => $referrer->id,
+                    //     'name' => $referrer->name,
+                    //     'remaining_rp_balance' => $referrerWallet->total_rp,
+                    //     'total_referrals' => $referrerWallet->total_referrals,
+                    // ],
+                    // 'placement' => [
+                    //     'level' => $placement['level'],
+                    //     'parent_id' => $placement['placement_parent_id'],
+                    // ],
+                    // 'credentials' => [
+                    //     'user_name' => $corporateUsername,
+                    //     'password' => $request->merchant_password,
+                    //     'message' => 'Login credentials sent via Email',
+                    // ]
                 ]
             ], 201);
 
@@ -590,7 +542,8 @@ class MerchantController extends Controller
                 'wallet',
                 'corporateMember.wallet',
                 'suspendedBy',
-                'rejectedBy'
+                'rejectedBy',
+                'businessType'
             ])->findOrFail($id);
 
             // Load statistics from your tree service
@@ -708,7 +661,6 @@ class MerchantController extends Controller
 
     public function update(Request $request, $id)
     {
-        // return "ok";
         // Validate request
         $validator = Validator::make($request->all(), [
             // Merchant Basic Info
@@ -870,6 +822,25 @@ class MerchantController extends Controller
                 }
             }
 
+            if ($request->status == 'approved') {
+                try {
+                    
+                    $corporateMember = $merchant->corporateMember;
+                    $corporateUsername = $corporateMember->username ?? null;
+                    $password = $corporateMember->password ?? null;
+                    $referrerId = $corporateMember->referred_by;
+                    $referrer = Member::findOrFail($referrerId);
+                    $referrerWallet = $referrer->wallet;
+                    Log::info('Step: newCorporateMemberReferral function start');
+                    $this->newCorporateMemberReferral($referrer, $referrerWallet, $corporateMember, $corporateUsername, $password);
+                    Log::info('Step: newCorporateMemberReferral function end');
+                    
+                } catch (\Exception $e) {
+                    Log::error('Error in newCorporateMemberReferral function: ' . $e->getMessage());
+                    throw new \Exception('Error in newCorporateMemberReferral function: ' . $e->getMessage());
+                }
+            }
+
             // Commit transaction
             DB::commit();
 
@@ -898,6 +869,92 @@ class MerchantController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+
+    public function newCorporateMemberReferral($referrer, $referrerWallet, $corporateMember, $corporateUsername = null, $password = null)
+    {
+        Log::info('Step 1: Deduct 100 RP from referrer');
+
+        // Step 1: Deduct 100 RP from referrer
+        $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
+        $referrerWallet->save();
+
+        Log::info('Step 2: createTransaction for referrer ID');
+
+        // Step 2: createTransaction for referrer ID
+        Transaction::createTransaction([
+            'member_id' => $referrer->id,
+            'transaction_points' => $this->settingAttributes['deductable_points'],
+            'transaction_type' => Transaction::TYPE_RP,
+            'points_type' => Transaction::POINTS_DEBITED,
+            'transaction_reason' => "Referred new member: {$corporateMember->name}",
+            'brp' => $referrerWallet->total_rp,
+            'bap' => $referrerWallet->available_points,
+            'bop' => $referrerWallet->onhold_points
+        ]);
+
+        Log::info('Step 3: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
+
+        // Step 3: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
+        $this->distributeReferralPoints($referrer, $corporateMember, $this->settingAttributes['deductable_points']);
+
+        Log::info('Step 4: Place new member in community tree');
+
+        // Step 4: Place new member in community tree
+        $placement = $this->treeService->placeInCommunityTree($referrer->id, $corporateMember->id);
+
+        if (!$placement['success']) {
+            throw new \Exception('Failed to place member in community tree');
+        }
+
+        Log::info('Step 5: Update referrers referral count');
+
+        // Step 5: Update referrer's referral count
+        $referrerWallet->increment('total_referrals');
+
+        Log::info('Step 6: Check and unlock CP levels if needed');
+
+        // Step 6: Check and unlock CP levels if needed
+        $this->checkAndUnlockCpLevels($referrer->id);
+
+        Log::info('Step 7: Send WhatsApp message to new member');
+
+         // Step 7: Send WhatsApp message to new member
+         $this->whatsappService->sendWelcomeMessage([
+            'member_id' => $corporateMember->id,
+            'referrer_id' => $referrer->id,
+            'name' => $corporateMember->name,
+            'phone' => $corporateMember->phone,
+            'user_name' => $corporateUsername,
+            'password' => $password,  // $password, // Send plain text password for WhatsApp message
+            'login_url' => 'https://maxreward.finobytes.com',
+        ]);
+
+        Log::info('Step 8: Send Email to new member if email exists');
+
+        // Step 8: Send Email to new member if email exists
+        if (!empty($corporateMember->email)) {
+            $this->emailService->sendWelcomeEmail([
+                'member_id' => $corporateMember->id,
+                'referrer_id' => $referrer->id,
+                'name' => $corporateMember->name,
+                'email' => $corporateMember->email,
+                'user_name' => $corporateUsername,
+                'password' => $password,
+                'login_url' => 'https://maxreward.finobytes.com',
+            ]);
+        }
+
+        Log::info('Step 9: Create notifications');
+
+        // Step 9: Create notifications
+        Notification::notifyReferralInvite($referrer->id, [
+            'new_member_name' => $corporateMember->name,
+            'new_member_phone' => $corporateMember->phone,
+        ]);
+
+        return $placement;
     }
 
     /**

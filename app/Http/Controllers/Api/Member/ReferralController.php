@@ -259,7 +259,7 @@ class ReferralController extends Controller
                 'phone' => $newMember->phone,
                 'user_name' => $userName,
                 'password' => $password, // Send plain text password for WhatsApp message
-                'login_url' => env('APP_URL') . '/login',
+                'login_url' => 'https://maxreward.finobytes.com',
             ]);
 
             Log::info('Step 12: Create notifications');
