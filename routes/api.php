@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\Admin\AdminStaffController;
 use App\Http\Controllers\Api\Admin\CompanyInfoController;
 use App\Http\Controllers\Api\Admin\BusinessTypeController;
 use App\Http\Controllers\Api\Admin\DenominationController;
+use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
@@ -288,6 +289,21 @@ Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(
     Route::get('/{id}', [DenominationController::class, 'show'])->middleware('role:admin');
     Route::patch('/{id}', [DenominationController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [DenominationController::class, 'destroy'])->middleware('role:admin');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Category Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::post('/', [CategoryController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,merchant,member');
+    Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,merchant,member');
+    Route::get('/{id}', [CategoryController::class, 'show'])->middleware('role:admin');
+    Route::patch('/{id}', [CategoryController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [CategoryController::class, 'destroy'])->middleware('role:admin');
 });
 
 
