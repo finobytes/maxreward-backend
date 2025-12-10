@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\Admin\DenominationController;
 use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\ModelController;
+use App\Http\Controllers\Api\Admin\BrandController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
@@ -337,6 +338,20 @@ Route::prefix('models')->middleware('auth:admin,merchant,member')->group(functio
     Route::post('/{id}', [ModelController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [ModelController::class, 'destroy'])->middleware('role:admin');
 });
+
+
+| Brand Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('brands')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::post('/', [BrandController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [BrandController::class, 'index'])->middleware('role:admin,merchant,member');
+    Route::get('/all', [BrandController::class, 'getAllBrands'])->middleware('role:admin,merchant,member');
+    Route::get('/{id}', [BrandController::class, 'show'])->middleware('role:admin');
+    Route::post('/{id}', [BrandController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('role:admin');
+});
+
 
 
 /*
