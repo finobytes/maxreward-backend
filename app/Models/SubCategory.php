@@ -6,19 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
-class Category extends Model
+class SubCategory extends Model
 {
     use HasFactory;
 
     /**
      * The table associated with the model.
      */
-    protected $table = 'categories';
+    protected $table = 'sub_categories';
 
     /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [
+        'category_id',
         'name',
         'slug',
         'description',
@@ -32,6 +33,7 @@ class Category extends Model
      * The attributes that should be cast.
      */
     protected $casts = [
+        'category_id' => 'integer',
         'sort_order' => 'integer',
         'is_active' => 'boolean',
         'created_at' => 'datetime',
@@ -45,31 +47,39 @@ class Category extends Model
     {
         parent::boot();
 
-        static::creating(function ($category) {
-            if (empty($category->slug)) {
-                $category->slug = Str::slug($category->name);
+        static::creating(function ($subCategory) {
+            if (empty($subCategory->slug)) {
+                $subCategory->slug = Str::slug($subCategory->name);
             }
         });
 
-        static::updating(function ($category) {
-            if ($category->isDirty('name') && empty($category->slug)) {
-                $category->slug = Str::slug($category->name);
+        static::updating(function ($subCategory) {
+            if ($subCategory->isDirty('name') && empty($subCategory->slug)) {
+                $subCategory->slug = Str::slug($subCategory->name);
             }
         });
     }
 
     /**
-     * Get all active categories
+     * Get the category that owns the sub-category
+     */
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Get all active sub-categories
      */
     public static function getActive()
     {
         return self::where('is_active', true)
-            ->orderBy('name', 'asc')
+            ->orderBy('sort_order', 'asc')
             ->get();
     }
 
     /**
-     * Get category by slug
+     * Get sub-category by slug
      */
     public static function getBySlug($slug)
     {
@@ -77,7 +87,7 @@ class Category extends Model
     }
 
     /**
-     * Scope to filter active categories
+     * Scope to filter active sub-categories
      */
     public function scopeActive($query)
     {
@@ -85,10 +95,10 @@ class Category extends Model
     }
 
     /**
-     * Get the sub-categories for the category
+     * Scope to filter by category
      */
-    public function subCategories()
+    public function scopeByCategory($query, $categoryId)
     {
-        return $this->hasMany(SubCategory::class);
+        return $query->where('category_id', $categoryId);
     }
 }

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\Admin\CompanyInfoController;
 use App\Http\Controllers\Api\Admin\BusinessTypeController;
 use App\Http\Controllers\Api\Admin\DenominationController;
 use App\Http\Controllers\Api\Admin\CategoryController;
+use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
@@ -304,6 +305,21 @@ Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(fun
     Route::get('/{id}', [CategoryController::class, 'show'])->middleware('role:admin');
     Route::post('/{id}', [CategoryController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [CategoryController::class, 'destroy'])->middleware('role:admin');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Sub-Category Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('sub-categories')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::post('/', [SubCategoryController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [SubCategoryController::class, 'index'])->middleware('role:admin,merchant,member');
+    Route::get('/all', [SubCategoryController::class, 'getAllSubCategories'])->middleware('role:admin,merchant,member');
+    Route::get('/{id}', [SubCategoryController::class, 'show'])->middleware('role:admin');
+    Route::post('/{id}', [SubCategoryController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [SubCategoryController::class, 'destroy'])->middleware('role:admin');
 });
 
 
