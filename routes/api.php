@@ -302,7 +302,7 @@ Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(fun
     Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,merchant,member');
     Route::get('/{id}', [CategoryController::class, 'show'])->middleware('role:admin');
-    Route::patch('/{id}', [CategoryController::class, 'update'])->middleware('role:admin');
+    Route::post('/{id}', [CategoryController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [CategoryController::class, 'destroy'])->middleware('role:admin');
 });
 
