@@ -339,7 +339,7 @@ Route::prefix('models')->middleware('auth:admin,merchant,member')->group(functio
     Route::delete('/{id}', [ModelController::class, 'destroy'])->middleware('role:admin');
 });
 
-
+/*
 | Brand Routes
 |--------------------------------------------------------------------------
 */
