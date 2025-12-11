@@ -11,18 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('models', function (Blueprint $table) {
+        Schema::create('attributes', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
+            $table->string('name', 100)->comment('size, color, material, etc');
             $table->string('slug', 120)->unique();
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index('slug');
-            $table->index('is_active');
-
-            // Foreign key constraint - will be created when brands table exists
-            // $table->foreign('brand_id')->references('id')->on('brands')->onDelete('set null');
         });
     }
 
@@ -31,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('models');
+        Schema::dropIfExists('attributes');
     }
 };

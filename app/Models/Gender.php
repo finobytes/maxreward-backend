@@ -6,14 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
 
-class ProductModel extends Model
+class Gender extends Model
 {
     use HasFactory;
 
     /**
      * The table associated with the model.
      */
-    protected $table = 'models';
+    protected $table = 'genders';
 
     /**
      * The attributes that are mass assignable.
@@ -40,21 +40,21 @@ class ProductModel extends Model
     {
         parent::boot();
 
-        static::creating(function ($model) {
-            if (empty($model->slug)) {
-                $model->slug = Str::slug($model->name);
+        static::creating(function ($gender) {
+            if (empty($gender->slug)) {
+                $gender->slug = Str::slug($gender->name);
             }
         });
 
-        static::updating(function ($model) {
-            if ($model->isDirty('name') && empty($model->slug)) {
-                $model->slug = Str::slug($model->name);
+        static::updating(function ($gender) {
+            if ($gender->isDirty('name') && empty($gender->slug)) {
+                $gender->slug = Str::slug($gender->name);
             }
         });
     }
 
     /**
-     * Get all active models
+     * Get all active genders
      */
     public static function getActive()
     {
@@ -64,7 +64,7 @@ class ProductModel extends Model
     }
 
     /**
-     * Get model by slug
+     * Get gender by slug
      */
     public static function getBySlug($slug)
     {
@@ -72,19 +72,10 @@ class ProductModel extends Model
     }
 
     /**
-     * Scope to filter active models
+     * Scope to filter active genders
      */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
-
-    /**
-     * Get the brand that owns the model
-     * Uncomment when Brand model is created
-     */
-    // public function brand()
-    // {
-    //     return $this->belongsTo(Brand::class);
-    // }
 }

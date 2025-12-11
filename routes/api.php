@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\ModelController;
 use App\Http\Controllers\Api\Admin\BrandController;
+use App\Http\Controllers\Api\Admin\GenderController;
+use App\Http\Controllers\Api\Admin\AttributeController;
+use App\Http\Controllers\Api\Admin\AttributeItemController;
 use App\Http\Controllers\Api\Admin\SettingController;
 use App\Http\Controllers\Api\Member\ReferralController;
 use App\Http\Controllers\Api\Member\VoucherController;
@@ -352,6 +355,53 @@ Route::prefix('brands')->middleware('auth:admin,merchant,member')->group(functio
     Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('role:admin');
 });
 
+
+/*
+|--------------------------------------------------------------------------
+| Gender Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin/genders')->middleware('auth:admin')->group(function () {
+    Route::post('/', [GenderController::class, 'store']);
+    Route::get('/', [GenderController::class, 'index']);
+    Route::get('/all', [GenderController::class, 'getAllGenders']);
+    Route::get('/{id}', [GenderController::class, 'show']);
+    Route::put('/{id}', [GenderController::class, 'update']);
+    Route::patch('/{id}', [GenderController::class, 'update']);
+    Route::delete('/{id}', [GenderController::class, 'destroy']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Attribute Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin/attributes')->middleware('auth:admin')->group(function () {
+    Route::post('/', [AttributeController::class, 'store']);
+    Route::get('/', [AttributeController::class, 'index']);
+    Route::get('/all', [AttributeController::class, 'getAllAttributes']);
+    Route::get('/{id}', [AttributeController::class, 'show']);
+    Route::put('/{id}', [AttributeController::class, 'update']);
+    Route::patch('/{id}', [AttributeController::class, 'update']);
+    Route::delete('/{id}', [AttributeController::class, 'destroy']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Attribute Item Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('admin/attribute-items')->middleware('auth:admin')->group(function () {
+    Route::post('/', [AttributeItemController::class, 'store']);
+    Route::get('/', [AttributeItemController::class, 'index']);
+    Route::get('/all', [AttributeItemController::class, 'getAllAttributeItems']);
+    Route::get('/{id}', [AttributeItemController::class, 'show']);
+    Route::put('/{id}', [AttributeItemController::class, 'update']);
+    Route::patch('/{id}', [AttributeItemController::class, 'update']);
+    Route::delete('/{id}', [AttributeItemController::class, 'destroy']);
+});
 
 
 /*

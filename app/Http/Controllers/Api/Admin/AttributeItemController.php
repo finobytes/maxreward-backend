@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\ProductModel;
+use App\Models\AttributeItem;
 
-class ModelController extends Controller
+class AttributeItemController extends Controller
 {
     /**
-     * Get all models with pagination
+     * Get all attribute items with pagination
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -20,7 +20,7 @@ class ModelController extends Controller
     {
         try {
             // Query builder
-            $query = ProductModel::query();
+            $query = AttributeItem::with('attribute');
 
             // Search by name or slug (optional)
             if ($request->has('search') && !empty($request->search)) {
@@ -35,58 +35,65 @@ class ModelController extends Controller
                 $query->where('is_active', $request->is_active);
             }
 
+            // Filter by attribute_id (optional)
+            if ($request->has('attribute_id')) {
+                $query->where('attribute_id', $request->attribute_id);
+            }
+
             // Get pagination limit (default: 10)
             $perPage = $request->get('per_page', 10);
 
-            // Fetch models with pagination
-            $models = $query->orderBy('created_at', 'desc')
+            // Fetch attribute items with pagination
+            $attributeItems = $query->orderBy('created_at', 'desc')
                            ->paginate($perPage);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Models retrieved successfully',
-                'data' => $models
+                'message' => 'Attribute items retrieved successfully',
+                'data' => $attributeItems
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve models',
+                'message' => 'Failed to retrieve attribute items',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get all models without pagination
+     * Get all attribute items without pagination
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAllModels()
+    public function getAllAttributeItems()
     {
         try {
-            $models = ProductModel::orderBy('name', 'asc')->get();
+            $attributeItems = AttributeItem::with('attribute')
+                ->orderBy('name', 'asc')
+                ->get();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Models retrieved successfully',
+                'message' => 'Attribute items retrieved successfully',
                 'data' => [
-                    'models' => $models,
-                    'total' => $models->count(),
+                    'attribute_items' => $attributeItems,
+                    'total' => $attributeItems->count(),
                 ]
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve models',
+                'message' => 'Failed to retrieve attribute items',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get single model by ID
+     * Get single attribute item by ID
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -94,30 +101,30 @@ class ModelController extends Controller
     public function show($id)
     {
         try {
-            $model = ProductModel::findOrFail($id);
+            $attributeItem = AttributeItem::with('attribute')->findOrFail($id);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model retrieved successfully',
-                'data' => $model
+                'message' => 'Attribute item retrieved successfully',
+                'data' => $attributeItem
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Attribute item not found'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve model',
+                'message' => 'Failed to retrieve attribute item',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Create a new model
+     * Create a new attribute item
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -126,8 +133,9 @@ class ModelController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100|unique:models,name',
-            'slug' => 'nullable|string|max:120|unique:models,slug',
+            'attribute_id' => 'required|integer|exists:attributes,id',
+            'name' => 'required|string|max:100',
+            'slug' => 'nullable|string|max:120',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -143,20 +151,40 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Create model
-            $model = ProductModel::create([
+            // Check if combination of attribute_id and slug already exists
+            $slug = $request->slug ?: \Illuminate\Support\Str::slug($request->name);
+            $exists = AttributeItem::where('attribute_id', $request->attribute_id)
+                ->where('slug', $slug)
+                ->exists();
+
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation error',
+                    'errors' => [
+                        'slug' => ['This attribute item already exists for the selected attribute.']
+                    ]
+                ], 422);
+            }
+
+            // Create attribute item
+            $attributeItem = AttributeItem::create([
+                'attribute_id' => $request->attribute_id,
                 'name' => $request->name,
                 'slug' => $request->slug,
                 'is_active' => $request->is_active ?? true,
             ]);
+
+            // Load relationship
+            $attributeItem->load('attribute');
 
             // Commit transaction
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model created successfully',
-                'data' => $model
+                'message' => 'Attribute item created successfully',
+                'data' => $attributeItem
             ], 201);
 
         } catch (\Exception $e) {
@@ -165,14 +193,14 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create model',
+                'message' => 'Failed to create attribute item',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Update model information
+     * Update attribute item information
      *
      * @param Request $request
      * @param int $id
@@ -182,8 +210,9 @@ class ModelController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:100|unique:models,name,' . $id,
-            'slug' => 'nullable|string|max:120|unique:models,slug,' . $id,
+            'attribute_id' => 'sometimes|required|integer|exists:attributes,id',
+            'name' => 'sometimes|required|string|max:100',
+            'slug' => 'nullable|string|max:120',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -199,40 +228,69 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Find model
-            $model = ProductModel::findOrFail($id);
+            // Find attribute item
+            $attributeItem = AttributeItem::findOrFail($id);
 
-            // Update model data (only fields that are provided)
+            // Get attribute_id (either from request or existing)
+            $attributeId = $request->has('attribute_id') ? $request->attribute_id : $attributeItem->attribute_id;
+
+            // Check if combination of attribute_id and slug already exists (excluding current item)
+            if ($request->has('slug') || $request->has('name')) {
+                $slug = $request->slug ?: ($request->has('name') ? \Illuminate\Support\Str::slug($request->name) : $attributeItem->slug);
+                $exists = AttributeItem::where('attribute_id', $attributeId)
+                    ->where('slug', $slug)
+                    ->where('id', '!=', $id)
+                    ->exists();
+
+                if ($exists) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Validation error',
+                        'errors' => [
+                            'slug' => ['This attribute item already exists for the selected attribute.']
+                        ]
+                    ], 422);
+                }
+            }
+
+            // Update attribute item data (only fields that are provided)
+            if ($request->has('attribute_id')) {
+                $attributeItem->attribute_id = $request->attribute_id;
+            }
             if ($request->has('name')) {
-                $model->name = $request->name;
+                $attributeItem->name = $request->name;
             }
             if ($request->has('slug')) {
-                $model->slug = $request->slug;
+                $attributeItem->slug = $request->slug;
             }
             if ($request->has('is_active')) {
-                $model->is_active = $request->is_active;
+                $attributeItem->is_active = $request->is_active;
             }
 
             // Save changes
-            $model->save();
+            $attributeItem->save();
+
+            // Load relationship
+            $attributeItem->load('attribute');
 
             // Commit transaction
             DB::commit();
 
-            // Refresh model data
-            $model->refresh();
+            // Refresh attribute item data
+            $attributeItem->refresh();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model updated successfully',
-                'data' => $model
+                'message' => 'Attribute item updated successfully',
+                'data' => $attributeItem
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Attribute item not found'
             ], 404);
         } catch (\Exception $e) {
             // Rollback transaction on error
@@ -240,14 +298,14 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update model',
+                'message' => 'Failed to update attribute item',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Delete model
+     * Delete attribute item
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -258,33 +316,34 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Find model
-            $model = ProductModel::findOrFail($id);
+            // Find attribute item
+            $attributeItem = AttributeItem::findOrFail($id);
 
             // Store info for response
-            $modelInfo = [
-                'id' => $model->id,
-                'name' => $model->name,
-                'slug' => $model->slug,
+            $attributeItemInfo = [
+                'id' => $attributeItem->id,
+                'attribute_id' => $attributeItem->attribute_id,
+                'name' => $attributeItem->name,
+                'slug' => $attributeItem->slug,
             ];
 
-            // Delete the model
-            $model->delete();
+            // Delete the attribute item
+            $attributeItem->delete();
 
             // Commit transaction
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model deleted successfully',
-                'data' => $modelInfo
+                'message' => 'Attribute item deleted successfully',
+                'data' => $attributeItemInfo
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Attribute item not found'
             ], 404);
         } catch (\Exception $e) {
             // Rollback transaction on error
@@ -292,7 +351,7 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete model',
+                'message' => 'Failed to delete attribute item',
                 'error' => $e->getMessage()
             ], 500);
         }

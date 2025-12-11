@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\ProductModel;
+use App\Models\Gender;
 
-class ModelController extends Controller
+class GenderController extends Controller
 {
     /**
-     * Get all models with pagination
+     * Get all genders with pagination
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -20,7 +20,7 @@ class ModelController extends Controller
     {
         try {
             // Query builder
-            $query = ProductModel::query();
+            $query = Gender::query();
 
             // Search by name or slug (optional)
             if ($request->has('search') && !empty($request->search)) {
@@ -38,55 +38,55 @@ class ModelController extends Controller
             // Get pagination limit (default: 10)
             $perPage = $request->get('per_page', 10);
 
-            // Fetch models with pagination
-            $models = $query->orderBy('created_at', 'desc')
+            // Fetch genders with pagination
+            $genders = $query->orderBy('created_at', 'desc')
                            ->paginate($perPage);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Models retrieved successfully',
-                'data' => $models
+                'message' => 'Genders retrieved successfully',
+                'data' => $genders
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve models',
+                'message' => 'Failed to retrieve genders',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get all models without pagination
+     * Get all genders without pagination
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function getAllModels()
+    public function getAllGenders()
     {
         try {
-            $models = ProductModel::orderBy('name', 'asc')->get();
+            $genders = Gender::orderBy('name', 'asc')->get();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Models retrieved successfully',
+                'message' => 'Genders retrieved successfully',
                 'data' => [
-                    'models' => $models,
-                    'total' => $models->count(),
+                    'genders' => $genders,
+                    'total' => $genders->count(),
                 ]
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve models',
+                'message' => 'Failed to retrieve genders',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Get single model by ID
+     * Get single gender by ID
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -94,30 +94,30 @@ class ModelController extends Controller
     public function show($id)
     {
         try {
-            $model = ProductModel::findOrFail($id);
+            $gender = Gender::findOrFail($id);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model retrieved successfully',
-                'data' => $model
+                'message' => 'Gender retrieved successfully',
+                'data' => $gender
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Gender not found'
             ], 404);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve model',
+                'message' => 'Failed to retrieve gender',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Create a new model
+     * Create a new gender
      *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
@@ -126,8 +126,8 @@ class ModelController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:100|unique:models,name',
-            'slug' => 'nullable|string|max:120|unique:models,slug',
+            'name' => 'required|string|max:50|unique:genders,name',
+            'slug' => 'nullable|string|max:60|unique:genders,slug',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -143,8 +143,8 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Create model
-            $model = ProductModel::create([
+            // Create gender
+            $gender = Gender::create([
                 'name' => $request->name,
                 'slug' => $request->slug,
                 'is_active' => $request->is_active ?? true,
@@ -155,8 +155,8 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model created successfully',
-                'data' => $model
+                'message' => 'Gender created successfully',
+                'data' => $gender
             ], 201);
 
         } catch (\Exception $e) {
@@ -165,14 +165,14 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create model',
+                'message' => 'Failed to create gender',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Update model information
+     * Update gender information
      *
      * @param Request $request
      * @param int $id
@@ -182,8 +182,8 @@ class ModelController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:100|unique:models,name,' . $id,
-            'slug' => 'nullable|string|max:120|unique:models,slug,' . $id,
+            'name' => 'sometimes|required|string|max:50|unique:genders,name,' . $id,
+            'slug' => 'nullable|string|max:60|unique:genders,slug,' . $id,
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -199,40 +199,40 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Find model
-            $model = ProductModel::findOrFail($id);
+            // Find gender
+            $gender = Gender::findOrFail($id);
 
-            // Update model data (only fields that are provided)
+            // Update gender data (only fields that are provided)
             if ($request->has('name')) {
-                $model->name = $request->name;
+                $gender->name = $request->name;
             }
             if ($request->has('slug')) {
-                $model->slug = $request->slug;
+                $gender->slug = $request->slug;
             }
             if ($request->has('is_active')) {
-                $model->is_active = $request->is_active;
+                $gender->is_active = $request->is_active;
             }
 
             // Save changes
-            $model->save();
+            $gender->save();
 
             // Commit transaction
             DB::commit();
 
-            // Refresh model data
-            $model->refresh();
+            // Refresh gender data
+            $gender->refresh();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model updated successfully',
-                'data' => $model
+                'message' => 'Gender updated successfully',
+                'data' => $gender
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Gender not found'
             ], 404);
         } catch (\Exception $e) {
             // Rollback transaction on error
@@ -240,14 +240,14 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update model',
+                'message' => 'Failed to update gender',
                 'error' => $e->getMessage()
             ], 500);
         }
     }
 
     /**
-     * Delete model
+     * Delete gender
      *
      * @param int $id
      * @return \Illuminate\Http\JsonResponse
@@ -258,33 +258,33 @@ class ModelController extends Controller
             // Start database transaction
             DB::beginTransaction();
 
-            // Find model
-            $model = ProductModel::findOrFail($id);
+            // Find gender
+            $gender = Gender::findOrFail($id);
 
             // Store info for response
-            $modelInfo = [
-                'id' => $model->id,
-                'name' => $model->name,
-                'slug' => $model->slug,
+            $genderInfo = [
+                'id' => $gender->id,
+                'name' => $gender->name,
+                'slug' => $gender->slug,
             ];
 
-            // Delete the model
-            $model->delete();
+            // Delete the gender
+            $gender->delete();
 
             // Commit transaction
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Model deleted successfully',
-                'data' => $modelInfo
+                'message' => 'Gender deleted successfully',
+                'data' => $genderInfo
             ], 200);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json([
                 'success' => false,
-                'message' => 'Model not found'
+                'message' => 'Gender not found'
             ], 404);
         } catch (\Exception $e) {
             // Rollback transaction on error
@@ -292,7 +292,7 @@ class ModelController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete model',
+                'message' => 'Failed to delete gender',
                 'error' => $e->getMessage()
             ], 500);
         }

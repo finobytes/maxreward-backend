@@ -11,18 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('models', function (Blueprint $table) {
+        Schema::create('attribute_items', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->string('slug', 120)->unique();
+            $table->unsignedBigInteger('attribute_id');
+            $table->string('name', 100)->comment('S, M, L, Red, Blue, etc');
+            $table->string('slug', 120);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->index('slug');
+            $table->index('attribute_id');
             $table->index('is_active');
-
-            // Foreign key constraint - will be created when brands table exists
-            // $table->foreign('brand_id')->references('id')->on('brands')->onDelete('set null');
+            $table->unique(['attribute_id', 'slug'], 'unique_attribute_item');
+            $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
         });
     }
 
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('models');
+        Schema::dropIfExists('attribute_items');
     }
 };
