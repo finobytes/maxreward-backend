@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use App\Models\Brand;
 use App\Helpers\CloudinaryHelper;
 
@@ -150,11 +151,9 @@ class BrandController extends Controller
                 $imageCloudinaryId = $upload['public_id'];
             }
 
-            $name = str_replace(' ', '', $request->name);
-
             $brand = Brand::create([
-                'name' => $name,
-                'slug' => $name,
+                'name' => $request->name,
+                'slug' => $request->slug ?? Str::slug($request->name),
                 'description' => $request->description,
                 'image_url' => $imageUrl,
                 'image_cloudinary_id' => $imageCloudinaryId,
