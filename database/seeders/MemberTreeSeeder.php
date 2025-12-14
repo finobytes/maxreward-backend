@@ -52,14 +52,18 @@ class MemberTreeSeeder extends Seeder
         try {
             echo "🌱 Starting Member Tree Seeding with Full Point Distribution...\n\n";
 
+            // Array to store created member IDs
+            $createdMemberIds = [];
+
             // Create 30 members
             for ($i = 1; $i <= 30; $i++) {
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
                 echo "Creating Member {$i}/30...\n";
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
-                // Generate Malaysian phone number (60 + 9-10 digits)
-                $phone = '60' . rand(100000000, 999999999);
+                // Generate Malaysian phone number with serial (60160000001 to 60160000030)
+                $phone = '60160' . str_pad($i, 6, '0', STR_PAD_LEFT);
+                
                 $userName = $this->formatPhoneNumber($phone);
                 $lastSix = substr($userName, -6);
                 $password = $lastSix;
@@ -83,6 +87,9 @@ class MemberTreeSeeder extends Seeder
                     'country_code' => 60,
                 ]);
 
+                // Store the created member ID
+                $createdMemberIds[$i] = $newMember->id;
+
                 echo "✅ Member {$i} created\n";
                 echo "   ID: {$newMember->id}\n";
                 echo "   Phone: {$phone}\n";
@@ -100,9 +107,7 @@ class MemberTreeSeeder extends Seeder
                     'available_points' => 0,
                     'total_rp' => 0,
                     'total_pp' => 0,
-                    'total_cp' => 0,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
+                    'total_cp' => 0
                 ]);
 
                 echo "💰 Wallet created for Member {$i}\n\n";
@@ -121,8 +126,19 @@ class MemberTreeSeeder extends Seeder
                 }
 
                 // For members 2-30: Follow referNewMember function
-                $referrer = Member::find($i - 1);
+                // Get the previous member as referrer
+                $referrerId = $createdMemberIds[$i - 1];
+                $referrer = Member::find($referrerId);
+                
+                if (!$referrer) {
+                    throw new \Exception("Referrer not found for Member {$i}");
+                }
+                
                 $referrerWallet = $referrer->wallet;
+                
+                if (!$referrerWallet) {
+                    throw new \Exception("Referrer wallet not found for Member {$i}");
+                }
 
                 echo "Step 1: Check referrer balance\n";
                 echo "   Referrer: Member {$referrer->id} ({$referrer->name})\n";
@@ -185,32 +201,32 @@ class MemberTreeSeeder extends Seeder
                 echo "   ✅ CP levels checked\n\n";
 
                 // Step 8: Update CP Distribution Pool
-                $cp_distribution_pool_id = session('cp_distribution_pool_id');
-                if (!empty($cp_distribution_pool_id)) {
-                    $cpDistributionPool = CpDistributionPool::findOrFail($cp_distribution_pool_id);
-                    $updatedReferrerWallet = MemberWallet::where('member_id', $referrer->id)->firstOrFail();
-                    if ($cpDistributionPool) {
-                        $cpDistributionPool->total_referrals = $updatedReferrerWallet->total_referrals;
-                        $cpDistributionPool->unlocked_level = $updatedReferrerWallet->unlocked_level;
-                        $cpDistributionPool->save();
-                    }
-                }
-                session()->forget('cp_distribution_pool_id');
+                // $cp_distribution_pool_id = session('cp_distribution_pool_id');
+                // if (!empty($cp_distribution_pool_id)) {
+                //     $cpDistributionPool = CpDistributionPool::findOrFail($cp_distribution_pool_id);
+                //     $updatedReferrerWallet = MemberWallet::where('member_id', $referrer->id)->firstOrFail();
+                //     if ($cpDistributionPool) {
+                //         $cpDistributionPool->total_referrals = $updatedReferrerWallet->total_referrals;
+                //         $cpDistributionPool->unlocked_level = $updatedReferrerWallet->unlocked_level;
+                //         $cpDistributionPool->save();
+                //     }
+                // }
+                // session()->forget('cp_distribution_pool_id');
 
                 // Step 9: Send Email (if not test environment)
                 echo "Step 7: Send welcome email\n";
-                if (!empty($newMember->email)) {
-                    $this->emailService->sendWelcomeEmail([
-                        'member_id' => $newMember->id,
-                        'referrer_id' => $referrer->id,
-                        'name' => $newMember->name,
-                        'email' => $newMember->email,
-                        'user_name' => $userName,
-                        'password' => $password,
-                        'login_url' => 'https://maxreward.finobytes.com',
-                    ]);
-                    echo "   ✅ Email sent\n\n";
-                }
+                // if (!empty($newMember->email)) {
+                //     $this->emailService->sendWelcomeEmail([
+                //         'member_id' => $newMember->id,
+                //         'referrer_id' => $referrer->id,
+                //         'name' => $newMember->name,
+                //         'email' => $newMember->email,
+                //         'user_name' => $userName,
+                //         'password' => $password,
+                //         'login_url' => 'https://maxreward.finobytes.com',
+                //     ]);
+                //     echo "   ✅ Email sent\n\n";
+                // }
 
                 // Step 10: Send WhatsApp message
                 echo "Step 8: Send WhatsApp message\n";
@@ -234,7 +250,7 @@ class MemberTreeSeeder extends Seeder
                 echo "   ✅ Notifications created\n\n";
 
                 // Small delay for visibility
-                usleep(200000); // 0.2 second
+                usleep(500000); // 0.2 second
             }
 
             DB::commit();

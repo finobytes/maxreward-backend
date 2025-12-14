@@ -154,7 +154,7 @@ trait PointDistributionTrait
         // Update all related transactions with the pool ID
         CpTransaction::whereIn('id', $cpTransactionIds)->update(['cp_distribution_pools_id' => $cpDistributionPool->id]);
 
-        session(['cp_distribution_pool_id' => $cpDistributionPool->id]);
+        // session(['cp_distribution_pool_id' => $cpDistributionPool->id]);
 
         Log::info("CP distribution completed");
     }

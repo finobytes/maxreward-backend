@@ -218,21 +218,21 @@ class ReferralController extends Controller
             // Step 9: Check and unlock CP levels if needed
             $this->checkAndUnlockCpLevels($referrer->id);
 
-            $cp_distribution_pool_id = session('cp_distribution_pool_id');
-            Log::info("Session CP Distribution Pool ID: " . $cp_distribution_pool_id);
+            // $cp_distribution_pool_id = session('cp_distribution_pool_id');
+            // Log::info("Session CP Distribution Pool ID: " . $cp_distribution_pool_id);
 
-            if (!empty($cp_distribution_pool_id)) {
-                $cpDistributionPool = CpDistributionPool::findOrFail($cp_distribution_pool_id); // Find the CpDistributionPool;
-                $updatedReferrerWallet = MemberWallet::where('member_id', $referrer->id)->firstOrFail();
-                if ($cpDistributionPool) {
-                    $cpDistributionPool->total_referrals = $updatedReferrerWallet->total_referrals;
-                    $cpDistributionPool->unlocked_level = $updatedReferrerWallet->unlocked_level;
-                    $cpDistributionPool->save();
-                    Log::info('Updated CP Distribution Pool');
-                }
-            }
+            // if (!empty($cp_distribution_pool_id)) {
+            //     $cpDistributionPool = CpDistributionPool::findOrFail($cp_distribution_pool_id); // Find the CpDistributionPool;
+            //     $updatedReferrerWallet = MemberWallet::where('member_id', $referrer->id)->firstOrFail();
+            //     if ($cpDistributionPool) {
+            //         $cpDistributionPool->total_referrals = $updatedReferrerWallet->total_referrals;
+            //         $cpDistributionPool->unlocked_level = $updatedReferrerWallet->unlocked_level;
+            //         $cpDistributionPool->save();
+            //         Log::info('Updated CP Distribution Pool');
+            //     }
+            // }
 
-            session()->forget('cp_distribution_pool_id');
+            // session()->forget('cp_distribution_pool_id');
 
             Log::info('Step 10: Send Email to new member if email exists');
 
