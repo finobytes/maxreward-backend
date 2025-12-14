@@ -90,6 +90,7 @@ class CpTransaction extends Model
             'is_locked' => $isLocked,
             'status' => $isLocked ? 'onhold' : 'available',
             'transaction_type' => 'earned',
+            'total_referrals' => $data['total_referrals']
         ]);
 
         return $transaction;

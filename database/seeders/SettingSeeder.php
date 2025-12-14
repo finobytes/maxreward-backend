@@ -19,7 +19,7 @@ class SettingSeeder extends Seeder
             [
                 'setting_attribute' => [
                     'maxreward' => [
-                        'rm_points' => 1,
+                        'rm_points' => 100,
                         'pp_points' => 10,
                         'rp_points' => 20,
                         'cp_points' => 50,
@@ -32,6 +32,6 @@ class SettingSeeder extends Seeder
         );
 
         $this->command->info('✅ Setting created successfully!');
-        $this->command->info('   MaxReward points: RM=1, PP=10, RP=20, CP=50, CR=20');
+        $this->command->info('   MaxReward points: RM=100, PP=10, RP=20, CP=50, CR=20');
     }
 }

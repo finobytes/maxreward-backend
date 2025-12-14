@@ -16,12 +16,13 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         $this->call([
-            MemberSeeder::class,
+            // MemberSeeder::class,
             AdminSeeder::class,
-            MerchantSeeder::class,
+            // MerchantSeeder::class,
             CpLevelConfigSeeder::class,
             CompanyInfoSeeder::class,
-            SettingSeeder::class
+            SettingSeeder::class,
+            MemberTreeSeeder::class
         ]);
 
         // User::factory()->create([
