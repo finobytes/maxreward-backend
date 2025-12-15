@@ -281,7 +281,6 @@ class MerchantController extends Controller
             ]);
 
             if ($auth->type == "admin" || $auth->type == "staff") {
-                return "ok";
                 try {
 
                     Log::info('Step: newCorporateMemberReferral function start');
