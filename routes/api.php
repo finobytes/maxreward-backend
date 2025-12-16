@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\ModelController;
 use App\Http\Controllers\Api\Admin\BrandController;
+use App\Http\Controllers\Api\Admin\ProductController;
 use App\Http\Controllers\Api\Admin\GenderController;
 use App\Http\Controllers\Api\Admin\AttributeController;
 use App\Http\Controllers\Api\Admin\AttributeItemController;
@@ -353,6 +354,16 @@ Route::prefix('brands')->middleware('auth:admin,merchant,member')->group(functio
     Route::get('/{id}', [BrandController::class, 'show'])->middleware('role:admin');
     Route::post('/{id}', [BrandController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('role:admin');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Product Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
+    Route::post('/', [ProductController::class, 'store'])->middleware('role:admin,merchant');
 });
 
 
