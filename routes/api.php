@@ -303,7 +303,7 @@ Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(
 | Category Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(function () {
+Route::prefix('categories')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [CategoryController::class, 'store'])->middleware('role:admin');
     Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,merchant,member');
@@ -318,7 +318,7 @@ Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(fun
 | Sub-Category Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('sub-categories')->middleware('auth:admin,merchant,member')->group(function () {
+Route::prefix('sub-categories')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [SubCategoryController::class, 'store'])->middleware('role:admin');
     Route::get('/', [SubCategoryController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [SubCategoryController::class, 'getAllSubCategories'])->middleware('role:admin,merchant,member');
@@ -333,7 +333,7 @@ Route::prefix('sub-categories')->middleware('auth:admin,merchant,member')->group
 | Model Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('models')->middleware('auth:admin,merchant,member')->group(function () {
+Route::prefix('models')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [ModelController::class, 'store'])->middleware('role:admin');
     Route::get('/', [ModelController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [ModelController::class, 'getAllModels'])->middleware('role:admin,merchant,member');
@@ -346,7 +346,7 @@ Route::prefix('models')->middleware('auth:admin,merchant,member')->group(functio
 | Brand Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('brands')->middleware('auth:admin,merchant,member')->group(function () {
+Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [BrandController::class, 'store'])->middleware('role:admin');
     Route::get('/', [BrandController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [BrandController::class, 'getAllBrands'])->middleware('role:admin,merchant,member');
@@ -361,7 +361,7 @@ Route::prefix('brands')->middleware('auth:admin,merchant,member')->group(functio
 | Gender Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin/genders')->middleware('auth:admin')->group(function () {
+Route::prefix('admin/genders')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [GenderController::class, 'store']);
     Route::get('/', [GenderController::class, 'index']);
     Route::get('/all', [GenderController::class, 'getAllGenders']);
@@ -377,7 +377,7 @@ Route::prefix('admin/genders')->middleware('auth:admin')->group(function () {
 | Attribute Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin/attributes')->middleware('auth:admin')->group(function () {
+Route::prefix('admin/attributes')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [AttributeController::class, 'store']);
     Route::get('/', [AttributeController::class, 'index']);
     Route::get('/all', [AttributeController::class, 'getAllAttributes']);
@@ -393,7 +393,7 @@ Route::prefix('admin/attributes')->middleware('auth:admin')->group(function () {
 | Attribute Item Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('admin/attribute-items')->middleware('auth:admin')->group(function () {
+Route::prefix('admin/attribute-items')->middleware('auth:admin,merchant')->group(function () {
     Route::post('/', [AttributeItemController::class, 'store']);
     Route::get('/', [AttributeItemController::class, 'index']);
     Route::get('/all', [AttributeItemController::class, 'getAllAttributeItems']);
