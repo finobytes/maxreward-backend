@@ -548,7 +548,7 @@ class ProductController extends Controller
 
     private function checkSkuExists($sku, $productId = null): bool
     {
-        $productExists = Product::where('sku', $sku)
+        $productExists = Product::where('sku_short_code', $sku)
             ->when($productId, function($query) use ($productId) {
                 return $query->where('id', '!=', $productId);
             })
