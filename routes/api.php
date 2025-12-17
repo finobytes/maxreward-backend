@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\ModelController;
 use App\Http\Controllers\Api\Admin\BrandController;
-use App\Http\Controllers\Api\Admin\ProductController;
+use App\Http\Controllers\Api\Merchant\ProductController;
 use App\Http\Controllers\Api\Admin\GenderController;
 use App\Http\Controllers\Api\Admin\AttributeController;
 use App\Http\Controllers\Api\Admin\AttributeItemController;
@@ -363,7 +363,7 @@ Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
-    Route::post('/', [ProductController::class, 'store'])->middleware('role:admin,merchant');
+    Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
 });
 
 
