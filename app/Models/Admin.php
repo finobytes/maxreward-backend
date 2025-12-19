@@ -6,10 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Spatie\Permission\Traits\HasRoles;
 
 class Admin extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles;
 
     /**
      * The table associated with the model.
@@ -17,6 +18,11 @@ class Admin extends Authenticatable implements JWTSubject
      * @var string
      */
     protected $table = 'admin';
+
+    /**
+     * The guard name for Spatie permissions
+     */
+    protected $guard_name = 'admin';
 
     /**
      * The attributes that are mass assignable.
