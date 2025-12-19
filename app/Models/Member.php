@@ -5,13 +5,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;  // ⬅️ এটা পরিবর্তন করুন
+use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
+use Spatie\Permission\Traits\HasRoles;
 
 class Member extends Authenticatable implements JWTSubject
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasRoles;
 
     protected $table = 'members';
+
+    /**
+     * The guard name for Spatie permissions
+     */
+    protected $guard_name = 'member';
 
     protected $fillable = [
         'user_name',

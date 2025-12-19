@@ -39,7 +39,13 @@ class AuthController extends Controller implements HasMiddleware
 
     public function me()
     {
-        return response()->json(auth('admin')->user());
+        $user = auth('admin')->user();
+
+        return response()->json([
+            'user' => $user,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'roles' => $user->getRoleNames(),
+        ]);
     }
 
 
@@ -57,10 +63,15 @@ class AuthController extends Controller implements HasMiddleware
 
     protected function respondWithToken($token)
     {
+        $user = auth('admin')->user();
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('admin')->factory()->getTTL() * 60
+            'expires_in' => auth('admin')->factory()->getTTL() * 60,
+            'user' => $user,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'roles' => $user->getRoleNames(),
         ]);
     }
 }

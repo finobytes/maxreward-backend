@@ -63,7 +63,7 @@ class AuthController extends Controller implements HasMiddleware
     {
         // return response()->json(auth('member')->user());
         $member = auth('member')->user()->load('wallet');
-        
+
         // Load statistics from your tree service
         $statistics = $this->treeService->getTreeStatistics($member->id);
         $member->community_members = $statistics['total_members'];
@@ -73,7 +73,11 @@ class AuthController extends Controller implements HasMiddleware
         ->approved() // include this if you want only approved purchases
         ->sum('transaction_amount');
 
-        return response()->json($member);
+        return response()->json([
+            'member' => $member,
+            'permissions' => $member->getAllPermissions()->pluck('name'),
+            'roles' => $member->getRoleNames(),
+        ]);
     }
 
 
@@ -91,10 +95,15 @@ class AuthController extends Controller implements HasMiddleware
 
     protected function respondWithToken($token)
     {
+        $member = auth('member')->user();
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('member')->factory()->getTTL() * 60
+            'expires_in' => auth('member')->factory()->getTTL() * 60,
+            'member' => $member,
+            'permissions' => $member->getAllPermissions()->pluck('name'),
+            'roles' => $member->getRoleNames(),
         ]);
     }
 }

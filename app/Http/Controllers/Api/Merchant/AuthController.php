@@ -53,28 +53,33 @@ class AuthController extends Controller implements HasMiddleware
     {
         // return response()->json(auth('merchant')->user());
         $user = auth('merchant')->user();
-    
+
         // Load merchant relationship (full data)
         $user->load('merchant.wallet', 'merchant.corporateMember.wallet');
- 
+
         $corporateMemberId = $user->merchant->corporateMember->id;
 
         if (!$corporateMemberId) {
             return response()->json(['error' => 'User not found'], 404);
         }
-        
+
         // Load statistics from your tree service
         $statistics = $this->treeService->getTreeStatistics($corporateMemberId);
         $user->community_members = $statistics['total_members'];
 
-        // Calculate total pending purchase total for this merchant 
+        // Calculate total pending purchase total for this merchant
         $user->total_pending_purchase = Purchase::where('merchant_id', $user->merchant->id)
-        ->pending()  // scopePending() is pending from Purchase model 
+        ->pending()  // scopePending() is pending from Purchase model
         ->count();
 
         $user->referred_members = CommonFunctionHelper::sponsoredMembers($corporateMemberId);
-        
-        return response()->json($user);
+
+        // Add permissions and roles to response
+        return response()->json([
+            'user' => $user,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'roles' => $user->getRoleNames(),
+        ]);
     }
 
     public function logout()
@@ -91,10 +96,15 @@ class AuthController extends Controller implements HasMiddleware
 
     protected function respondWithToken($token)
     {
+        $user = auth('merchant')->user();
+
         return response()->json([
             'access_token' => $token,
             'token_type' => 'bearer',
-            'expires_in' => auth('merchant')->factory()->getTTL() * 60
+            'expires_in' => auth('merchant')->factory()->getTTL() * 60,
+            'user' => $user,
+            'permissions' => $user->getAllPermissions()->pluck('name'),
+            'roles' => $user->getRoleNames(),
         ]);
     }
 }
