@@ -4,7 +4,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\Admin\AuthController as AdminAuthController;
 use App\Http\Controllers\Api\Admin\DashboardController;
-use App\Http\Controllers\Api\Admin\RoleController;
 use App\Http\Controllers\Api\Member\AuthController as MemberAuthController;
 use App\Http\Controllers\Api\Merchant\AuthController as MerchantAuthController;
 use App\Http\Controllers\GitWebhookController;
@@ -144,16 +143,6 @@ Route::prefix('admin')->group(function () {
         Route::post('me', [AdminAuthController::class, 'me']);
         Route::post('change-password', [AdminStaffController::class, 'changePassword']);
 
-        // Role Management Routes (Admin only)
-        Route::prefix('roles')->group(function () {
-            Route::post('assign-admin', [RoleController::class, 'assignRoleToAdmin']);
-            Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
-            Route::post('remove-admin', [RoleController::class, 'removeRoleFromAdmin']);
-            Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant']);
-            Route::get('/', [RoleController::class, 'getAllRoles']);
-            Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
-            Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
-        });
 
         Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
         Route::post('/merchant-suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
@@ -370,26 +359,19 @@ Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Product Routes (WITH PERMISSION SYSTEM)
+| Product Routes
 |--------------------------------------------------------------------------
 */
 Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
-    // View products - owner, manager, staff, sales can view
-    Route::get('/', [ProductController::class, 'index'])->middleware('permission:product.view');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('permission:product.view');
-
-    // Create product - only owner, manager can create
-    Route::post('/', [ProductController::class, 'store'])->middleware('permission:product.create');
-
-    // Update product - only owner, manager can edit
-    Route::put('/{id}', [ProductController::class, 'update'])->middleware('permission:product.edit');
-
-    // Delete product - only owner can delete
-    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('permission:product.delete');
-
-    // Variation Helpers - only owner, manager can use
-    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('permission:product.create');
-    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('permission:product.create');
+    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,merchant');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
+    Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
+    Route::put('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
+    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
+    
+    // Variation Helpers
+    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant');
+    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant');
 });
 
 
