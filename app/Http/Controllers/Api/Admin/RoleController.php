@@ -221,6 +221,196 @@ class RoleController extends Controller
     }
 
     /**
+     * Create a new role
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createRole(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'guard_name' => 'required|in:admin,merchant,member',
+            'permissions' => 'array',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Check if role already exists
+            $existingRole = Role::where('name', $request->name)
+                              ->where('guard_name', $request->guard_name)
+                              ->first();
+
+            if ($existingRole) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role already exists for this guard',
+                    'data' => $existingRole
+                ], 409);
+            }
+
+            // Create role
+            $role = Role::create([
+                'name' => $request->name,
+                'guard_name' => $request->guard_name,
+            ]);
+
+            // Assign permissions if provided
+            if ($request->has('permissions') && count($request->permissions) > 0) {
+                // Filter permissions by guard
+                $validPermissions = Permission::where('guard_name', $request->guard_name)
+                                             ->whereIn('name', $request->permissions)
+                                             ->pluck('name')
+                                             ->toArray();
+
+                $role->syncPermissions($validPermissions);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role created successfully',
+                'data' => [
+                    'role' => $role,
+                    'permissions' => $role->permissions->pluck('name')
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a role
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updateRole(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'sometimes|string|max:255',
+            'permissions' => 'sometimes|array',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $role = Role::findOrFail($id);
+
+            // Update name if provided
+            if ($request->has('name')) {
+                // Check if new name already exists
+                $existingRole = Role::where('name', $request->name)
+                                  ->where('guard_name', $role->guard_name)
+                                  ->where('id', '!=', $id)
+                                  ->first();
+
+                if ($existingRole) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Role name already exists for this guard'
+                    ], 409);
+                }
+
+                $role->name = $request->name;
+                $role->save();
+            }
+
+            // Update permissions if provided
+            if ($request->has('permissions')) {
+                // Filter permissions by guard
+                $validPermissions = Permission::where('guard_name', $role->guard_name)
+                                             ->whereIn('name', $request->permissions)
+                                             ->pluck('name')
+                                             ->toArray();
+
+                $role->syncPermissions($validPermissions);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role updated successfully',
+                'data' => [
+                    'role' => $role,
+                    'permissions' => $role->permissions->pluck('name')
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a role
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteRole($id)
+    {
+        try {
+            $role = Role::findOrFail($id);
+
+            // Check if any users have this role
+            $usersWithRole = \DB::table('model_has_roles')
+                              ->where('role_id', $id)
+                              ->count();
+
+            if ($usersWithRole > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete role. ' . $usersWithRole . ' user(s) currently have this role.',
+                    'users_count' => $usersWithRole
+                ], 409);
+            }
+
+            $roleName = $role->name;
+            $role->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role deleted successfully',
+                'data' => [
+                    'deleted_role' => $roleName
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get all available roles
      *
      * @param Request $request
@@ -281,6 +471,170 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Create a new permission
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function createPermission(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'guard_name' => 'required|in:admin,merchant,member',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            // Check if permission already exists
+            $existingPermission = Permission::where('name', $request->name)
+                                           ->where('guard_name', $request->guard_name)
+                                           ->first();
+
+            if ($existingPermission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission already exists for this guard',
+                    'data' => $existingPermission
+                ], 409);
+            }
+
+            // Create permission
+            $permission = Permission::create([
+                'name' => $request->name,
+                'guard_name' => $request->guard_name,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission created successfully',
+                'data' => $permission
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create permission',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a permission
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletePermission($id)
+    {
+        try {
+            $permission = Permission::findOrFail($id);
+
+            // Check if any roles have this permission
+            $rolesWithPermission = \DB::table('role_has_permissions')
+                                     ->where('permission_id', $id)
+                                     ->count();
+
+            if ($rolesWithPermission > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete permission. ' . $rolesWithPermission . ' role(s) currently have this permission.',
+                    'roles_count' => $rolesWithPermission
+                ], 409);
+            }
+
+            $permissionName = $permission->name;
+            $permission->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission deleted successfully',
+                'data' => [
+                    'deleted_permission' => $permissionName
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete permission',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Assign permissions to a role
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function assignPermissionsToRole(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $role = Role::findOrFail($id);
+
+            // Filter permissions by guard to ensure they match the role's guard
+            $validPermissions = Permission::where('guard_name', $role->guard_name)
+                                         ->whereIn('name', $request->permissions)
+                                         ->pluck('name')
+                                         ->toArray();
+
+            if (empty($validPermissions)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid permissions found for this role guard',
+                    'data' => [
+                        'role_guard' => $role->guard_name,
+                        'requested_permissions' => $request->permissions
+                    ]
+                ], 400);
+            }
+
+            // Sync permissions (replaces all existing permissions)
+            $role->syncPermissions($validPermissions);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permissions assigned successfully',
+                'data' => [
+                    'role' => $role,
+                    'permissions' => $role->permissions->pluck('name'),
+                    'assigned_count' => count($validPermissions)
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign permissions',
                 'error' => $e->getMessage()
             ], 500);
         }

@@ -146,13 +146,24 @@ Route::prefix('admin')->group(function () {
 
         // Role Management Routes (Admin only)
         Route::prefix('roles')->group(function () {
+            // CRUD Operations
+            Route::post('create', [RoleController::class, 'createRole']);
+            Route::put('update/{id}', [RoleController::class, 'updateRole']);
+            Route::delete('delete/{id}', [RoleController::class, 'deleteRole']);
+            Route::get('/', [RoleController::class, 'getAllRoles']);
+
+            // Assign/Remove Roles
             Route::post('assign-admin', [RoleController::class, 'assignRoleToAdmin']);
             Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
             Route::post('remove-admin', [RoleController::class, 'removeRoleFromAdmin']);
             Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant']);
-            Route::get('/', [RoleController::class, 'getAllRoles']);
+
+            // Permissions Management
             Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
+            Route::post('/permissions/create', [RoleController::class, 'createPermission']);
+            Route::delete('/permissions/delete/{id}', [RoleController::class, 'deletePermission']);
             Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
+            Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
         });
 
         Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
