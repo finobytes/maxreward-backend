@@ -34,7 +34,7 @@ return new class extends Migration
             $table->decimal('unit_weight', 8, 2)->default(0)->comment('Weight in grams');
 
             $table->string('short_description', 500)->nullable();
-            $table->text('description')->nullable();
+            $table->text('description');
 
             $table->json('images')->nullable()->comment('Array of Cloudinary URLs');
 

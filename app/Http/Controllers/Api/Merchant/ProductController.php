@@ -11,6 +11,8 @@ use App\Models\ProductVariation;
 use App\Models\ProductVariationAttribute;
 use App\Helpers\CloudinaryHelper;
 use Illuminate\Support\Str;
+use App\Models\Attribute;
+use App\Models\AttributeItem;
 
 class ProductController extends Controller
 {
@@ -143,7 +145,8 @@ class ProductController extends Controller
 
         try {
             $skuShortCode = strtoupper(trim($request->sku_short_code));
-            $attributes = $request->attributes;
+            $attributes = $request->input('attributes');
+            // dd($attributes);
             $productId = $request->product_id;
 
             // Generate combinations
@@ -214,7 +217,7 @@ class ProductController extends Controller
             'type' => 'required|in:simple,variable',
             'status' => 'nullable|in:active,inactive,draft,out_of_stock',
             'short_description' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
+            'description' => 'required|string',
             'images' => 'nullable|array',
             'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
 
@@ -295,11 +298,11 @@ class ProductController extends Controller
                 'short_description' => $request->short_description,
                 'description' => $request->description,
                 'images' => !empty($productImages) ? $productImages : null,
-                'regular_price' => $request->type === 'simple' ? $request->regular_price : 0,
-                'regular_point' => $request->type === 'simple' ? $request->regular_point : 0,
-                'sale_price' => $request->type === 'simple' ? $request->sale_price : null,
-                'sale_point' => $request->type === 'simple' ? $request->sale_point : null,
-                'cost_price' => $request->type === 'simple' ? $request->cost_price : null,
+                'regular_price' => $request->regular_price ?? 0,
+                'regular_point' => $request->regular_point ?? 0,
+                'sale_price' => $request->sale_price ?? 0,
+                'sale_point' => $request->sale_point ?? 0,
+                'cost_price' => $request->cost_price ?? 0,
                 'unit_weight' => $request->unit_weight ?? 0,
             ]);
 
@@ -578,7 +581,9 @@ class ProductController extends Controller
                     $newCombination = $combination;
                     $newCombination[] = [
                         'attribute_id' => $attribute['attribute_id'],
-                        'attribute_item_id' => $itemId
+                        'attribute_item_id' => $itemId,
+                        'attribute_name' => Attribute::find($attribute['attribute_id'])->name,
+                        'attribute_item_name' => AttributeItem::find($itemId)->name
                     ];
                     $temp[] = $newCombination;
                 }
@@ -589,30 +594,67 @@ class ProductController extends Controller
         return $result;
     }
 
+    /**
+     * Generate variation SKU with proper attribute ordering
+     * Attributes are sorted by attribute_id to ensure consistent SKU format
+     * Example: TSHIRT-GREEN-S (Color first, then Size if attribute_id of Color < Size)
+     */
     private function generateVariationSKU($baseSkuCode, $attributeCombination): string
     {
-        $attributeValues = [];
+        // Collect attribute data with their IDs for sorting
+        $attributeData = [];
         
         foreach ($attributeCombination as $attr) {
             $attributeItem = \App\Models\AttributeItem::find($attr['attribute_item_id']);
             if ($attributeItem) {
-                $attributeValues[] = strtoupper(Str::slug($attributeItem->name, ''));
+                $attributeData[] = [
+                    'attribute_id' => $attr['attribute_id'],
+                    'item_slug' => strtoupper(Str::slug($attributeItem->name, ''))
+                ];
             }
         }
 
-        return strtoupper($baseSkuCode) . '-' . implode('-', $attributeValues);
+        // Sort by attribute_id to maintain consistent order (e.g., Size before Color)
+        usort($attributeData, function($a, $b) {
+            return $a['attribute_id'] <=> $b['attribute_id'];
+        });
+
+        // Build SKU parts
+        $skuParts = array_map(function($item) {
+            return $item['item_slug'];
+        }, $attributeData);
+
+        return strtoupper($baseSkuCode) . '-' . implode('-', $skuParts);
     }
 
+    /**
+     * Format attribute names for display
+     * Maintains same order as SKU generation (sorted by attribute_id)
+     */
     private function formatAttributeNames($attributeCombination): string
     {
-        $names = [];
+        // Collect attribute data
+        $attributeData = [];
         
         foreach ($attributeCombination as $attr) {
             $attributeItem = \App\Models\AttributeItem::find($attr['attribute_item_id']);
             if ($attributeItem) {
-                $names[] = $attributeItem->name;
+                $attributeData[] = [
+                    'attribute_id' => $attr['attribute_id'],
+                    'name' => $attributeItem->name
+                ];
             }
         }
+
+        // Sort by attribute_id to maintain same order as SKU
+        usort($attributeData, function($a, $b) {
+            return $a['attribute_id'] <=> $b['attribute_id'];
+        });
+
+        // Extract names
+        $names = array_map(function($item) {
+            return $item['name'];
+        }, $attributeData);
 
         return implode(' / ', $names);
     }
