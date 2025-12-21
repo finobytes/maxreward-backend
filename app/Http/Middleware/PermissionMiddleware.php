@@ -12,14 +12,12 @@ class PermissionMiddleware
      * Handle an incoming request.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     * @param  string  $permission  The permission name to check (e.g., 'product.create')
+     * @param  string  $permission  The permission name to check (e.g., 'product.view' or 'administrator.product.view')
      */
     public function handle(Request $request, Closure $next, string $permission): Response
     {
         // Get authenticated user from any guard
         $user = $this->getAuthenticatedUser();
-
-        // dd($user);
 
         // Check if user is authenticated
         if (!$user) {
@@ -33,30 +31,91 @@ class PermissionMiddleware
         // Get the guard name for the authenticated user
         $guardName = $this->getAuthenticatedGuard();
 
-        // For admin guard, prefix the permission with 'admin.'
-        // This handles the difference in permission naming:
-        // - Merchant permissions: product.view, product.create, etc.
-        // - Admin permissions: admin.product.view, admin.product.edit, etc.
-        $permissionToCheck = $permission;
-        if ($guardName === 'admin') {
-            // If permission doesn't already start with 'admin.', prefix it
-            if (!str_starts_with($permission, 'admin.')) {
-                $permissionToCheck = 'admin.' . $permission;
+        // Build permission patterns to check based on user's roles
+        $permissionsToCheck = $this->buildPermissionPatterns($user, $permission, $guardName);
+
+        // Check if user has any of the required permissions
+        $hasPermission = false;
+        foreach ($permissionsToCheck as $perm) {
+            if ($user->hasPermissionTo($perm)) {
+                $hasPermission = true;
+                break;
             }
         }
 
-        // Check if user has the required permission
-        if (!$user->hasPermissionTo($permissionToCheck)) {
+        if (!$hasPermission) {
+            $userPermissions = $user->getAllPermissions()->pluck('name')->toArray();
+            $userRoles = $user->getRoleNames()->toArray();
+
             return response()->json([
                 'success' => false,
-                'message' => 'You do not have permission to perform this action',
+                'message' => 'Access denied. You do not have the required permission to perform this action.',
                 'error' => 'forbidden',
-                'required_permission' => $permissionToCheck,
-                'your_permissions' => $user->getAllPermissions()->pluck('name')->toArray()
+                'details' => [
+                    'required_permission' => $permission,
+                    'checked_permissions' => $permissionsToCheck,
+                    'your_role' => $userRoles[0] ?? null,
+                    'your_roles' => $userRoles,
+                    'your_permissions' => $userPermissions,
+                    'permissions_count' => count($userPermissions),
+                ],
+                'suggestion' => count($userPermissions) === 0
+                    ? 'You have no permissions assigned. Please contact your administrator to assign you a role with appropriate permissions.'
+                    : 'Your current role does not have access to this resource. Required: ' . $permission
             ], 403);
         }
 
         return $next($request);
+    }
+
+    /**
+     * Build permission patterns based on user's roles
+     *
+     * @param  mixed  $user
+     * @param  string  $permission
+     * @param  string  $guardName
+     * @return array
+     */
+    private function buildPermissionPatterns($user, string $permission, string $guardName): array
+    {
+        $patterns = [];
+
+        // If permission is already fully qualified (e.g., 'administrator.product.view'), use it as-is
+        if (str_contains($permission, '.') && !str_starts_with($permission, 'admin.')) {
+            $parts = explode('.', $permission);
+            if (count($parts) >= 2) {
+                // Check if first part is a role name
+                $possibleRole = $parts[0];
+                if ($user->hasRole($possibleRole)) {
+                    $patterns[] = $permission;
+                    return $patterns;
+                }
+            }
+        }
+
+        // Get user's roles
+        $userRoles = $user->getRoleNames();
+
+        // For each role, build the role-specific permission
+        foreach ($userRoles as $role) {
+            // Build: {role}.{permission}
+            // Example: administrator.product.view, staff.product.view
+            $patterns[] = $role . '.' . $permission;
+        }
+
+        // Fallback: Also check guard-based permission for backward compatibility
+        if ($guardName === 'admin') {
+            if (!str_starts_with($permission, 'admin.')) {
+                $patterns[] = 'admin.' . $permission;
+            } else {
+                $patterns[] = $permission;
+            }
+        } else {
+            // For merchant/member guards, use permission as-is
+            $patterns[] = $permission;
+        }
+
+        return array_unique($patterns);
     }
 
     /**

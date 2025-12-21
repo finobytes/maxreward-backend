@@ -134,99 +134,128 @@ class PermissionSeeder extends Seeder
     {
         $guardName = 'admin';
 
-        // Define all admin permissions
-        $permissions = [
-            // Merchant Management
-            'merchant.view' => 'View merchants',
-            'merchant.create' => 'Create merchants',
-            'merchant.edit' => 'Edit merchants',
-            'merchant.delete' => 'Delete merchants',
-            'merchant.approve' => 'Approve merchant applications',
-            'merchant.suspend' => 'Suspend merchants',
+        // ==================== ROLE-SPECIFIC PERMISSIONS ====================
 
-            // Member Management
-            'member.view' => 'View members',
-            'member.edit' => 'Edit members',
-            'member.delete' => 'Delete members',
-            'member.manage' => 'Full member management',
-
-            // Product Management (Admin)
-            'admin.product.view' => 'View all products',
-            'admin.product.edit' => 'Edit any product',
-            'admin.product.delete' => 'Delete any product',
-
-            // Category & Brand Management
-            'category.manage' => 'Manage categories',
-            'brand.manage' => 'Manage brands',
-            'attribute.manage' => 'Manage attributes',
-
-            // Transaction Management
-            'admin.transaction.view' => 'View all transactions',
-            'admin.transaction.manage' => 'Manage transactions',
-
-            // Report & Analytics
-            'admin.report.view' => 'View admin reports',
-            'admin.report.export' => 'Export admin reports',
-
-            // Staff Management
-            'admin.staff.view' => 'View admin staff',
-            'admin.staff.create' => 'Create admin staff',
-            'admin.staff.edit' => 'Edit admin staff',
-            'admin.staff.delete' => 'Delete admin staff',
-
-            // System Settings
-            'settings.manage' => 'Manage system settings',
-            'settings.view' => 'View system settings',
+        // SUPER ADMIN PERMISSIONS
+        $superAdminPermissions = [
+            'super_admin.merchant.view' => 'View merchants',
+            'super_admin.merchant.create' => 'Create merchants',
+            'super_admin.merchant.edit' => 'Edit merchants',
+            'super_admin.merchant.delete' => 'Delete merchants',
+            'super_admin.merchant.approve' => 'Approve merchants',
+            'super_admin.merchant.suspend' => 'Suspend merchants',
+            'super_admin.member.view' => 'View members',
+            'super_admin.member.edit' => 'Edit members',
+            'super_admin.member.delete' => 'Delete members',
+            'super_admin.member.manage' => 'Full member management',
+            'super_admin.product.view' => 'View all products',
+            'super_admin.product.create' => 'Create products',
+            'super_admin.product.edit' => 'Edit any product',
+            'super_admin.product.delete' => 'Delete any product',
+            'super_admin.category.manage' => 'Manage categories',
+            'super_admin.brand.manage' => 'Manage brands',
+            'super_admin.attribute.manage' => 'Manage attributes',
+            'super_admin.transaction.view' => 'View all transactions',
+            'super_admin.transaction.manage' => 'Manage transactions',
+            'super_admin.report.view' => 'View admin reports',
+            'super_admin.report.export' => 'Export admin reports',
+            'super_admin.staff.view' => 'View admin staff',
+            'super_admin.staff.create' => 'Create admin staff',
+            'super_admin.staff.edit' => 'Edit admin staff',
+            'super_admin.staff.delete' => 'Delete admin staff',
+            'super_admin.settings.manage' => 'Manage system settings',
+            'super_admin.settings.view' => 'View system settings',
         ];
 
-        // Create permissions
-        foreach ($permissions as $name => $description) {
+        // ADMIN PERMISSIONS
+        $adminPermissions = [
+            'admin.merchant.view' => 'View merchants',
+            'admin.merchant.edit' => 'Edit merchants',
+            'admin.merchant.approve' => 'Approve merchants',
+            'admin.member.view' => 'View members',
+            'admin.member.edit' => 'Edit members',
+            'admin.product.view' => 'View products',
+            'admin.product.edit' => 'Edit products',
+            'admin.category.manage' => 'Manage categories',
+            'admin.brand.manage' => 'Manage brands',
+            'admin.attribute.manage' => 'Manage attributes',
+            'admin.transaction.view' => 'View transactions',
+            'admin.report.view' => 'View reports',
+            'admin.report.export' => 'Export reports',
+            'admin.settings.view' => 'View settings',
+        ];
+
+        // STAFF PERMISSIONS
+        $staffPermissions = [
+            'staff.merchant.view' => 'View merchants',
+            'staff.member.view' => 'View members',
+            'staff.product.view' => 'View products',
+            'staff.transaction.view' => 'View transactions',
+            'staff.report.view' => 'View reports',
+        ];
+
+        // ADMINISTRATOR PERMISSIONS (Custom role with specific access)
+        $administratorPermissions = [
+            'administrator.merchant.view' => 'View merchants',
+            'administrator.merchant.edit' => 'Edit merchants',
+            'administrator.member.view' => 'View members',
+            'administrator.member.edit' => 'Edit members',
+            'administrator.product.view' => 'View products',
+            'administrator.product.create' => 'Create products',
+            'administrator.product.edit' => 'Edit products',
+            'administrator.product.delete' => 'Delete products',
+            'administrator.category.manage' => 'Manage categories',
+            'administrator.brand.manage' => 'Manage brands',
+            'administrator.transaction.view' => 'View transactions',
+            'administrator.report.view' => 'View reports',
+            'administrator.report.export' => 'Export reports',
+            'administrator.staff.view' => 'View staff',
+        ];
+
+        // Create all permissions
+        $allPermissions = array_merge(
+            $superAdminPermissions,
+            $adminPermissions,
+            $staffPermissions,
+            $administratorPermissions
+        );
+
+        foreach ($allPermissions as $name => $description) {
             Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => $guardName]
             );
         }
 
-        // Create Admin Roles
+        // Create Roles and assign permissions
 
-        // 1. Super Admin - Full access
+        // 1. Super Admin Role - Full access
         $superAdminRole = Role::firstOrCreate(
             ['name' => 'super_admin', 'guard_name' => $guardName]
         );
-        $superAdminRole->syncPermissions(array_keys($permissions));
+        $superAdminRole->syncPermissions(array_keys($superAdminPermissions));
 
-        // 2. Admin - Most permissions
+        // 2. Admin Role - Most permissions
         $adminRole = Role::firstOrCreate(
             ['name' => 'admin', 'guard_name' => $guardName]
         );
-        $adminRole->syncPermissions([
-            'merchant.view',
-            'merchant.edit',
-            'merchant.approve',
-            'member.view',
-            'member.edit',
-            'admin.product.view',
-            'admin.product.edit',
-            'category.manage',
-            'brand.manage',
-            'attribute.manage',
-            'admin.transaction.view',
-            'admin.report.view',
-            'admin.report.export',
-            'settings.view',
-        ]);
+        $adminRole->syncPermissions(array_keys($adminPermissions));
 
-        // 3. Staff - Limited access
-        $adminStaffRole = Role::firstOrCreate(
+        // 3. Staff Role - Limited access
+        $staffRole = Role::firstOrCreate(
             ['name' => 'staff', 'guard_name' => $guardName]
         );
-        $adminStaffRole->syncPermissions([
-            'merchant.view',
-            'member.view',
-            'admin.product.view',
-            'admin.transaction.view',
-            'admin.report.view',
-        ]);
+        $staffRole->syncPermissions(array_keys($staffPermissions));
+
+        // 4. Administrator Role - Custom access
+        $administratorRole = Role::firstOrCreate(
+            ['name' => 'administrator', 'guard_name' => $guardName]
+        );
+        $administratorRole->syncPermissions(array_keys($administratorPermissions));
 
         $this->command->info('✅ Admin permissions and roles created successfully!');
+        $this->command->info('   - super_admin: ' . count($superAdminPermissions) . ' permissions');
+        $this->command->info('   - admin: ' . count($adminPermissions) . ' permissions');
+        $this->command->info('   - staff: ' . count($staffPermissions) . ' permissions');
+        $this->command->info('   - administrator: ' . count($administratorPermissions) . ' permissions');
     }
 }
