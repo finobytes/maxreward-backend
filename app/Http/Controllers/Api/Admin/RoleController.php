@@ -641,6 +641,110 @@ class RoleController extends Controller
     }
 
     /**
+     * Assign role to member
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function assignRoleToMember(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'member_id' => 'required|integer|exists:members,id',
+            'role' => 'required|string|exists:roles,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $member = \App\Models\Member::findOrFail($request->member_id);
+
+            // Check if role exists for member guard
+            $role = Role::where('name', $request->role)
+                       ->where('guard_name', 'member')
+                       ->first();
+
+            if (!$role) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found for member guard',
+                    'available_roles' => Role::where('guard_name', 'member')->pluck('name')
+                ], 404);
+            }
+
+            // Assign role
+            $member->syncRoles([$request->role]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role assigned successfully',
+                'data' => [
+                    'member' => $member,
+                    'role' => $request->role,
+                    'permissions' => $member->getAllPermissions()->pluck('name'),
+                    'all_roles' => $member->getRoleNames()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove role from member
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removeRoleFromMember(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'member_id' => 'required|integer|exists:members,id',
+            'role' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $member = \App\Models\Member::findOrFail($request->member_id);
+            $member->removeRole($request->role);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role removed successfully',
+                'data' => [
+                    'member' => $member,
+                    'removed_role' => $request->role,
+                    'remaining_roles' => $member->getRoleNames()
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove role',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get user roles and permissions
      *
      * @param Request $request
@@ -649,7 +753,7 @@ class RoleController extends Controller
     public function getUserRolesAndPermissions(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'user_type' => 'required|in:admin,merchant',
+            'user_type' => 'required|in:admin,merchant,member',
             'user_id' => 'required|integer',
         ]);
 
@@ -664,8 +768,10 @@ class RoleController extends Controller
         try {
             if ($request->user_type === 'admin') {
                 $user = Admin::findOrFail($request->user_id);
-            } else {
+            } elseif ($request->user_type === 'merchant') {
                 $user = MerchantStaff::findOrFail($request->user_id);
+            } else {
+                $user = \App\Models\Member::findOrFail($request->user_id);
             }
 
             return response()->json([

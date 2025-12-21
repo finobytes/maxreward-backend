@@ -155,8 +155,10 @@ Route::prefix('admin')->group(function () {
             // Assign/Remove Roles
             Route::post('assign-admin', [RoleController::class, 'assignRoleToAdmin']);
             Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
+            Route::post('assign-member', [RoleController::class, 'assignRoleToMember']);
             Route::post('remove-admin', [RoleController::class, 'removeRoleFromAdmin']);
             Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant']);
+            Route::post('remove-member', [RoleController::class, 'removeRoleFromMember']);
 
             // Permissions Management
             Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
