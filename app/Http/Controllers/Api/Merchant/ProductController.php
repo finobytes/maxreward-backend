@@ -605,7 +605,7 @@ class ProductController extends Controller
         $attributeData = [];
         
         foreach ($attributeCombination as $attr) {
-            $attributeItem = \App\Models\AttributeItem::find($attr['attribute_item_id']);
+            $attributeItem = AttributeItem::find($attr['attribute_item_id']);
             if ($attributeItem) {
                 $attributeData[] = [
                     'attribute_id' => $attr['attribute_id'],
@@ -637,7 +637,7 @@ class ProductController extends Controller
         $attributeData = [];
         
         foreach ($attributeCombination as $attr) {
-            $attributeItem = \App\Models\AttributeItem::find($attr['attribute_item_id']);
+            $attributeItem = AttributeItem::find($attr['attribute_item_id']);
             if ($attributeItem) {
                 $attributeData[] = [
                     'attribute_id' => $attr['attribute_id'],
