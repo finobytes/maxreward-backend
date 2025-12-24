@@ -179,6 +179,8 @@ class ReferralController extends Controller
 
             Log::info('Step 5: Deduct 100 RP from referrer');
 
+            $referral_history = false;
+
             // Step 5: Deduct 100 RP from referrer
             if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
                 if ($referrerWallet->available_points >= $this->settingAttributes['deductable_points']) {
@@ -186,6 +188,7 @@ class ReferralController extends Controller
                     $referrerWallet->save();
                 }
             } else {
+                $referral_history = true;
                 $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
                 $referrerWallet->save();
             }
@@ -200,7 +203,8 @@ class ReferralController extends Controller
                 'transaction_reason' => "Referred new member: {$newMember->name}",
                 'brp' => $referrerWallet->total_rp,
                 'bap' => $referrerWallet->available_points,
-                'bop' => $referrerWallet->onhold_points
+                'bop' => $referrerWallet->onhold_points,
+                'is_referral_history' => $referral_history
             ]);
 
             Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
