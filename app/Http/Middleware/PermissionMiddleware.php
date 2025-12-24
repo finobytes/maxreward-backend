@@ -96,22 +96,26 @@ class PermissionMiddleware
         // Get user's roles
         $userRoles = $user->getRoleNames();
 
-        // For each role, build the role-specific permission
-        foreach ($userRoles as $role) {
-            // Build: {role}.{permission}
-            // Example: administrator.product.view, staff.product.view
-            $patterns[] = $role . '.' . $permission;
-        }
+        // For admin and member guards, build role-specific permissions
+        // For merchant guard, use shared permissions
+        if ($guardName === 'admin' || $guardName === 'member') {
+            // Build role-specific permissions
+            foreach ($userRoles as $role) {
+                // Build: {role}.{permission}
+                // Example: administrator.product.view, premium_member.voucher.create
+                $patterns[] = $role . '.' . $permission;
+            }
 
-        // Fallback: Also check guard-based permission for backward compatibility
-        if ($guardName === 'admin') {
-            if (!str_starts_with($permission, 'admin.')) {
-                $patterns[] = 'admin.' . $permission;
-            } else {
-                $patterns[] = $permission;
+            // Fallback for admin guard: Also check guard-based permission
+            if ($guardName === 'admin') {
+                if (!str_starts_with($permission, 'admin.')) {
+                    $patterns[] = 'admin.' . $permission;
+                } else {
+                    $patterns[] = $permission;
+                }
             }
         } else {
-            // For merchant/member guards, use permission as-is
+            // For merchant guard, use shared permissions (permission as-is)
             $patterns[] = $permission;
         }
 

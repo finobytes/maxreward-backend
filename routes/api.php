@@ -166,6 +166,10 @@ Route::prefix('admin')->group(function () {
             Route::delete('/permissions/delete/{id}', [RoleController::class, 'deletePermission']);
             Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
             Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
+
+            // Direct Permissions (for merchant staff)
+            Route::post('/staff/assign-direct-permissions', [RoleController::class, 'assignDirectPermissionsToStaff']);
+            Route::post('/staff/remove-direct-permissions', [RoleController::class, 'removeDirectPermissionsFromStaff']);
         });
 
         Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');

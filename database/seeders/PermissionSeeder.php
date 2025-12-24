@@ -31,8 +31,14 @@ class PermissionSeeder extends Seeder
     {
         $guardName = 'merchant';
 
-        // Define all merchant permissions
-        $permissions = [
+        // You can choose between two approaches:
+        // 1. Shared permissions (simpler) - uncomment this
+        // 2. Role-specific permissions (like admin) - uncomment the other one
+
+        // ==================== APPROACH 1: SHARED PERMISSIONS (RECOMMENDED) ====================
+
+        // Define shared merchant permissions
+        $sharedPermissions = [
             // Product Management
             'product.view' => 'View products',
             'product.create' => 'Create new products',
@@ -67,8 +73,8 @@ class PermissionSeeder extends Seeder
             'wallet.manage' => 'Manage wallet',
         ];
 
-        // Create permissions
-        foreach ($permissions as $name => $description) {
+        // Create shared permissions
+        foreach ($sharedPermissions as $name => $description) {
             Permission::firstOrCreate(
                 ['name' => $name, 'guard_name' => $guardName]
             );
@@ -80,7 +86,7 @@ class PermissionSeeder extends Seeder
         $ownerRole = Role::firstOrCreate(
             ['name' => 'owner', 'guard_name' => $guardName]
         );
-        $ownerRole->syncPermissions(array_keys($permissions));
+        $ownerRole->syncPermissions(array_keys($sharedPermissions));
 
         // 2. Manager Role - Most permissions except critical ones
         $managerRole = Role::firstOrCreate(
@@ -125,6 +131,11 @@ class PermissionSeeder extends Seeder
         ]);
 
         $this->command->info('✅ Merchant permissions and roles created successfully!');
+        $this->command->info('   Using SHARED permissions approach');
+        $this->command->info('   - owner: All permissions');
+        $this->command->info('   - manager: 12 permissions');
+        $this->command->info('   - staff: 4 permissions');
+        $this->command->info('   - sales: 5 permissions');
     }
 
     /**

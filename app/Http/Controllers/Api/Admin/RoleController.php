@@ -745,6 +745,115 @@ class RoleController extends Controller
     }
 
     /**
+     * Assign direct permissions to merchant staff (in addition to role permissions)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function assignDirectPermissionsToStaff(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'staff_id' => 'required|integer|exists:merchant_staffs,id',
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $staff = MerchantStaff::findOrFail($request->staff_id);
+
+            // Filter permissions by merchant guard
+            $validPermissions = Permission::where('guard_name', 'merchant')
+                                         ->whereIn('name', $request->permissions)
+                                         ->pluck('name')
+                                         ->toArray();
+
+            if (empty($validPermissions)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid permissions found for merchant guard',
+                ], 400);
+            }
+
+            // Give direct permissions (in addition to role permissions)
+            $staff->givePermissionTo($validPermissions);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Direct permissions assigned successfully',
+                'data' => [
+                    'staff' => $staff,
+                    'role_permissions' => $staff->getPermissionsViaRoles()->pluck('name'),
+                    'direct_permissions' => $staff->getDirectPermissions()->pluck('name'),
+                    'all_permissions' => $staff->getAllPermissions()->pluck('name'),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove direct permissions from merchant staff
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removeDirectPermissionsFromStaff(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'staff_id' => 'required|integer|exists:merchant_staffs,id',
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $staff = MerchantStaff::findOrFail($request->staff_id);
+
+            // Revoke direct permissions
+            $staff->revokePermissionTo($request->permissions);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Direct permissions removed successfully',
+                'data' => [
+                    'staff' => $staff,
+                    'role_permissions' => $staff->getPermissionsViaRoles()->pluck('name'),
+                    'direct_permissions' => $staff->getDirectPermissions()->pluck('name'),
+                    'all_permissions' => $staff->getAllPermissions()->pluck('name'),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Get user roles and permissions
      *
      * @param Request $request
