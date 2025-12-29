@@ -406,7 +406,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::find($id);
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
@@ -624,7 +624,7 @@ class ProductController extends Controller
             return $item['item_slug'];
         }, $attributeData);
 
-        return strtoupper($baseSkuCode) . '-' . implode('-', $skuParts);
+        return strtoupper($baseSkuCode) . '_' . implode('_', $skuParts);
     }
 
     /**
