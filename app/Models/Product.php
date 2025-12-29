@@ -183,4 +183,46 @@ class Product extends Model
     {
         return $this->type === 'simple';
     }
+
+    /**
+     * Get grouped attributes for the product variation
+     */
+    public function getGroupedAttributesAttribute()
+    {
+        if ($this->type !== 'variable' || $this->variations->isEmpty()) {
+            return [];
+        }
+
+        $groupedAttributes = [];
+        
+        foreach ($this->variations as $variation) {
+            foreach ($variation->variationAttributes as $varAttr) {
+                $attrId = $varAttr->attribute_id;
+                
+                // Initialize attribute group if not exists
+                if (!isset($groupedAttributes[$attrId])) {
+                    $groupedAttributes[$attrId] = [
+                        'attribute_id' => $attrId,
+                        'attribute_name' => $varAttr->attribute->name,
+                        'items' => []
+                    ];
+                }
+                
+                // Add item if not already added
+                $itemId = $varAttr->attribute_item_id;
+                if (!isset($groupedAttributes[$attrId]['items'][$itemId])) {
+                    $groupedAttributes[$attrId]['items'][$itemId] = [
+                        'item_id' => $itemId,
+                        'item_name' => $varAttr->attributeItem->name,
+                    ];
+                }
+            }
+        }
+
+        // Convert to array and reset keys
+        return array_values(array_map(function($attr) {
+            $attr['items'] = array_values($attr['items']);
+            return $attr;
+        }, $groupedAttributes));
+    }
 }

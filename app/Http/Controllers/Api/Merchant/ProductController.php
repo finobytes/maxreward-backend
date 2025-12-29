@@ -22,7 +22,7 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'brand', 'variations']);
+        $query = Product::with(['category', 'subCategory', 'brand', 'model', 'gender', 'variations']);
 
         // Search
         if ($request->has('search')) {
@@ -70,6 +70,9 @@ class ProductController extends Controller
             'variations.variationAttributes.attribute',
             'variations.variationAttributes.attributeItem'
         ])->findOrFail($id);
+
+        // Append grouped attributes
+        $product->append('grouped_attributes');
 
         return response()->json([
             'success' => true,
@@ -406,6 +409,13 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
+        // return $request->all();
+        // return response()->json([
+        //     'debug' => true,
+        //     'data' => $request->all(),
+        // ]);
+
+        // return $request->images;
         $product = Product::find($id);
 
         $validator = Validator::make($request->all(), [
