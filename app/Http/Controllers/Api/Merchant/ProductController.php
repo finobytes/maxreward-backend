@@ -163,11 +163,11 @@ class ProductController extends Controller
                 $sku = $this->generateVariationSKU($skuShortCode, $combination);
                 
                 // Check if SKU exists
-                $skuExists = $this->checkSkuExists($sku, $productId);
+               $skuExists = $this->checkSkuExists($sku, $productId);
                 
                 if ($skuExists) {
                     $existingSkus[] = $sku;
-                }
+                } 
 
                 $variationsWithValidation[] = [
                     'sku' => $sku,
@@ -404,10 +404,351 @@ class ProductController extends Controller
         }
     }
 
+
+    public function update(Request $request, $id)
+{
+    // Find product
+    $product = Product::find($id);
+
+    // Validate request
+    $validator = Validator::make($request->all(), [
+        'category_id' => 'nullable|integer|exists:categories,id',
+        'subcategory_id' => 'nullable|integer|exists:sub_categories,id',
+        'brand_id' => 'nullable|integer|exists:brands,id',
+        'model_id' => 'nullable|integer|exists:models,id',
+        'gender_id' => 'nullable|integer|exists:genders,id',
+        'name' => 'nullable|string|max:255',
+        'slug' => 'nullable|string|max:300|unique:products,slug,' . $id,
+        'sku_short_code' => 'nullable|string|max:50|unique:products,sku_short_code,' . $id,
+        'type' => 'nullable|in:simple,variable',
+        'status' => 'nullable|in:active,inactive,draft,out_of_stock',
+        'short_description' => 'nullable|string|max:500',
+        'description' => 'nullable|string',
+        'images' => 'nullable|array',
+        'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        'delete_images' => 'nullable|array',
+        'delete_images.*' => 'string',
+
+        // Simple product fields
+        'regular_price' => 'nullable|numeric|min:0',
+        'regular_point' => 'nullable|numeric|min:0',
+        'sale_price' => 'nullable|numeric|min:0',
+        'sale_point' => 'nullable|numeric|min:0',
+        'cost_price' => 'nullable|numeric|min:0',
+        'unit_weight' => 'nullable|numeric|min:0',
+
+        // Variations
+        'variations' => 'nullable|array',
+        'variations.*.id' => 'nullable|integer|exists:product_variations,id',
+        'variations.*.sku' => 'required_with:variations|string|max:100',
+        'variations.*.regular_price' => 'required_with:variations|numeric|min:0',
+        'variations.*.regular_point' => 'required_with:variations|numeric|min:0',
+        'variations.*.sale_price' => 'nullable|numeric|min:0',
+        'variations.*.sale_point' => 'nullable|numeric|min:0',
+        'variations.*.cost_price' => 'nullable|numeric|min:0',
+        'variations.*.actual_quantity' => 'required_with:variations|integer|min:0',
+        'variations.*.low_stock_threshold' => 'nullable|integer|min:0',
+        'variations.*.ean_no' => 'nullable|string|max:50',
+        'variations.*.unit_weight' => 'nullable|numeric|min:0',
+        'variations.*.images' => 'nullable|array',
+        'variations.*.images.*' => 'image|mimes:jpeg,png,jpg,gif,svg,webp|max:2048',
+        'variations.*.delete_images' => 'nullable|array',
+        'variations.*.delete_images.*' => 'string',
+        'variations.*.attributes' => 'required_with:variations|array|min:1',
+        'variations.*.attributes.*.attribute_id' => 'required_with:variations.*.attributes|exists:attributes,id',
+        'variations.*.attributes.*.attribute_item_id' => 'required_with:variations.*.attributes|exists:attribute_items,id',
+        'delete_variations' => 'nullable|array',
+        'delete_variations.*' => 'integer|exists:product_variations,id',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    DB::beginTransaction();
+    try {
+        // Update slug if name changed
+        if ($request->filled('name') && $request->name !== $product->name) {
+            $slug = $request->slug ?? Str::slug($request->name);
+            $originalSlug = $slug;
+            $counter = 1;
+            while (Product::where('slug', $slug)->where('id', '!=', $id)->exists()) {
+                $slug = $originalSlug . '-' . $counter;
+                $counter++;
+            }
+            $product->slug = $slug;
+        }
+
+        // Delete old product images if requested
+        if ($request->has('delete_images') && is_array($request->delete_images)) {
+            $currentImages = is_array($product->images) ? $product->images : [];
+            
+            foreach ($request->delete_images as $publicId) {
+                // Delete from Cloudinary
+                CloudinaryHelper::deleteImage($publicId);
+                
+                // Remove from product images array
+                $currentImages = array_filter($currentImages, function($img) use ($publicId) {
+                    return $img['public_id'] !== $publicId;
+                });
+            }
+            
+            $product->images = array_values($currentImages);
+        }
+
+        // Handle new product images
+        if ($request->hasFile('images')) {
+            $newImages = [];
+            foreach ($request->file('images') as $image) {
+                $uploadResult = CloudinaryHelper::uploadImage(
+                    $image,
+                    'maxreward/products'
+                );
+                $newImages[] = [
+                    'url' => $uploadResult['url'],
+                    'public_id' => $uploadResult['public_id']
+                ];
+            }
+            
+            $currentImages = is_array($product->images) ? $product->images : [];
+            $product->images = array_merge($currentImages, $newImages);
+        }
+
+        // Update product basic fields
+        $product->fill($request->only([
+            'category_id',
+            'subcategory_id',
+            'brand_id',
+            'model_id',
+            'gender_id',
+            'name',
+            'status',
+            'short_description',
+            'description',
+            'regular_price',
+            'regular_point',
+            'sale_price',
+            'sale_point',
+            'cost_price',
+            'unit_weight',
+        ]));
+
+        // if ($request->filled('sku_short_code')) {
+        //     $product->sku_short_code = strtoupper($request->sku_short_code);
+        // }
+
+        $product->save();
+
+        // Handle variations if variable product
+        if ($product->type === 'variable') {
+            // Delete variations if requested
+            if ($request->has('delete_variations') && is_array($request->delete_variations)) {
+                foreach ($request->delete_variations as $variationId) {
+                    $variation = ProductVariation::where('product_id', $product->id)
+                        ->where('id', $variationId)
+                        ->first();
+                    
+                    if ($variation) {
+                        // Delete variation images from Cloudinary
+                        if (is_array($variation->images)) {
+                            foreach ($variation->images as $image) {
+                                CloudinaryHelper::deleteImage($image['public_id']);
+                            }
+                        }
+                        
+                        // Delete variation attributes
+                        ProductVariationAttribute::where('product_variation_id', $variation->id)->delete();
+                        
+                        // Delete variation
+                        $variation->delete();
+                    }
+                }
+            }
+
+            // Update or create variations
+            if ($request->has('variations') && is_array($request->variations)) {
+                foreach ($request->variations as $variationData) {
+                    // Check if updating existing or creating new
+                    if (isset($variationData['id'])) {
+                        // return 1;
+                        // Update existing variation
+                        $variation = ProductVariation::where('product_id', $product->id)
+                            ->where('id', $variationData['id'])
+                            ->first();
+                        
+                        if (!$variation) {
+                            continue;
+                        }
+
+                        // Check SKU uniqueness (excluding current variation)
+                        // $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))
+                        //                  ->where('id', '!=', $variation->id)
+                        //                  ->exists();
+
+                        // if ($skuExists) {
+                        //     throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                        // }
+
+                        // Delete old variation images if requested
+                        if (isset($variationData['delete_images']) && is_array($variationData['delete_images'])) {
+                            $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                            
+                            foreach ($variationData['delete_images'] as $publicId) {
+                                CloudinaryHelper::deleteImage($publicId);
+                                
+                                $currentVarImages = array_filter($currentVarImages, function($img) use ($publicId) {
+                                    return $img['public_id'] !== $publicId;
+                                });
+                            }
+                            
+                            $variation->images = array_values($currentVarImages);
+                        }
+
+                        // Handle new variation images
+                        if (isset($variationData['images']) && is_array($variationData['images'])) {
+                            $newVarImages = [];
+                            foreach ($variationData['images'] as $image) {
+                                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                                    $uploadResult = CloudinaryHelper::uploadImage(
+                                        $image,
+                                        'maxreward/product-variations'
+                                    );
+                                    $newVarImages[] = [
+                                        'url' => $uploadResult['url'],
+                                        'public_id' => $uploadResult['public_id']
+                                    ];
+                                }
+                            }
+                            
+                            if (!empty($newVarImages)) {
+                                $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                                $variation->images = array_merge($currentVarImages, $newVarImages);
+                            }
+                        }
+
+                        // Update variation fields
+                        $variation->update([
+                            'sku' => strtoupper($variationData['sku']),
+                            'regular_price' => $variationData['regular_price'],
+                            'regular_point' => $variationData['regular_point'],
+                            'sale_price' => $variationData['sale_price'] ?? null,
+                            'sale_point' => $variationData['sale_point'] ?? null,
+                            'cost_price' => $variationData['cost_price'] ?? null,
+                            'actual_quantity' => $variationData['actual_quantity'],
+                            'low_stock_threshold' => $variationData['low_stock_threshold'] ?? 2,
+                            'ean_no' => $variationData['ean_no'] ?? null,
+                            'unit_weight' => $variationData['unit_weight'] ?? 0,
+                            'images' => $variation->images,
+                        ]);
+
+                        // Update attributes
+                        if (isset($variationData['attributes'])) {
+                            ProductVariationAttribute::where('product_variation_id', $variation->id)->delete();
+                            
+                            foreach ($variationData['attributes'] as $attribute) {
+                                ProductVariationAttribute::create([
+                                    'product_variation_id' => $variation->id,
+                                    'attribute_id' => $attribute['attribute_id'],
+                                    'attribute_item_id' => $attribute['attribute_item_id'],
+                                ]);
+                            }
+                        }
+
+                    } else {
+                        // Create new variation
+                        // return 2;
+                        $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))->exists();
+
+                        if ($skuExists) {
+                            throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                        }
+
+                        // Handle new variation images
+                        $variationImages = [];
+                        if (isset($variationData['images']) && is_array($variationData['images'])) {
+                            foreach ($variationData['images'] as $image) {
+                                if ($image instanceof \Illuminate\Http\UploadedFile) {
+                                    $uploadResult = CloudinaryHelper::uploadImage(
+                                        $image,
+                                        'maxreward/product-variations'
+                                    );
+                                    $variationImages[] = [
+                                        'url' => $uploadResult['url'],
+                                        'public_id' => $uploadResult['public_id']
+                                    ];
+                                }
+                            }
+                        }
+
+                        $variation = ProductVariation::create([
+                            'product_id' => $product->id,
+                            'sku' => strtoupper($variationData['sku']),
+                            'regular_price' => $variationData['regular_price'],
+                            'regular_point' => $variationData['regular_point'],
+                            'sale_price' => $variationData['sale_price'] ?? null,
+                            'sale_point' => $variationData['sale_point'] ?? null,
+                            'cost_price' => $variationData['cost_price'] ?? null,
+                            'actual_quantity' => $variationData['actual_quantity'],
+                            'low_stock_threshold' => $variationData['low_stock_threshold'] ?? 2,
+                            'ean_no' => $variationData['ean_no'] ?? null,
+                            'unit_weight' => $variationData['unit_weight'] ?? 0,
+                            'images' => !empty($variationImages) ? $variationImages : null,
+                            'is_active' => true,
+                        ]);
+
+                        // Create attributes
+                        if (isset($variationData['attributes'])) {
+                            foreach ($variationData['attributes'] as $attribute) {
+                                ProductVariationAttribute::create([
+                                    'product_variation_id' => $variation->id,
+                                    'attribute_id' => $attribute['attribute_id'],
+                                    'attribute_item_id' => $attribute['attribute_item_id'],
+                                ]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        DB::commit();
+
+        // Load relationships
+        $product->load([
+            'category',
+            'subCategory',
+            'brand',
+            'model',
+            'gender',
+            'variations.variationAttributes.attribute',
+            'variations.variationAttributes.attributeItem'
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product updated successfully',
+            'data' => $product
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update product',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
+
     /**
      * Update product
      */
-    public function update(Request $request, $id)
+    public function updateOld(Request $request, $id)
     {
         // return $request->all();
         // return response()->json([
