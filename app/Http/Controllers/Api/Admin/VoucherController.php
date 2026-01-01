@@ -126,7 +126,8 @@ class VoucherController extends Controller
                     'transaction_reason' => 'Voucher approved - Referral Points',
                     'brp' => $memberWallet->total_rp, // brp = balance referral points
                     'bap' => $memberWallet->available_points, // bap = balance available points
-                    'bop' => $memberWallet->onhold_points // bop = balance onhold points
+                    'bop' => $memberWallet->onhold_points, // bop = balance onhold points
+                    'is_referral_history' => 1
                 ]);
 
             } elseif ($voucher->voucher_type === 'max') {

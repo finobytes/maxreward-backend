@@ -197,11 +197,12 @@ class TransactionController extends Controller
     }
 
 
-    public function getMemberTransactions($id)
+    public function getMemberAvailableTransactions($id)
     {
         try {
             $transactions = Transaction::with(['member.wallet'])
                 ->where('member_id', $id)
+                ->where('is_referral_history', false)
                 ->orderBy('id', 'desc')
                 ->paginate(20);
 
@@ -219,4 +220,30 @@ class TransactionController extends Controller
             ], 500);
         }
     }
+
+    public function getMemberReferTransactions($id)
+    {
+        try {
+            $transactions = Transaction::with(['member.wallet'])
+                ->where('member_id', $id)
+                ->where('is_referral_history', true)
+                ->orderBy('id', 'desc')
+                ->paginate(20);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Transactions retrieved successfully',
+                'data' => $transactions
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve transactions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }

@@ -29,7 +29,8 @@ class Transaction extends Model
         'brp', // Balance Referral Points
         'bop', // Balance Onhold Points
         'merchant_balance',
-        'cr_balance'
+        'cr_balance',
+        'is_referral_history'
     ];
 
     /**
@@ -151,7 +152,8 @@ class Transaction extends Model
             'bap' => $data['bap'] ?? 0,
             'bop' => $data['bop'] ?? 0,
             'cr_balance' => $data['cr_balance'] ?? 0,
-            'merchant_balance' => $data['merchant_balance'] ?? 0
+            'merchant_balance' => $data['merchant_balance'] ?? 0,
+            'is_referral_history' => $data['is_referral_history'] ?? false
         ]);
     }
 

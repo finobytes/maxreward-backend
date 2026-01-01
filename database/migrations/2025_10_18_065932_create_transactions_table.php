@@ -26,6 +26,7 @@ return new class extends Migration
                 ->comment('pp=personal, rp=referral, cp=community, cr=company reserve, dp=deducted, ap=added points, vrp=voucher referral, vap=voucher available');
             $table->enum('points_type', ['debited', 'credited']);
             $table->text('transaction_reason')->nullable();
+            $table->boolean('is_referral_history')->default(false);
             $table->timestamps();
             
             $table->index('member_id');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index('transaction_type');
             $table->index('points_type');
             $table->index('created_at');
+            $table->index('is_referral_history');
             
             $table->foreign('member_id')->references('id')->on('members');
             $table->foreign('merchant_id')->references('id')->on('merchants');

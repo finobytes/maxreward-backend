@@ -229,7 +229,8 @@ Route::prefix('transactions')->middleware('auth:admin,member,merchant')->group(f
     Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin');
     Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin');
     Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member');
-    Route::get('/{id}/member', [TransactionController::class, 'getMemberTransactions'])->middleware('role:member,admin,merchant');
+    Route::get('/{id}/member/available/transactions', [TransactionController::class, 'getMemberAvailableTransactions'])->middleware('role:member,admin,merchant');
+    Route::get('/{id}/member/refer/transactions', [TransactionController::class, 'getMemberReferTransactions'])->middleware('role:member,admin,merchant');
 });
 
 // Notification Management
@@ -391,22 +392,15 @@ Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
-    // View products - owner, manager, staff, sales can view
-    Route::get('/', [ProductController::class, 'index'])->middleware('permission:product.view');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('permission:product.view');
-
-    // Create product - only owner, manager can create
-    Route::post('/', [ProductController::class, 'store'])->middleware('permission:product.create');
-
-    // Update product - only owner, manager can edit
-    Route::put('/{id}', [ProductController::class, 'update'])->middleware('permission:product.edit');
-
-    // Delete product - only owner can delete
-    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('permission:product.delete');
-
-    // Variation Helpers - only owner, manager can use
-    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('permission:product.create');
-    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('permission:product.create');
+    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,merchant');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
+    Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
+    Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
+    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
+    
+    // Variation Helpers
+    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant');
+    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant');
 });
 
 

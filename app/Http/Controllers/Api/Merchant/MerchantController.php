@@ -175,12 +175,14 @@ class MerchantController extends Controller
 
             // Step 1: Check if referrer has sufficient referral balance (>= 100)
             if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient referral balance. You need at least 100 RP to refer a new member.',
-                    'current_balance' => $referrerWallet->total_rp,
-                    'required_balance' => $this->settingAttributes['deductable_points'],
-                ], 400);
+                if ($referrerWallet->available_points < $this->settingAttributes['deductable_points']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient referral balance. You need at least 100 RP  to refer a new member.',
+                        'current_balance' => $referrerWallet->total_rp,
+                        'required_balance' => $this->settingAttributes['deductable_points'],
+                    ], 400); 
+                }
             }
 
             // Handle business logo upload to Cloudinary
@@ -238,9 +240,9 @@ class MerchantController extends Controller
             // $corporateUsername = $this->generateCorporateMemberUsername();
             $corporateUsername = 'C' . $request->phone;
             $referralCode = $this->generateUniqueReferralCode(); // this function coming from MemberHelperTrait
-            // $userName = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
-            // $lastSix = substr($userName, -6);
-            // $password = $lastSix;
+            $phone_number = $this->formatPhoneNumber($request->phone); // this function coming from MemberHelperTrait
+            $lastSix = substr($phone_number, -6);
+            $password = $lastSix;
 
             Log::info('Step 3: Create new corporate member');
 
@@ -250,7 +252,7 @@ class MerchantController extends Controller
                 'name' => $merchant->business_name,
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'password' => Hash::make($request->corporate_password ?? 'password123'),
+                'password' => Hash::make($password),
                 'member_type' => 'corporate',
                 'gender_type' => $request->gender,
                 'status' => 'active',
@@ -284,7 +286,7 @@ class MerchantController extends Controller
                 try {
 
                     Log::info('Step: newCorporateMemberReferral function start');
-                    $placement = $this->newCorporateMemberReferral($referrer, $referrerWallet, $corporateMember, $corporateUsername, $request->corporate_password);
+                    $placement = $this->newCorporateMemberReferral($referrer, $referrerWallet, $corporateMember, $corporateUsername, $password);
                     Log::info('Step: newCorporateMemberReferral function end');
                     
                 } catch (\Exception $e) {
@@ -313,7 +315,7 @@ class MerchantController extends Controller
                 'name' => $request->owner_name,
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'password' => Hash::make($request->merchant_password),
+                'password' => Hash::make($password),
                 'designation' => $request->designation,
                 'type' => 'merchant',
                 'status' => 'active',
@@ -875,9 +877,20 @@ class MerchantController extends Controller
     {
         Log::info('Step 1: Deduct 100 RP from referrer');
 
+        $referral_history = false;
+
         // Step 1: Deduct 100 RP from referrer
-        $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
-        $referrerWallet->save();
+        if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
+            if ($referrerWallet->available_points >= $this->settingAttributes['deductable_points']) {
+                $referrerWallet->available_points -= $this->settingAttributes['deductable_points'];
+                $referrerWallet->save();
+            }
+        } else {
+            $referral_history = true;
+            $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
+            $referrerWallet->save();
+        }
+        
 
         Log::info('Step 2: createTransaction for referrer ID');
 
@@ -890,7 +903,8 @@ class MerchantController extends Controller
             'transaction_reason' => "Referred new member: {$corporateMember->name}",
             'brp' => $referrerWallet->total_rp,
             'bap' => $referrerWallet->available_points,
-            'bop' => $referrerWallet->onhold_points
+            'bop' => $referrerWallet->onhold_points,
+            'is_referral_history' => $referral_history
         ]);
 
         Log::info('Step 3: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');

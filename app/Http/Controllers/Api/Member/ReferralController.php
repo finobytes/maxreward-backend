@@ -111,12 +111,14 @@ class ReferralController extends Controller
 
             // Step 1: Check if referrer has sufficient referral balance (>= 100)
             if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient referral balance. You need at least 100 RP to refer a new member.',
-                    'current_balance' => $referrerWallet->total_rp,
-                    'required_balance' => $this->settingAttributes['deductable_points'],
-                ], 400);
+                if ($referrerWallet->available_points < $this->settingAttributes['deductable_points']) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Insufficient referral balance. You need at least 100 RP to refer a new member.',
+                        'current_balance' => $referrerWallet->total_rp,
+                        'required_balance' => $this->settingAttributes['deductable_points'],
+                    ], 400);
+                }
             }
 
             
@@ -177,9 +179,19 @@ class ReferralController extends Controller
 
             Log::info('Step 5: Deduct 100 RP from referrer');
 
+            $referral_history = false;
+
             // Step 5: Deduct 100 RP from referrer
-            $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
-            $referrerWallet->save();
+            if ($referrerWallet->total_rp < $this->settingAttributes['deductable_points']) {
+                if ($referrerWallet->available_points >= $this->settingAttributes['deductable_points']) {
+                    $referrerWallet->available_points -= $this->settingAttributes['deductable_points'];
+                    $referrerWallet->save();
+                }
+            } else {
+                $referral_history = true;
+                $referrerWallet->total_rp -= $this->settingAttributes['deductable_points'];
+                $referrerWallet->save();
+            }
 
             Log::info('createTransaction for referrer ID');
 
@@ -191,7 +203,8 @@ class ReferralController extends Controller
                 'transaction_reason' => "Referred new member: {$newMember->name}",
                 'brp' => $referrerWallet->total_rp,
                 'bap' => $referrerWallet->available_points,
-                'bop' => $referrerWallet->onhold_points
+                'bop' => $referrerWallet->onhold_points,
+                'is_referral_history' => $referral_history
             ]);
 
             Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
