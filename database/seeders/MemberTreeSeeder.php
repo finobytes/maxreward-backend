@@ -174,13 +174,8 @@ class MemberTreeSeeder extends Seeder
                 echo "   Deducted: {$this->settingAttributes['deductable_points']} RP\n";
                 echo "   Remaining: {$referrerWallet->total_rp} RP\n\n";
 
-                // Step 4: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
-                echo "Step 3: Distribute {$this->settingAttributes['deductable_points']} points (PP:10, RP:20, CP:50, CR:20)\n";
-                $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
-                echo "   ✅ Points distributed successfully\n\n";
-
-                // Step 5: Place new member in community tree
-                echo "Step 4: Place in community tree\n";
+                // Step 3: Place new member in community tree
+                echo "Step 3: Place in community tree\n";
                 $placement = $this->treeService->placeInCommunityTree($referrer->id, $newMember->id);
 
                 if ($placement['success']) {
@@ -190,17 +185,24 @@ class MemberTreeSeeder extends Seeder
                     throw new \Exception('Failed to place member in community tree');
                 }
 
-                // Step 6: Update referrer's referral count
+                // Step 4: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
+                echo "Step 4: Distribute {$this->settingAttributes['deductable_points']} points (PP:10, RP:20, CP:50, CR:20)\n";
+                $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
+                echo "   ✅ Points distributed successfully\n\n";
+
+                
+
+                // Step 5: Update referrer's referral count
                 echo "Step 5: Update referrer's referral count\n";
                 $referrerWallet->increment('total_referrals');
                 echo "   Total Referrals: {$referrerWallet->total_referrals}\n\n";
 
-                // Step 7: Check and unlock CP levels if needed
+                // Step 6: Check and unlock CP levels if needed
                 echo "Step 6: Check and unlock CP levels\n";
                 $this->checkAndUnlockCpLevels($referrer->id);
                 echo "   ✅ CP levels checked\n\n";
 
-                // Step 8: Update CP Distribution Pool
+                // Step 7: Update CP Distribution Pool
                 // $cp_distribution_pool_id = session('cp_distribution_pool_id');
                 // if (!empty($cp_distribution_pool_id)) {
                 //     $cpDistributionPool = CpDistributionPool::findOrFail($cp_distribution_pool_id);
@@ -213,8 +215,8 @@ class MemberTreeSeeder extends Seeder
                 // }
                 // session()->forget('cp_distribution_pool_id');
 
-                // Step 9: Send Email (if not test environment)
-                echo "Step 7: Send welcome email\n";
+                // Step 8: Send Email (if not test environment)
+                echo "Step 8: Send welcome email\n";
                 // if (!empty($newMember->email)) {
                 //     $this->emailService->sendWelcomeEmail([
                 //         'member_id' => $newMember->id,
@@ -228,8 +230,8 @@ class MemberTreeSeeder extends Seeder
                 //     echo "   ✅ Email sent\n\n";
                 // }
 
-                // Step 10: Send WhatsApp message
-                echo "Step 8: Send WhatsApp message\n";
+                // Step 9: Send WhatsApp message
+                echo "Step 9: Send WhatsApp message\n";
                 $this->whatsappService->sendWelcomeMessage([
                     'member_id' => $newMember->id,
                     'referrer_id' => $referrer->id,
@@ -241,8 +243,8 @@ class MemberTreeSeeder extends Seeder
                 ]);
                 echo "   ✅ WhatsApp message sent\n\n";
 
-                // Step 11: Create notifications
-                echo "Step 9: Create notifications\n";
+                // Step 10: Create notifications
+                echo "Step 10: Create notifications\n";
                 Notification::notifyReferralInvite($referrer->id, [
                     'new_member_name' => $newMember->name,
                     'new_member_phone' => $newMember->phone,

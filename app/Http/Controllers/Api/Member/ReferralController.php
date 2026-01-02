@@ -207,19 +207,19 @@ class ReferralController extends Controller
                 'is_referral_history' => $referral_history
             ]);
 
-            Log::info('Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
+            Log::info('Step 6: Place new member in community tree');
 
-            // Step 6: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
-            $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
-
-            Log::info('Step 7: Place new member in community tree');
-
-            // Step 7: Place new member in community tree
+            // Step 6: Place new member in community tree
             $placement = $this->treeService->placeInCommunityTree($referrer->id, $newMember->id);
 
             if (!$placement['success']) {
                 throw new \Exception('Failed to place member in community tree');
             }
+
+            Log::info('Step 7: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
+
+            // Step 7: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
+            $this->distributeReferralPoints($referrer, $newMember, $this->settingAttributes['deductable_points']);
 
             Log::info('Step 8: Update referrers referral count');
 
@@ -250,17 +250,17 @@ class ReferralController extends Controller
             Log::info('Step 10: Send Email to new member if email exists');
 
             // Step 10: Send Email to new member if email exists
-            if (!empty($newMember->email)) {
-                $this->emailService->sendWelcomeEmail([
-                    'member_id' => $newMember->id,
-                    'referrer_id' => $referrer->id,
-                    'name' => $newMember->name,
-                    'email' => $newMember->email,
-                    'user_name' => $userName,
-                    'password' => $password,
-                    'login_url' => 'https://maxreward.finobytes.com',
-                ]);
-            }
+            // if (!empty($newMember->email)) {
+            //     $this->emailService->sendWelcomeEmail([
+            //         'member_id' => $newMember->id,
+            //         'referrer_id' => $referrer->id,
+            //         'name' => $newMember->name,
+            //         'email' => $newMember->email,
+            //         'user_name' => $userName,
+            //         'password' => $password,
+            //         'login_url' => 'https://maxreward.finobytes.com',
+            //     ]);
+            // }
 
             Log::info('Step 11: Send WhatsApp message to new member');
 
