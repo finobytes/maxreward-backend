@@ -125,10 +125,65 @@ class ProductController extends Controller
         ]);
     }
 
+
+
+    public function generateVariations(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'sku_short_code' => 'required|string|max:50',
+            'product_id' => 'nullable|exists:products,id',
+            'attributes' => 'required|array|min:1',
+            'attributes.*.attribute_id' => 'required|exists:attributes,id',
+            'attributes.*.attribute_item_ids' => 'required|array|min:1',
+            'attributes.*.attribute_item_ids.*' => 'required|exists:attribute_items,id',
+            'existing_variations' => 'nullable|array',
+            'existing_variations.*.attributes' => 'required|array',
+            'existing_variations.*.attributes.*.attribute_id' => 'required|integer',
+            'existing_variations.*.attributes.*.attribute_item_id' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $skuShortCode = strtoupper(trim($request->sku_short_code));
+            $attributes = $request->input('attributes');
+            $productId = $request->product_id;
+            $existingVariations = $request->input('existing_variations', []);
+
+            // CASE 1: New Product (no product_id)
+            // Generate all combinations
+            if (!$productId) {
+                return $this->generateNewProductVariations($skuShortCode, $attributes);
+            }
+
+            // CASE 2: Existing Product (has product_id)
+            // Generate only new combinations
+            return $this->generateIncrementalVariations(
+                $skuShortCode, 
+                $attributes, 
+                $productId, 
+                $existingVariations
+            );
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate variations',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
     /**
      * Generate variation combinations with SKU validation
      */
-    public function generateVariations(Request $request)
+    public function generateVariationsOLD(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'sku_short_code' => 'required|string|max:50',
@@ -195,6 +250,211 @@ class ProductController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+
+    /**
+     * CASE 1: Generate variations for NEW product
+     */
+    private function generateNewProductVariations($skuShortCode, $attributes)
+    {
+        // Generate all possible combinations
+        $allCombinations = $this->generateCombinations($attributes);
+        
+        $variations = [];
+        $existingSkus = [];
+
+        foreach ($allCombinations as $combination) {
+            $sku = $this->generateVariationSKU($skuShortCode, $combination);
+            
+            // Check if SKU exists globally (in any product)
+            $skuExists = $this->checkSkuExists($sku, null);
+            
+            if ($skuExists) {
+                $existingSkus[] = $sku;
+            }
+
+            $variations[] = [
+                'sku' => $sku,
+                'sku_exists' => $skuExists,
+                'regular_price' => 0,
+                'regular_point' => 0,
+                'sale_price' => null,
+                'sale_point' => null,
+                'cost_price' => null,
+                'actual_quantity' => 0,
+                'low_stock_threshold' => 2,
+                'unit_weight' => 0,
+                'attributes' => $combination,
+                'formatted_attributes' => $this->formatAttributeNames($combination)
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'mode' => 'new_product',
+            'data' => [
+                'variations' => $variations,
+                'total_combinations' => count($variations),
+                'existing_skus_count' => count($existingSkus),
+                'existing_skus' => $existingSkus,
+                'has_conflicts' => count($existingSkus) > 0,
+                'message' => count($existingSkus) > 0 
+                    ? 'Some SKUs already exist. Please modify them.' 
+                    : 'All variations are ready to create.'
+            ]
+        ]);
+    }
+
+    /**
+     * CASE 2: Generate ONLY NEW variations for EXISTING product
+     */
+    private function generateIncrementalVariations($skuShortCode, $attributes, $productId, $existingVariations)
+    {
+        // If no existing variations provided, fetch from database
+        if (empty($existingVariations)) {
+            $product = Product::with('variations.variationAttributes')->find($productId);
+            
+            if ($product && $product->variations) {
+                $existingVariations = $product->variations->map(function($variation) {
+                    return [
+                        'id' => $variation->id,
+                        'sku' => $variation->sku,
+                        'attributes' => $variation->variationAttributes->map(function($attr) {
+                            return [
+                                'attribute_id' => $attr->attribute_id,
+                                'attribute_item_id' => $attr->attribute_item_id
+                            ];
+                        })->toArray()
+                    ];
+                })->toArray();
+            }
+        }
+
+        // Generate all possible combinations
+        $allCombinations = $this->generateCombinations($attributes);
+        
+        // Filter out existing combinations
+        $newCombinations = $this->filterNewCombinations($allCombinations, $existingVariations);
+        
+        // Generate variations for new combinations only
+        $newVariations = [];
+        $existingSkus = [];
+
+        foreach ($newCombinations as $combination) {
+            $sku = $this->generateVariationSKU($skuShortCode, $combination);
+            
+            // Check if SKU exists (excluding current product)
+            $skuExists = $this->checkSkuExists($sku, $productId);
+            
+            if ($skuExists) {
+                $existingSkus[] = $sku;
+            }
+
+            $newVariations[] = [
+                'sku' => $sku,
+                'sku_exists' => $skuExists,
+                'regular_price' => 0,
+                'regular_point' => 0,
+                'sale_price' => null,
+                'sale_point' => null,
+                'cost_price' => null,
+                'actual_quantity' => 0,
+                'low_stock_threshold' => 2,
+                'unit_weight' => 0,
+                'attributes' => $combination,
+                'formatted_attributes' => $this->formatAttributeNames($combination)
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'mode' => 'incremental',
+            'data' => [
+                'variations' => $newVariations,
+                'total_possible_combinations' => count($allCombinations),
+                'existing_combinations' => count($existingVariations),
+                'new_combinations' => count($newCombinations),
+                'existing_skus_count' => count($existingSkus),
+                'existing_skus' => $existingSkus,
+                'has_conflicts' => count($existingSkus) > 0,
+                'message' => count($newCombinations) === 0
+                    ? 'No new combinations to add. All variations already exist.'
+                    : (count($existingSkus) > 0 
+                        ? 'Some new SKUs conflict with existing products.' 
+                        : count($newCombinations) . ' new variations ready to add.')
+            ]
+        ]);
+    }
+
+
+    /**
+     * Filter out existing combinations from all combinations
+     */
+    private function filterNewCombinations($allCombinations, $existingVariations)
+    {
+        if (empty($existingVariations)) {
+            return $allCombinations;
+        }
+
+        $newCombinations = [];
+
+        foreach ($allCombinations as $combination) {
+            if (!$this->combinationExists($combination, $existingVariations)) {
+                $newCombinations[] = $combination;
+            }
+        }
+
+        return $newCombinations;
+    }
+
+    /**
+     * Check if a combination already exists
+     */
+    private function combinationExists($combination, $existingVariations)
+    {
+        foreach ($existingVariations as $existing) {
+            if ($this->isSameCombination($combination, $existing['attributes'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Compare two combinations
+     */
+    private function isSameCombination($combo1, $combo2)
+    {
+        // Sort both combinations for comparison
+        $sorted1 = $this->sortCombination($combo1);
+        $sorted2 = $this->sortCombination($combo2);
+
+        // Compare lengths
+        if (count($sorted1) !== count($sorted2)) {
+            return false;
+        }
+
+        // Compare each attribute
+        foreach ($sorted1 as $index => $attr) {
+            if ($attr['attribute_id'] !== $sorted2[$index]['attribute_id'] ||
+                $attr['attribute_item_id'] !== $sorted2[$index]['attribute_item_id']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Sort combination by attribute_id for consistent comparison
+     */
+    private function sortCombination($combination)
+    {
+        usort($combination, function($a, $b) {
+            return $a['attribute_id'] <=> $b['attribute_id'];
+        });
+        return $combination;
     }
 
 
@@ -917,7 +1177,38 @@ class ProductController extends Controller
         return $productExists || $variationExists;
     }
 
+
+    /**
+     * Generate all possible combinations from attributes
+     * ⚠️ UPDATED - Removed unnecessary DB queries during combination generation
+     */
     private function generateCombinations($attributes): array
+    {
+        if (empty($attributes)) {
+            return [];
+        }
+
+        $result = [[]];
+        
+        foreach ($attributes as $attribute) {
+            $temp = [];
+            foreach ($result as $combination) {
+                foreach ($attribute['attribute_item_ids'] as $itemId) {
+                    $newCombination = $combination;
+                    $newCombination[] = [
+                        'attribute_id' => $attribute['attribute_id'],
+                        'attribute_item_id' => $itemId
+                    ];
+                    $temp[] = $newCombination;
+                }
+            }
+            $result = $temp;
+        }
+
+        return $result;
+    }
+
+    private function generateCombinationsOLD($attributes): array
     {
         if (empty($attributes)) {
             return [];
