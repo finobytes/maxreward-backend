@@ -1182,33 +1182,33 @@ class ProductController extends Controller
      * Generate all possible combinations from attributes
      * ⚠️ UPDATED - Removed unnecessary DB queries during combination generation
      */
-    private function generateCombinations($attributes): array
-    {
-        if (empty($attributes)) {
-            return [];
-        }
+    // private function generateCombinations($attributes): array
+    // {
+    //     if (empty($attributes)) {
+    //         return [];
+    //     }
 
-        $result = [[]];
+    //     $result = [[]];
         
-        foreach ($attributes as $attribute) {
-            $temp = [];
-            foreach ($result as $combination) {
-                foreach ($attribute['attribute_item_ids'] as $itemId) {
-                    $newCombination = $combination;
-                    $newCombination[] = [
-                        'attribute_id' => $attribute['attribute_id'],
-                        'attribute_item_id' => $itemId
-                    ];
-                    $temp[] = $newCombination;
-                }
-            }
-            $result = $temp;
-        }
+    //     foreach ($attributes as $attribute) {
+    //         $temp = [];
+    //         foreach ($result as $combination) {
+    //             foreach ($attribute['attribute_item_ids'] as $itemId) {
+    //                 $newCombination = $combination;
+    //                 $newCombination[] = [
+    //                     'attribute_id' => $attribute['attribute_id'],
+    //                     'attribute_item_id' => $itemId
+    //                 ];
+    //                 $temp[] = $newCombination;
+    //             }
+    //         }
+    //         $result = $temp;
+    //     }
 
-        return $result;
-    }
+    //     return $result;
+    // }
 
-    private function generateCombinationsOLD($attributes): array
+    private function generateCombinations($attributes): array
     {
         if (empty($attributes)) {
             return [];
