@@ -277,14 +277,6 @@ class ProductController extends Controller
             $variations[] = [
                 'sku' => $sku,
                 'sku_exists' => $skuExists,
-                'regular_price' => 0,
-                'regular_point' => 0,
-                'sale_price' => null,
-                'sale_point' => null,
-                'cost_price' => null,
-                'actual_quantity' => 0,
-                'low_stock_threshold' => 2,
-                'unit_weight' => 0,
                 'attributes' => $combination,
                 'formatted_attributes' => $this->formatAttributeNames($combination)
             ];
@@ -354,14 +346,6 @@ class ProductController extends Controller
             $newVariations[] = [
                 'sku' => $sku,
                 'sku_exists' => $skuExists,
-                'regular_price' => 0,
-                'regular_point' => 0,
-                'sale_price' => null,
-                'sale_point' => null,
-                'cost_price' => null,
-                'actual_quantity' => 0,
-                'low_stock_threshold' => 2,
-                'unit_weight' => 0,
                 'attributes' => $combination,
                 'formatted_attributes' => $this->formatAttributeNames($combination)
             ];
