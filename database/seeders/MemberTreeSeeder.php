@@ -55,10 +55,10 @@ class MemberTreeSeeder extends Seeder
             // Array to store created member IDs
             $createdMemberIds = [];
 
-            // Create 30 members
-            for ($i = 1; $i <= 30; $i++) {
+            // Create 31 members
+            for ($i = 1; $i <= 31; $i++) {
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-                echo "Creating Member {$i}/30...\n";
+                echo "Creating Member {$i}/31...\n";
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
                 // Generate Malaysian phone number with serial (60160000001 to 60160000030)
@@ -257,7 +257,7 @@ class MemberTreeSeeder extends Seeder
 
             DB::commit();
 
-            echo "\n🎉 Successfully created 30 members in hierarchical tree!\n";
+            echo "\n🎉 Successfully created 31 members in hierarchical tree!\n";
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
             // Display summary
