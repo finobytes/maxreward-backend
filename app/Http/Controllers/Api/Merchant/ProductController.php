@@ -945,15 +945,22 @@ class ProductController extends Controller
                                 'is_active' => true,
                             ]);
 
-                            // Create attributes
-                            if (isset($variationData['attributes'])) {
+                            // Create attributes for NEW variation with duplicate prevention
+                            if (isset($variationData['attributes']) && is_array($variationData['attributes'])) {
                                 foreach ($variationData['attributes'] as $attribute) {
-                                    ProductVariationAttribute::create([
-                                        'product_variation_id' => $variation->id,
-                                        'attribute_id' => $attribute['attribute_id'],
-                                        'attribute_item_id' => $attribute['attribute_item_id'],
-                                    ]);
+                                    ProductVariationAttribute::firstOrCreate(
+                                        [
+                                            'product_variation_id' => $variation->id,
+                                            'attribute_id' => $attribute['attribute_id'],
+                                            'attribute_item_id' => $attribute['attribute_item_id'],
+                                        ]
+                                    );
                                 }
+                            } else {
+                                \Log::warning("Variation created without attributes", [
+                                    'variation_id' => $variation->id,
+                                    'sku' => $variation->sku
+                                ]);
                             }
                         }
                     }
