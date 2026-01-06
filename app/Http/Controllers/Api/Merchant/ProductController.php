@@ -504,6 +504,7 @@ class ProductController extends Controller
         }
 
         DB::beginTransaction();
+        
         try {
             // Generate slug if not provided
             $slug = $request->slug ?? Str::slug($request->name);
@@ -609,6 +610,23 @@ class ProductController extends Controller
                         }
                     }
                 }
+            } else {
+                // Create variation for simple variation product
+                $variation = ProductVariation::create([
+                    'product_id' => $product->id,
+                    'regular_price' => $request->variation_regular_price ?? 0,
+                    'regular_point' => $request->variation_regular_point ?? 0,
+                    'sale_price' => $request->variation_sale_price ?? null,
+                    'sale_point' => $request->variation_sale_point ?? null,
+                    'cost_price' => $request->cost_price ?? null,
+                    'actual_quantity' => $request->actual_quantity,
+                    'low_stock_threshold' => $request->low_stock_threshold ?? 2,
+                    'ean_no' => $request->ean_no ?? null,
+                    'sku' => $request->sku,
+                    'unit_weight' => $request->unit_weight ?? 0,
+                    'images' => !empty($productImages) ? $productImages : null,
+                    'is_active' => true,
+                ]);
             }
 
             DB::commit();
@@ -1132,9 +1150,13 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
+        DB::beginTransaction();
+        
         try {
             $product = Product::findOrFail($id);
-            $product->delete();
+            $product->delete(); // Model boot method handles everything product model and product variation model
+ 
+            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -1142,6 +1164,8 @@ class ProductController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete product',

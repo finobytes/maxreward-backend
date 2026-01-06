@@ -62,11 +62,11 @@ return new class extends Migration
 
             // Foreign Keys
             // $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
-            $table->foreign('category_id')->references('id')->on('categories')->onDelete('set null');
-            $table->foreign('subcategory_id')->references('id')->on('sub_categories')->onDelete('set null');
-            $table->foreign('brand_id')->references('id')->on('brands')->onDelete('set null');
-            $table->foreign('model_id')->references('id')->on('models')->onDelete('set null');
-            $table->foreign('gender_id')->references('id')->on('genders')->onDelete('set null');
+            $table->foreign('category_id')->references('id')->on('categories');
+            $table->foreign('subcategory_id')->references('id')->on('sub_categories');
+            $table->foreign('brand_id')->references('id')->on('brands');
+            $table->foreign('model_id')->references('id')->on('models');
+            $table->foreign('gender_id')->references('id')->on('genders');
         });
     }
 

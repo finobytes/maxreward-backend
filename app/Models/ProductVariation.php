@@ -137,4 +137,14 @@ class ProductVariation extends Model
     {
         return $this->hasMany(ProductVariationAttribute::class);
     }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::deleting(function ($variation) {
+            // Delete variation attributes (if not using cascade)
+            $variation->variationAttributes()->delete();
+        });
+    }
 }

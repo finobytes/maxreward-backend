@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('product_variation_id');
             $table->unsignedBigInteger('attribute_id');
             $table->unsignedBigInteger('attribute_item_id');
+            $table->softDeletes();
             $table->timestamps();
 
             // Indexes
@@ -24,9 +25,9 @@ return new class extends Migration
             $table->index('attribute_item_id');
 
             // Foreign Keys
-            $table->foreign('product_variation_id')->references('id')->on('product_variations')->onDelete('cascade');
-            $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
-            $table->foreign('attribute_item_id')->references('id')->on('attribute_items')->onDelete('cascade');
+            $table->foreign('product_variation_id')->references('id')->on('product_variations');
+            $table->foreign('attribute_id')->references('id')->on('attributes');
+            $table->foreign('attribute_item_id')->references('id')->on('attribute_items');
 
             // Unique constraint to prevent duplicate attribute assignments
             $table->unique(['product_variation_id', 'attribute_id'], 'unique_variation_attribute');
