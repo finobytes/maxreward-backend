@@ -907,19 +907,19 @@ class MerchantController extends Controller
             'is_referral_history' => $referral_history
         ]);
 
-        Log::info('Step 3: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
+        Log::info('Step 3: Place new member in community tree');
 
-        // Step 3: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
-        $this->distributeReferralPoints($referrer, $corporateMember, $this->settingAttributes['deductable_points']);
-
-        Log::info('Step 4: Place new member in community tree');
-
-        // Step 4: Place new member in community tree
+        // Step 3: Place new member in community tree
         $placement = $this->treeService->placeInCommunityTree($referrer->id, $corporateMember->id);
 
         if (!$placement['success']) {
             throw new \Exception('Failed to place member in community tree');
         }
+
+        Log::info('Step 4: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)');
+
+        // Step 4: Distribute 100 points (PP:10, RP:20, CP:50, CR:20)
+        $this->distributeReferralPoints($referrer, $corporateMember, $this->settingAttributes['deductable_points']);
 
         Log::info('Step 5: Update referrers referral count');
 

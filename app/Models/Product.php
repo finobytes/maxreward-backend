@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Helpers\CloudinaryHelper;
+use Illuminate\Support\Facades\Log;
 
 class Product extends Model
 {
@@ -84,6 +86,38 @@ class Product extends Model
         static::updating(function ($product) {
             if ($product->isDirty('name') && empty($product->slug)) {
                 $product->slug = Str::slug($product->name);
+            }
+        });
+
+        static::deleting(function ($product) {
+            // Delete variations and their images/attributes
+            foreach ($product->variations as $variation) {
+                // Delete variation images
+                if (is_array($variation->images)) {
+                    foreach ($variation->images as $image) {
+                        try {
+                            CloudinaryHelper::deleteImage($image['public_id']);
+                        } catch (\Exception $e) {
+                            \Log::error("Cloudinary delete failed: {$image['public_id']}");
+                        }
+                    }
+                }
+                
+                // Attributes will be deleted by cascade
+                // But we explicitly delete for clarity
+                $variation->variationAttributes()->delete();
+                $variation->delete();
+            }
+
+            // Delete product images
+            if (is_array($product->images)) {
+                foreach ($product->images as $image) {
+                    try {
+                        CloudinaryHelper::deleteImage($image['public_id']);
+                    } catch (\Exception $e) {
+                        \Log::error("Cloudinary delete failed: {$image['public_id']}");
+                    }
+                }
             }
         });
     }
@@ -225,4 +259,8 @@ class Product extends Model
             return $attr;
         }, $groupedAttributes));
     }
+
+
+    
+
 }

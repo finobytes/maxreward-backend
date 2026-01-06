@@ -22,7 +22,7 @@ return new class extends Migration
             $table->index('attribute_id');
             $table->index('is_active');
             $table->unique(['attribute_id', 'slug'], 'unique_attribute_item');
-            $table->foreign('attribute_id')->references('id')->on('attributes')->onDelete('cascade');
+            $table->foreign('attribute_id')->references('id')->on('attributes');
         });
     }
 
