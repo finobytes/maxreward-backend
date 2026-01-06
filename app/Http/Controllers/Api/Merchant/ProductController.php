@@ -983,6 +983,12 @@ class ProductController extends Controller
                         }
                     }
                 }
+            } else {
+                if ($request->has('variations') && is_array($request->variations)) {
+                    foreach ($request->variations as $variationData) {
+                        //
+                    }
+                }
             }
 
             DB::commit();
