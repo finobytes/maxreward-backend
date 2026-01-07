@@ -112,6 +112,9 @@ class RoleController extends Controller
             // Assign role
             $staff->syncRoles([$request->role]);
 
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Role assigned successfully',
@@ -200,6 +203,9 @@ class RoleController extends Controller
         try {
             $staff = MerchantStaff::findOrFail($request->staff_id);
             $staff->removeRole($request->role);
+
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
             return response()->json([
                 'success' => true,
@@ -445,6 +451,35 @@ class RoleController extends Controller
     }
 
     /**
+     * Get a single role by ID
+     *
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRole($id)
+    {
+        try {
+            $role = Role::with('permissions')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Role retrieved successfully',
+                'data' => [
+                    'role' => $role,
+                    'permissions' => $role->permissions->pluck('name')
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+                'error' => $e->getMessage()
+            ], 404);
+        }
+    }
+
+    /**
      * Get all available permissions
      *
      * @param Request $request
@@ -621,6 +656,9 @@ class RoleController extends Controller
             // Sync permissions (replaces all existing permissions)
             $role->syncPermissions($validPermissions);
 
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Permissions assigned successfully',
@@ -635,6 +673,56 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to assign permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove permissions from a role
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function removePermissionsFromRole(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'permissions' => 'required|array|min:1',
+            'permissions.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $role = Role::findOrFail($id);
+
+            // Remove the specified permissions from the role
+            $role->revokePermissionTo($request->permissions);
+
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permissions removed successfully',
+                'data' => [
+                    'role' => $role,
+                    'remaining_permissions' => $role->permissions->pluck('name'),
+                    'removed_permissions' => $request->permissions
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove permissions',
                 'error' => $e->getMessage()
             ], 500);
         }
@@ -785,6 +873,9 @@ class RoleController extends Controller
             // Give direct permissions (in addition to role permissions)
             $staff->givePermissionTo($validPermissions);
 
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Direct permissions assigned successfully',
@@ -833,6 +924,9 @@ class RoleController extends Controller
             // Revoke direct permissions
             $staff->revokePermissionTo($request->permissions);
 
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
             return response()->json([
                 'success' => true,
                 'message' => 'Direct permissions removed successfully',
@@ -848,6 +942,30 @@ class RoleController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to remove permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Clear permission cache
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function clearPermissionCache()
+    {
+        try {
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission cache cleared successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear permission cache',
                 'error' => $e->getMessage()
             ], 500);
         }

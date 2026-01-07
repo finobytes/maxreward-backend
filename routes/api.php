@@ -162,6 +162,7 @@ Route::prefix('admin')->group(function () {
             Route::put('update/{id}', [RoleController::class, 'updateRole']);
             Route::delete('delete/{id}', [RoleController::class, 'deleteRole']);
             Route::get('/', [RoleController::class, 'getAllRoles']);
+            Route::get('/{id}', [RoleController::class, 'getRole']);
 
             // Assign/Remove Roles
             Route::post('assign-admin', [RoleController::class, 'assignRoleToAdmin']);
@@ -174,8 +175,10 @@ Route::prefix('admin')->group(function () {
             Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
             Route::post('/permissions/create', [RoleController::class, 'createPermission']);
             Route::delete('/permissions/delete/{id}', [RoleController::class, 'deletePermission']);
+            Route::post('/permissions/clear-cache', [RoleController::class, 'clearPermissionCache']);
             Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
             Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
+            Route::post('{id}/remove-permissions', [RoleController::class, 'removePermissionsFromRole']);
 
              Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
 
@@ -424,7 +427,7 @@ Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
 */
 Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
     // View products - owner, manager, staff, sales can view
-    Route::get('/', [ProductController::class, 'index'])->middleware('permission:product.view');
+    Route::get('/', [ProductController::class, 'index'])->middleware('permission:product.index');
     Route::get('/{id}', [ProductController::class, 'show'])->middleware('permission:product.view');
 
     // Create product - only owner, manager can create
