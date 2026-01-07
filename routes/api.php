@@ -368,7 +368,8 @@ Route::prefix('products')->middleware('auth:admin,merchant,member')->group(funct
     Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant');
     Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant');
     
-    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,merchant');
+    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member');
+    Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant');
     Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
     Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
     Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');

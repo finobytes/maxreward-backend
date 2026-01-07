@@ -18,42 +18,218 @@ class ProductController extends Controller
 {
 
     /**
-     * Get all products with filters
+     * Get all products with filters (Admin & Member)
      */
     public function index(Request $request)
     {
-        $query = Product::with(['category', 'subCategory', 'brand', 'model', 'gender', 'variations']);
+        try {
+            $query = Product::with([
+                'category', 
+                'subCategory', 
+                'brand', 
+                'model', 
+                'gender', 
+                'variations.variationAttributes.attribute',
+                'variations.variationAttributes.attributeItem'
+            ]);
 
-        // Search
-        if ($request->has('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%')
-                  ->orWhere('sku', 'like', '%' . $request->search . '%');
+            // Search
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('sku_short_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                });
+            }
+
+            // Filter by merchant
+            if ($request->has('merchant_id') && $request->merchant_id) {
+                $query->where('merchant_id', $request->merchant_id);
+            }
+
+            // Filter by category
+            if ($request->has('category_id') && $request->category_id) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            // Filter by subcategory
+            if ($request->has('subcategory_id') && $request->subcategory_id) {
+                $query->where('subcategory_id', $request->subcategory_id);
+            }
+
+            // Filter by brand
+            if ($request->has('brand_id') && $request->brand_id) {
+                $query->where('brand_id', $request->brand_id);
+            }
+
+            // Filter by status
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by type
+            if ($request->has('type') && $request->type) {
+                $query->where('type', $request->type);
+            }
+
+            // Filter by gender
+            if ($request->has('gender_id') && $request->gender_id) {
+                $query->where('gender_id', $request->gender_id);
+            }
+
+            // Price range filter
+            if ($request->has('min_price')) {
+                $query->where('regular_price', '>=', $request->min_price);
+            }
+
+            if ($request->has('max_price')) {
+                $query->where('regular_price', '<=', $request->max_price);
+            }
+
+            // Sort options
+            $sortBy = $request->get('sort_by', 'created_at');
+            $sortOrder = $request->get('sort_order', 'desc');
+            
+            $allowedSortFields = ['created_at', 'name', 'regular_price', 'status'];
+            if (in_array($sortBy, $allowedSortFields)) {
+                $query->orderBy($sortBy, $sortOrder);
+            } else {
+                $query->latest();
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 15);
+            $products = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $products,
+                'meta' => [
+                    'total' => $products->total(),
+                    'per_page' => $products->perPage(),
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch products',
+                'error' => $e->getMessage()
+            ], 500);
         }
+    }
 
-        // Filters
-        if ($request->has('merchant_id')) {
-            $query->where('merchant_id', $request->merchant_id);
+
+    /**
+     * Get all products for a specific merchant with filters
+     * Accessible by: Admin (any merchant) & Merchant (own products only)
+     */
+    public function merchantIndex(Request $request, $id)
+    {
+        try {
+
+            // Build query
+            $query = Product::with([
+                'category',
+                'subCategory', 
+                'brand', 
+                'model', 
+                'gender', 
+                'variations.variationAttributes.attribute',
+                'variations.variationAttributes.attributeItem'
+            ])->where('merchant_id', $id);
+
+            // Search
+            if ($request->has('search') && $request->search) {
+                $searchTerm = $request->search;
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('name', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('sku_short_code', 'like', '%' . $searchTerm . '%')
+                    ->orWhere('description', 'like', '%' . $searchTerm . '%');
+                });
+            }
+
+            // Filter by category
+            if ($request->has('category_id') && $request->category_id) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            // Filter by subcategory
+            if ($request->has('subcategory_id') && $request->subcategory_id) {
+                $query->where('subcategory_id', $request->subcategory_id);
+            }
+
+            // Filter by brand
+            if ($request->has('brand_id') && $request->brand_id) {
+                $query->where('brand_id', $request->brand_id);
+            }
+
+            // Filter by status
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            // Filter by type
+            if ($request->has('type') && $request->type) {
+                $query->where('type', $request->type);
+            }
+
+            // Filter by gender
+            if ($request->has('gender_id') && $request->gender_id) {
+                $query->where('gender_id', $request->gender_id);
+            }
+
+            // Price range filter
+            if ($request->has('min_price') && $request->min_price) {
+                $query->where('regular_price', '>=', $request->min_price);
+            }
+
+            if ($request->has('max_price') && $request->max_price) {
+                $query->where('regular_price', '<=', $request->max_price);
+            }
+
+            // Sort options
+            $sortBy = $request->get('sort_by', 'created_at');
+            $sortOrder = $request->get('sort_order', 'desc');
+            
+            $allowedSortFields = ['created_at', 'name', 'regular_price', 'status'];
+            if (in_array($sortBy, $allowedSortFields)) {
+                $query->orderBy($sortBy, $sortOrder);
+            } else {
+                $query->latest();
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 15);
+            $products = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data' => $products,
+                'meta' => [
+                    'total' => $products->total(),
+                    'per_page' => $products->perPage(),
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                ]
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch products',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        if ($request->has('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
-
-        if ($request->has('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->has('type')) {
-            $query->where('type', $request->type);
-        }
-
-        $perPage = $request->get('per_page', 15);
-        $products = $query->latest()->paginate($perPage);
-
-        return response()->json([
-            'success' => true,
-            'data' => $products
-        ]);
     }
 
     /**
