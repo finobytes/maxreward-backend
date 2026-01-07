@@ -132,7 +132,7 @@ Route::prefix('merchant')->group(function () {
 */
 Route::prefix('roles')->middleware('auth:admin,merchant')->group(function () {
     // Assign role to merchant - accessible by both admin and merchant
-    Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
+    // Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
 });
 
 
@@ -176,6 +176,8 @@ Route::prefix('admin')->group(function () {
             Route::delete('/permissions/delete/{id}', [RoleController::class, 'deletePermission']);
             Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
             Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
+
+             Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
 
             // Direct Permissions (for merchant staff)
             Route::post('/staff/assign-direct-permissions', [RoleController::class, 'assignDirectPermissionsToStaff']);
