@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\Admin\CategoryController;
 use App\Http\Controllers\Api\Admin\SubCategoryController;
 use App\Http\Controllers\Api\Admin\ModelController;
 use App\Http\Controllers\Api\Admin\BrandController;
+use App\Http\Controllers\Api\Admin\SectionController;
 use App\Http\Controllers\Api\Merchant\ProductController;
 use App\Http\Controllers\Api\Admin\GenderController;
 use App\Http\Controllers\Api\Admin\AttributeController;
@@ -374,6 +375,21 @@ Route::prefix('sub-categories')->middleware('auth:admin,merchant')->group(functi
     Route::get('/{id}', [SubCategoryController::class, 'show'])->middleware('role:admin');
     Route::post('/{id}', [SubCategoryController::class, 'update'])->middleware('role:admin');
     Route::delete('/{id}', [SubCategoryController::class, 'destroy'])->middleware('role:admin');
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Section Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('sections')->middleware('auth:admin')->group(function () {
+    Route::post('/', [SectionController::class, 'store'])->middleware('role:admin');
+    Route::get('/', [SectionController::class, 'index'])->middleware('role:admin');
+    Route::get('/all', [SectionController::class, 'getAllSections'])->middleware('role:admin');
+    Route::get('/{id}', [SectionController::class, 'show'])->middleware('role:admin');
+    Route::patch('/{id}', [SectionController::class, 'update'])->middleware('role:admin');
+    Route::delete('/{id}', [SectionController::class, 'destroy'])->middleware('role:admin');
 });
 
 
