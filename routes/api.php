@@ -162,6 +162,15 @@ Route::prefix('admin')->group(function () {
             Route::put('update/{id}', [RoleController::class, 'updateRole']);
             Route::delete('delete/{id}', [RoleController::class, 'deleteRole']);
             Route::get('/', [RoleController::class, 'getAllRoles']);
+
+            // Permissions Management (MUST be before /{id} route)
+            Route::get('permissions', [RoleController::class, 'getAllPermissions']);
+            Route::post('permissions/create', [RoleController::class, 'createPermission']);
+            Route::delete('permissions/delete/{id}', [RoleController::class, 'deletePermission']);
+            Route::post('permissions/clear-cache', [RoleController::class, 'clearPermissionCache']);
+            Route::post('user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
+
+            // Get single role (MUST be after specific routes)
             Route::get('/{id}', [RoleController::class, 'getRole']);
 
             // Assign/Remove Roles
@@ -171,12 +180,7 @@ Route::prefix('admin')->group(function () {
             Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant']);
             Route::post('remove-member', [RoleController::class, 'removeRoleFromMember']);
 
-            // Permissions Management
-            Route::get('/permissions', [RoleController::class, 'getAllPermissions']);
-            Route::post('/permissions/create', [RoleController::class, 'createPermission']);
-            Route::delete('/permissions/delete/{id}', [RoleController::class, 'deletePermission']);
-            Route::post('/permissions/clear-cache', [RoleController::class, 'clearPermissionCache']);
-            Route::post('/user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);
+            // Role Permissions
             Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
             Route::post('{id}/remove-permissions', [RoleController::class, 'removePermissionsFromRole']);
 
