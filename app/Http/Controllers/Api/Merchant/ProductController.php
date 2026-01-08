@@ -843,6 +843,59 @@ class ProductController extends Controller
     }
 
 
+    public function statusUpdate(Request $request, $id)
+    {
+        try {
+            
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:active,inactive,draft,out_of_stock',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Find product
+            $product = Product::find($id);
+            
+            if (empty($product)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found',
+                ], 404);
+            }
+
+            // Update product status
+            $product->status = $request->status;
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully',
+                'data' => $product
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+                'error' => $e->getMessage()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+        
+    }
+
+
     public function update(Request $request, $id)
     {
         // Find product
