@@ -1077,50 +1077,50 @@ class ProductController extends Controller
                             }
 
                             // Check SKU uniqueness (excluding current variation)
-                            // $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))
-                            //                  ->where('id', '!=', $variation->id)
-                            //                  ->exists();
+                            $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))
+                                             ->where('id', '!=', $variation->id)
+                                             ->exists();
 
-                            // if ($skuExists) {
-                            //     throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
-                            // }
+                            if ($skuExists) {
+                                throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                            }
 
                             // Delete old variation images if requested
-                            // if (isset($variationData['delete_images']) && is_array($variationData['delete_images'])) {
-                            //     $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                            if (isset($variationData['delete_images']) && is_array($variationData['delete_images'])) {
+                                $currentVarImages = is_array($variation->images) ? $variation->images : [];
                                 
-                            //     foreach ($variationData['delete_images'] as $publicId) {
-                            //         CloudinaryHelper::deleteImage($publicId);
+                                foreach ($variationData['delete_images'] as $publicId) {
+                                    CloudinaryHelper::deleteImage($publicId);
                                     
-                            //         $currentVarImages = array_filter($currentVarImages, function($img) use ($publicId) {
-                            //             return $img['public_id'] !== $publicId;
-                            //         });
-                            //     }
+                                    $currentVarImages = array_filter($currentVarImages, function($img) use ($publicId) {
+                                        return $img['public_id'] !== $publicId;
+                                    });
+                                }
                                 
-                            //     $variation->images = array_values($currentVarImages);
-                            // }
+                                $variation->images = array_values($currentVarImages);
+                            }
 
                             // Handle new variation images
-                            // if (isset($variationData['images']) && is_array($variationData['images'])) {
-                            //     $newVarImages = [];
-                            //     foreach ($variationData['images'] as $image) {
-                            //         if ($image instanceof \Illuminate\Http\UploadedFile) {
-                            //             $uploadResult = CloudinaryHelper::uploadImage(
-                            //                 $image,
-                            //                 'maxreward/product-variations'
-                            //             );
-                            //             $newVarImages[] = [
-                            //                 'url' => $uploadResult['url'],
-                            //                 'public_id' => $uploadResult['public_id']
-                            //             ];
-                            //         }
-                            //     }
+                            if (isset($variationData['images']) && is_array($variationData['images'])) {
+                                $newVarImages = [];
+                                foreach ($variationData['images'] as $image) {
+                                    if ($image instanceof \Illuminate\Http\UploadedFile) {
+                                        $uploadResult = CloudinaryHelper::uploadImage(
+                                            $image,
+                                            'maxreward/product-variations'
+                                        );
+                                        $newVarImages[] = [
+                                            'url' => $uploadResult['url'],
+                                            'public_id' => $uploadResult['public_id']
+                                        ];
+                                    }
+                                }
                                 
-                            //     if (!empty($newVarImages)) {
-                            //         $currentVarImages = is_array($variation->images) ? $variation->images : [];
-                            //         $variation->images = array_merge($currentVarImages, $newVarImages);
-                            //     }
-                            // }
+                                if (!empty($newVarImages)) {
+                                    $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                                    $variation->images = array_merge($currentVarImages, $newVarImages);
+                                }
+                            }
 
                             // Update variation fields
                             $variation->update([
@@ -1134,7 +1134,7 @@ class ProductController extends Controller
                                 'low_stock_threshold' => $variationData['low_stock_threshold'] ?? 2,
                                 'ean_no' => $variationData['ean_no'] ?? null,
                                 'unit_weight' => $variationData['unit_weight'] ?? 0,
-                                // 'images' => $variation->images,
+                                'images' => $variation->images,
                             ]);
 
                             // Update attributes
