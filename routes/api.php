@@ -305,7 +305,7 @@ Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(
 | Category Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('categories')->middleware('auth:admin,merchant')->group(function () {
+Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(function () {
     Route::post('/', [CategoryController::class, 'store'])->middleware('role:admin');
     Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,merchant,member');
     Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,merchant,member');
