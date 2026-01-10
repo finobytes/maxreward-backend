@@ -1213,11 +1213,37 @@ class ProductController extends Controller
                     }
                 }
             } else {
-                if ($request->has('variations') && is_array($request->variations)) {
-                    foreach ($request->variations as $variationData) {
-                        //
-                    }
+               // Update existing simple product variation
+                $variation = ProductVariation::where('product_id', $product->id)
+                        ->where('id', $request->variation_id)
+                        ->first();
+                    
+                if (!$variation) {
+                    throw new \Exception("Variation not found");
                 }
+
+                // Check SKU uniqueness (excluding current variation)
+                $skuExists = ProductVariation::where('sku', strtoupper($request->sku))
+                                    ->where('id', '!=', $request->variation_id)
+                                    ->exists();
+
+                if ($skuExists) {
+                    throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                }
+
+                $variation->update([
+                    'sku' => strtoupper($request->sku),
+                    'regular_price' => $request->variation_regular_price ?? null,
+                    'regular_point' => $request->variation_regular_point ?? null,
+                    'sale_price' => $request->variation_sale_price ?? null,
+                    'sale_point' => $request->variation_sale_point ?? null,
+                    'cost_price' => $request->cost_price ?? null,
+                    'actual_quantity' => $request->actual_quantity,
+                    'low_stock_threshold' => $request->low_stock_threshold ?? 2,
+                    'ean_no' => $request->ean_no ?? null,
+                    'unit_weight' => $request->unit_weight ?? 0,
+                ]);
+                
             }
 
             DB::commit();
