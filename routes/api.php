@@ -168,6 +168,7 @@ Route::prefix('admin')->group(function () {
             // Permissions Management (MUST be before /{id} route)
             Route::get('permissions', [RoleController::class, 'getAllPermissions']);
             Route::post('permissions/create', [RoleController::class, 'createPermission']);
+            Route::put('permissions/update/{id}', [RoleController::class, 'updatePermission']);
             Route::delete('permissions/delete/{id}', [RoleController::class, 'deletePermission']);
             Route::post('permissions/clear-cache', [RoleController::class, 'clearPermissionCache']);
             Route::post('user-permissions', [RoleController::class, 'getUserRolesAndPermissions']);

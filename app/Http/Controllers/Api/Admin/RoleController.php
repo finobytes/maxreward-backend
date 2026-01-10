@@ -568,6 +568,66 @@ class RoleController extends Controller
     }
 
     /**
+     * Update a permission
+     *
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function updatePermission(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $permission = Permission::findOrFail($id);
+
+            // Check if new name already exists for the same guard
+            $existingPermission = Permission::where('name', $request->name)
+                                           ->where('guard_name', $permission->guard_name)
+                                           ->where('id', '!=', $id)
+                                           ->first();
+
+            if ($existingPermission) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Permission name already exists for this guard',
+                    'data' => $existingPermission
+                ], 409);
+            }
+
+            // Update permission name
+            $permission->name = $request->name;
+            $permission->save();
+
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission updated successfully',
+                'data' => $permission
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update permission',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Delete a permission
      *
      * @param int $id
