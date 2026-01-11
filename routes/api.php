@@ -42,6 +42,7 @@ use App\Http\Controllers\Api\Merchant\MemberCommunityPointController as Merchant
 use App\Http\Controllers\Api\Admin\CpUnlockHistoryController as AdminCpUnlockHistoryController;
 use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockHistoryController;
 use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
+use App\Http\Controllers\Api\Member\CartController;
 
 
 /*
@@ -80,6 +81,17 @@ Route::prefix('member')->group(function () {
             Route::get('/', [MemberCpUnlockHistoryController::class, 'index']);
             Route::get('/{id}', [MemberCpUnlockHistoryController::class, 'show']);
         });
+
+        // Cart Routes
+        Route::prefix('cart')->group(function () {
+            Route::get('/', [CartController::class, 'index']);
+            Route::post('/', [CartController::class, 'store']);
+            Route::put('/{id}', [CartController::class, 'update']);
+            Route::delete('/{id}', [CartController::class, 'destroy']);
+            Route::delete('/', [CartController::class, 'clear']);
+            Route::get('/count', [CartController::class, 'count']);
+        });
+
     });
 });
 
