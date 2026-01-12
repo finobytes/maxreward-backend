@@ -122,12 +122,22 @@ class Product extends Model
         });
     }
 
+
+    /**
+     * Get the merchant
+     */
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class, 'merchant_id');
+    }
+
+
     /**
      * Get the category that the product belongs to
      */
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(Category::class, 'category_id');
     }
 
     /**
@@ -143,7 +153,7 @@ class Product extends Model
      */
     public function brand()
     {
-        return $this->belongsTo(Brand::class);
+        return $this->belongsTo(Brand::class, 'brand_id');
     }
 
     /**
@@ -159,7 +169,7 @@ class Product extends Model
      */
     public function gender()
     {
-        return $this->belongsTo(Gender::class);
+        return $this->belongsTo(Gender::class, 'gender_id');
     }
 
     /**
@@ -167,7 +177,7 @@ class Product extends Model
      */
     public function variations()
     {
-        return $this->hasMany(ProductVariation::class);
+        return $this->hasMany(ProductVariation::class, 'product_id');
     }
 
     /**
@@ -261,6 +271,13 @@ class Product extends Model
     }
 
 
+    /**
+     * Get cart items
+     */
+    public function cartItems()
+    {
+        return $this->hasMany(Cart::class, 'product_id');
+    }
     
 
 }

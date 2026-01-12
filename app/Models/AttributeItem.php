@@ -60,7 +60,15 @@ class AttributeItem extends Model
      */
     public function attribute()
     {
-        return $this->belongsTo(Attribute::class);
+        return $this->belongsTo(Attribute::class, 'attribute_id');
+    }
+
+    /**
+     * Get variation attributes
+     */
+    public function variationAttributes()
+    {
+        return $this->hasMany(ProductVariationAttribute::class, 'attribute_item_id');
     }
 
     /**

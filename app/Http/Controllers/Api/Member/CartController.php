@@ -18,10 +18,13 @@ class CartController extends Controller
     public function index()
     {
         try {
-        
             $memberId = auth('member')->id();
-    
-            $cartItems = Cart::with(['product', 'productVariation'])
+            
+            $cartItems = Cart::with([
+                'product', 
+                'productVariation.variationAttributes.attribute',
+                'productVariation.variationAttributes.attributeItem'
+            ])
                 ->byMember($memberId)
                 ->active()
                 ->get()
@@ -30,11 +33,20 @@ class CartController extends Controller
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'product_name' => $item->product->name,
-                        'product_image' => $item->product->images[0] ?? null,
+                        'product_image' => $item->product->images ? $item->product->images[0] ?? null : null,
                         'variation_id' => $item->product_variation_id,
                         'variation_details' => $item->productVariation ? [
                             'sku' => $item->productVariation->sku,
-                            'attributes' => $item->productVariation->variationAttributes ?? null,
+                            'attributes' => $item->productVariation->variationAttributes->map(function($attr) {
+                                return [
+                                    'id' => $attr->id,
+                                    'attribute_id' => $attr->attribute_id,
+                                    'attribute_name' => $attr->attribute->name ?? 'N/A',
+                                    'attribute_item_id' => $attr->attribute_item_id,
+                                    'attribute_item_name' => $attr->attributeItem->name ?? 'N/A',
+                                    'display' => ($attr->attribute->name ?? 'N/A') . ': ' . ($attr->attributeItem->name ?? 'N/A'),
+                                ];
+                            }),
                         ] : null,
                         'quantity' => $item->quantity,
                         'price' => $item->getPrice(),
@@ -60,9 +72,8 @@ class CartController extends Controller
                 'success' => false,
                 'message' => 'Failed to retrieve cart items',
                 'error' => $e->getMessage()
-            ]);
+            ], 500);
         }
-        
     }
 
     /**

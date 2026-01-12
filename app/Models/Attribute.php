@@ -66,4 +66,20 @@ class Attribute extends Model
     {
         return self::where('slug', $slug)->first();
     }
+
+    /**
+     * Get attribute items
+     */
+    public function items()
+    {
+        return $this->hasMany(AttributeItem::class, 'attribute_id');
+    }
+
+    /**
+     * Get variation attributes
+     */
+    public function variationAttributes()
+    {
+        return $this->hasMany(ProductVariationAttribute::class, 'attribute_id');
+    }
 }
