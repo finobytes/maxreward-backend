@@ -99,6 +99,7 @@ class RoleController extends Controller
             // Check if role exists for merchant guard
             $role = Role::where('name', $request->role)
                        ->where('guard_name', 'merchant')
+                       ->where('merchant_id', $staff->merchant_id)
                        ->first();
 
             if (!$role) {
@@ -110,7 +111,7 @@ class RoleController extends Controller
             }
 
             // Assign role
-            $staff->syncRoles([$request->role]);
+            $staff->syncRoles([$role]);
 
             // Clear permission cache
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -202,7 +203,18 @@ class RoleController extends Controller
 
         try {
             $staff = MerchantStaff::findOrFail($request->staff_id);
-            $staff->removeRole($request->role);
+            $role = Role::where('name', $request->role)
+                       ->where('guard_name', 'merchant')
+                       ->where('merchant_id', $staff->merchant_id)
+                       ->first();
+
+            if (!$role) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found for this merchant',
+                ], 404);
+            }
+            $staff->removeRole($role);
 
             // Clear permission cache
             app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
@@ -234,9 +246,15 @@ class RoleController extends Controller
      */
     public function createRole(Request $request)
     {
+        $merchantUser = auth('merchant')->user();
+        $isMerchantRequest = !empty($merchantUser);
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'guard_name' => 'required|in:admin,merchant,member',
+            'guard_name' => $isMerchantRequest
+                ? 'sometimes|in:admin,merchant,member'
+                : 'required|in:admin,merchant,member',
+            'merchant_id' => 'nullable|integer|exists:merchants,id',
             'permissions' => 'array',
             'permissions.*' => 'string|exists:permissions,name',
         ]);
@@ -250,10 +268,31 @@ class RoleController extends Controller
         }
 
         try {
+            $guardName = $isMerchantRequest ? 'merchant' : $request->guard_name;
+            $merchantId = null;
+
+            if ($guardName === 'merchant') {
+                if ($isMerchantRequest) {
+                    $merchantId = $merchantUser->merchant_id;
+                } else {
+                    if (empty($request->merchant_id)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Validation error',
+                            'errors' => ['merchant_id' => ['The merchant_id field is required for merchant roles.']],
+                        ], 422);
+                    }
+                    $merchantId = $request->merchant_id;
+                }
+            }
+
             // Check if role already exists
-            $existingRole = Role::where('name', $request->name)
-                              ->where('guard_name', $request->guard_name)
-                              ->first();
+            $existingRoleQuery = Role::where('name', $request->name)
+                                   ->where('guard_name', $guardName);
+            if ($guardName === 'merchant') {
+                $existingRoleQuery->where('merchant_id', $merchantId);
+            }
+            $existingRole = $existingRoleQuery->first();
 
             if ($existingRole) {
                 return response()->json([
@@ -266,13 +305,18 @@ class RoleController extends Controller
             // Create role
             $role = Role::create([
                 'name' => $request->name,
-                'guard_name' => $request->guard_name,
+                'guard_name' => $guardName,
             ]);
+
+            if ($merchantId) {
+                $role->merchant_id = $merchantId;
+                $role->save();
+            }
 
             // Assign permissions if provided
             if ($request->has('permissions') && count($request->permissions) > 0) {
                 // Filter permissions by guard
-                $validPermissions = Permission::where('guard_name', $request->guard_name)
+                $validPermissions = Permission::where('guard_name', $guardName)
                                              ->whereIn('name', $request->permissions)
                                              ->pluck('name')
                                              ->toArray();
@@ -323,14 +367,27 @@ class RoleController extends Controller
 
         try {
             $role = Role::findOrFail($id);
+            $merchantUser = auth('merchant')->user();
+
+            if ($merchantUser && $role->guard_name === 'merchant') {
+                if ((int) $role->merchant_id !== (int) $merchantUser->merchant_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authorized to update this role',
+                    ], 403);
+                }
+            }
 
             // Update name if provided
             if ($request->has('name')) {
                 // Check if new name already exists
-                $existingRole = Role::where('name', $request->name)
-                                  ->where('guard_name', $role->guard_name)
-                                  ->where('id', '!=', $id)
-                                  ->first();
+                $existingRoleQuery = Role::where('name', $request->name)
+                                       ->where('guard_name', $role->guard_name)
+                                       ->where('id', '!=', $id);
+                if ($role->guard_name === 'merchant') {
+                    $existingRoleQuery->where('merchant_id', $role->merchant_id);
+                }
+                $existingRole = $existingRoleQuery->first();
 
                 if ($existingRole) {
                     return response()->json([
@@ -382,6 +439,16 @@ class RoleController extends Controller
     {
         try {
             $role = Role::findOrFail($id);
+            $merchantUser = auth('merchant')->user();
+
+            if ($merchantUser && $role->guard_name === 'merchant') {
+                if ((int) $role->merchant_id !== (int) $merchantUser->merchant_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authorized to delete this role',
+                    ], 403);
+                }
+            }
 
             // Check if any users have this role
             $usersWithRole = \DB::table('model_has_roles')
@@ -425,10 +492,19 @@ class RoleController extends Controller
     public function getAllRoles(Request $request)
     {
         try {
+            $merchantUser = auth('merchant')->user();
             $guard = $request->get('guard', 'all');
 
-            if ($guard === 'all') {
-                $roles = Role::with('permissions')->get()->groupBy('guard_name');
+            if ($merchantUser) {
+                $roles = Role::with('permissions')
+                    ->where('guard_name', 'merchant')
+                    ->where('merchant_id', $merchantUser->merchant_id)
+                    ->get()
+                    ->groupBy('guard_name');
+            } elseif ($guard === 'all') {
+                $roles = Role::with('permissions')
+                    ->get()
+                    ->groupBy('guard_name');
             } else {
                 $roles = Role::with('permissions')
                            ->where('guard_name', $guard)
@@ -488,10 +564,16 @@ class RoleController extends Controller
     public function getAllPermissions(Request $request)
     {
         try {
+            $merchantUser = auth('merchant')->user();
             $guard = $request->get('guard', 'all');
 
-            if ($guard === 'all') {
-                $permissions = Permission::all()->groupBy('guard_name');
+            if ($merchantUser) {
+                $permissions = Permission::where('guard_name', 'merchant')
+                    ->get()
+                    ->groupBy('guard_name');
+            } elseif ($guard === 'all') {
+                $permissions = Permission::all()
+                    ->groupBy('guard_name');
             } else {
                 $permissions = Permission::where('guard_name', $guard)->get();
             }
@@ -695,6 +777,16 @@ class RoleController extends Controller
 
         try {
             $role = Role::findOrFail($id);
+            $merchantUser = auth('merchant')->user();
+
+            if ($merchantUser && $role->guard_name === 'merchant') {
+                if ((int) $role->merchant_id !== (int) $merchantUser->merchant_id) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'You are not authorized to assign permissions to this role',
+                    ], 403);
+                }
+            }
 
             // Filter permissions by guard to ensure they match the role's guard
             $validPermissions = Permission::where('guard_name', $role->guard_name)

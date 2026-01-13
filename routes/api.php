@@ -160,13 +160,23 @@ Route::prefix('admin')->group(function () {
         // Role Management Routes (Admin only)
         Route::prefix('roles')->group(function () {
             // CRUD Operations
-            Route::post('create', [RoleController::class, 'createRole']);
-            Route::put('update/{id}', [RoleController::class, 'updateRole']);
-            Route::delete('delete/{id}', [RoleController::class, 'deleteRole']);
-            Route::get('/', [RoleController::class, 'getAllRoles']);
+            Route::post('create', [RoleController::class, 'createRole'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
+            Route::put('update/{id}', [RoleController::class, 'updateRole'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
+            Route::delete('delete/{id}', [RoleController::class, 'deleteRole'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
+            Route::get('/', [RoleController::class, 'getAllRoles'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
 
             // Permissions Management (MUST be before /{id} route)
-            Route::get('permissions', [RoleController::class, 'getAllPermissions']);
+            Route::get('permissions', [RoleController::class, 'getAllPermissions'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
             Route::post('permissions/create', [RoleController::class, 'createPermission']);
             Route::put('permissions/update/{id}', [RoleController::class, 'updatePermission']);
             Route::delete('permissions/delete/{id}', [RoleController::class, 'deletePermission']);
@@ -184,7 +194,9 @@ Route::prefix('admin')->group(function () {
             Route::post('remove-member', [RoleController::class, 'removeRoleFromMember']);
 
             // Role Permissions
-            Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole']);
+            Route::post('{id}/assign-permissions', [RoleController::class, 'assignPermissionsToRole'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
             Route::post('{id}/remove-permissions', [RoleController::class, 'removePermissionsFromRole']);
 
              Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
