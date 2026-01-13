@@ -69,6 +69,21 @@ class Cart extends Model
     }
 
     /**
+     * Get the merchant through product
+     */
+    public function merchant()
+    {
+        return $this->hasOneThrough(
+            Merchant::class,
+            Product::class,
+            'id', // Product model এর foreign key
+            'id', // Merchant model এর foreign key
+            'product_id', // Cart model এর local key
+            'merchant_id' // Product model এর local key
+        );
+    }
+
+    /**
      * Scope to get non-expired cart items
      */
     public function scopeActive($query)
