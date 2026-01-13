@@ -47,8 +47,8 @@ class CartController extends Controller
                         'merchant_id' => $merchant->id,
                         'merchant_name' => $merchant->business_name,
                         'merchant_logo' => $merchant->business_logo,
-                        'merchant_unique_number' => $merchant->unique_number,
-                        'merchant_status' => $merchant->status,
+                        // 'merchant_unique_number' => $merchant->unique_number,
+                        // 'merchant_status' => $merchant->status,
                     ];
                 }
 
@@ -57,18 +57,18 @@ class CartController extends Controller
                         'id' => $item->id,
                         'product_id' => $item->product_id,
                         'product_name' => $item->product->name,
-                        'product_slug' => $item->product->slug,
-                        'product_sku' => $item->product->sku_short_code,
-                        'product_image' => $item->product->images ? $item->product->images[0] ?? null : null,
+                        // 'product_slug' => $item->product->slug,
+                        // 'product_sku' => $item->product->sku_short_code,
+                        // 'product_image' => $item->product->images ? $item->product->images[0] ?? null : null,
                         'variation_id' => $item->product_variation_id,
                         'variation_details' => $item->productVariation ? [
                             'sku' => $item->productVariation->sku,
-                            'regular_price' => $item->productVariation->regular_price,
-                            'regular_point' => $item->productVariation->regular_point,
+                            // 'regular_price' => $item->productVariation->regular_price,
+                            // 'regular_point' => $item->productVariation->regular_point,
                             'sale_price' => $item->productVariation->sale_price,
                             'sale_point' => $item->productVariation->sale_point,
                             'actual_quantity' => $item->productVariation->actual_quantity,
-                            'images' => $item->productVariation->images,
+                            'image' => $item->productVariation->images[0] ?? null,
                             'attributes' => $item->productVariation->variationAttributes->map(function($attr) {
                                 return [
                                     'id' => $attr->id,
