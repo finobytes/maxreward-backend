@@ -843,6 +843,59 @@ class ProductController extends Controller
     }
 
 
+    public function statusUpdate(Request $request, $id)
+    {
+        try {
+            
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'status' => 'required|in:active,inactive,draft,out_of_stock',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Find product
+            $product = Product::find($id);
+            
+            if (empty($product)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found',
+                ], 404);
+            }
+
+            // Update product status
+            $product->status = $request->status;
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product status updated successfully',
+                'data' => $product
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found',
+                'error' => $e->getMessage()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update product status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+        
+    }
+
+
     public function update(Request $request, $id)
     {
         // Find product
@@ -1024,50 +1077,50 @@ class ProductController extends Controller
                             }
 
                             // Check SKU uniqueness (excluding current variation)
-                            // $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))
-                            //                  ->where('id', '!=', $variation->id)
-                            //                  ->exists();
+                            $skuExists = ProductVariation::where('sku', strtoupper($variationData['sku']))
+                                             ->where('id', '!=', $variation->id)
+                                             ->exists();
 
-                            // if ($skuExists) {
-                            //     throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
-                            // }
+                            if ($skuExists) {
+                                throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                            }
 
                             // Delete old variation images if requested
-                            // if (isset($variationData['delete_images']) && is_array($variationData['delete_images'])) {
-                            //     $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                            if (isset($variationData['delete_images']) && is_array($variationData['delete_images'])) {
+                                $currentVarImages = is_array($variation->images) ? $variation->images : [];
                                 
-                            //     foreach ($variationData['delete_images'] as $publicId) {
-                            //         CloudinaryHelper::deleteImage($publicId);
+                                foreach ($variationData['delete_images'] as $publicId) {
+                                    CloudinaryHelper::deleteImage($publicId);
                                     
-                            //         $currentVarImages = array_filter($currentVarImages, function($img) use ($publicId) {
-                            //             return $img['public_id'] !== $publicId;
-                            //         });
-                            //     }
+                                    $currentVarImages = array_filter($currentVarImages, function($img) use ($publicId) {
+                                        return $img['public_id'] !== $publicId;
+                                    });
+                                }
                                 
-                            //     $variation->images = array_values($currentVarImages);
-                            // }
+                                $variation->images = array_values($currentVarImages);
+                            }
 
                             // Handle new variation images
-                            // if (isset($variationData['images']) && is_array($variationData['images'])) {
-                            //     $newVarImages = [];
-                            //     foreach ($variationData['images'] as $image) {
-                            //         if ($image instanceof \Illuminate\Http\UploadedFile) {
-                            //             $uploadResult = CloudinaryHelper::uploadImage(
-                            //                 $image,
-                            //                 'maxreward/product-variations'
-                            //             );
-                            //             $newVarImages[] = [
-                            //                 'url' => $uploadResult['url'],
-                            //                 'public_id' => $uploadResult['public_id']
-                            //             ];
-                            //         }
-                            //     }
+                            if (isset($variationData['images']) && is_array($variationData['images'])) {
+                                $newVarImages = [];
+                                foreach ($variationData['images'] as $image) {
+                                    if ($image instanceof \Illuminate\Http\UploadedFile) {
+                                        $uploadResult = CloudinaryHelper::uploadImage(
+                                            $image,
+                                            'maxreward/product-variations'
+                                        );
+                                        $newVarImages[] = [
+                                            'url' => $uploadResult['url'],
+                                            'public_id' => $uploadResult['public_id']
+                                        ];
+                                    }
+                                }
                                 
-                            //     if (!empty($newVarImages)) {
-                            //         $currentVarImages = is_array($variation->images) ? $variation->images : [];
-                            //         $variation->images = array_merge($currentVarImages, $newVarImages);
-                            //     }
-                            // }
+                                if (!empty($newVarImages)) {
+                                    $currentVarImages = is_array($variation->images) ? $variation->images : [];
+                                    $variation->images = array_merge($currentVarImages, $newVarImages);
+                                }
+                            }
 
                             // Update variation fields
                             $variation->update([
@@ -1081,7 +1134,7 @@ class ProductController extends Controller
                                 'low_stock_threshold' => $variationData['low_stock_threshold'] ?? 2,
                                 'ean_no' => $variationData['ean_no'] ?? null,
                                 'unit_weight' => $variationData['unit_weight'] ?? 0,
-                                // 'images' => $variation->images,
+                                'images' => $variation->images,
                             ]);
 
                             // Update attributes
@@ -1160,11 +1213,37 @@ class ProductController extends Controller
                     }
                 }
             } else {
-                if ($request->has('variations') && is_array($request->variations)) {
-                    foreach ($request->variations as $variationData) {
-                        //
-                    }
+               // Update existing simple product variation
+                $variation = ProductVariation::where('product_id', $product->id)
+                        ->where('id', $request->variation_id)
+                        ->first();
+                    
+                if (!$variation) {
+                    throw new \Exception("Variation not found");
                 }
+
+                // Check SKU uniqueness (excluding current variation)
+                $skuExists = ProductVariation::where('sku', strtoupper($request->sku))
+                                    ->where('id', '!=', $request->variation_id)
+                                    ->exists();
+
+                if ($skuExists) {
+                    throw new \Exception("SKU '{$variationData['sku']}' already exists in the system");
+                }
+
+                $variation->update([
+                    'sku' => strtoupper($request->sku),
+                    'regular_price' => $request->variation_regular_price ?? null,
+                    'regular_point' => $request->variation_regular_point ?? null,
+                    'sale_price' => $request->variation_sale_price ?? null,
+                    'sale_point' => $request->variation_sale_point ?? null,
+                    'cost_price' => $request->cost_price ?? null,
+                    'actual_quantity' => $request->actual_quantity,
+                    'low_stock_threshold' => $request->low_stock_threshold ?? 2,
+                    'ean_no' => $request->ean_no ?? null,
+                    'unit_weight' => $request->unit_weight ?? 0,
+                ]);
+                
             }
 
             DB::commit();

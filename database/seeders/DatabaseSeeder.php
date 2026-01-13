@@ -22,7 +22,10 @@ class DatabaseSeeder extends Seeder
             CpLevelConfigSeeder::class,
             CompanyInfoSeeder::class,
             SettingSeeder::class,
-            MemberTreeSeeder::class
+            MemberTreeSeeder::class,
+            DenominationSeeder::class,
+            BusinessTypeSeeder::class,
+            CountrySeeder::class
         ]);
 
         // User::factory()->create([
