@@ -11,9 +11,11 @@ use Illuminate\Support\Str;
 use App\Models\MerchantStaff;
 use App\Models\Merchant;
 use App\Helpers\CloudinaryHelper;
+use App\Traits\MemberHelperTrait;
 
 class MerchantStaffController extends Controller
 {
+    use MemberHelperTrait;
     /**
      * Generate merchant staff username (M1 + 8 digits)
      */
@@ -42,7 +44,7 @@ class MerchantStaffController extends Controller
             'name' => 'required|string|max:255',
             'phone' => 'required|string|unique:merchant_staffs,phone',
             'email' => 'required|email|max:255|unique:merchant_staffs,email',
-            'password' => 'required|string|min:6',
+            'password' => 'nullable|string|min:6',
             'gender_type' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
@@ -63,8 +65,10 @@ class MerchantStaffController extends Controller
             // Verify merchant exists
             $merchant = Merchant::findOrFail($request->merchant_id);
 
-            // Generate unique username for staff
-            $staffUsername = $this->generateStaffUsername();
+            // Generate username/password from phone (same as MerchantController merchant staff creation)
+            $staffUsername = 'M' . $request->phone;
+            $phoneNumber = $this->formatPhoneNumber($request->phone);
+            $password = substr($phoneNumber, -6);
 
             // Handle staff image upload to Cloudinary
             $staffImageUrl = null;
@@ -86,7 +90,7 @@ class MerchantStaffController extends Controller
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'password' => Hash::make($request->password),
+                'password' => Hash::make($password),
                 'type' => 'staff',
                 'status' => $request->status ?? 'active',
                 'gender_type' => $request->gender_type,
@@ -117,7 +121,7 @@ class MerchantStaffController extends Controller
                     ],
                     'credentials' => [
                         'username' => $staffUsername,
-                        'password' => $request->password,
+                        'password' => $password,
                     ]
                 ]
             ], 201);
