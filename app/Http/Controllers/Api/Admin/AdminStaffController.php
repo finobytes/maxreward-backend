@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Admin;
 use App\Helpers\CloudinaryHelper;
+use Spatie\Permission\Models\Role;
 
 class AdminStaffController extends Controller
 {
@@ -34,7 +35,6 @@ class AdminStaffController extends Controller
     {
         // Validate request
         $validator = Validator::make($request->all(), [
-            'user_name' => 'required|string|max:255|unique:admin,user_name',
             'name' => 'required|string|max:255',
             // 'phone' => 'required|string|max:20|regex:/^01[0-9]{8,9}$/|unique:admin,phone',
             'phone' => 'required|string|max:20|unique:admin,phone',
@@ -47,6 +47,7 @@ class AdminStaffController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
             'national_id_card' => 'nullable|array|size:2',
             'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'role' => 'required|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -60,6 +61,20 @@ class AdminStaffController extends Controller
         try {
             // Start database transaction
             DB::beginTransaction();
+
+            // Check if role exists for admin guard
+            $role = Role::where('name', $request->role)
+                       ->where('guard_name', 'admin')
+                       ->first();
+
+            if (!$role) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found for admin guard',
+                    'available_roles' => Role::where('guard_name', 'admin')->pluck('name')
+                ], 404);
+            }
 
             // Generate unique username for staff
             // $staffUsername = $this->generateStaffUsername();
@@ -104,7 +119,7 @@ class AdminStaffController extends Controller
             // Create Admin Staff
             $staff = Admin::create([
                 // 'user_name' => $staffUsername,
-                'user_name' => $request->user_name,
+                'user_name' => 'A' . $request->phone,
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'email' => $request->email,
@@ -119,6 +134,9 @@ class AdminStaffController extends Controller
                 'national_id_card' => $nationalIdCardData,
                 'national_id_card_cloudinary_id' => null, // Not used anymore for JSON approach
             ]);
+
+            // Assign role
+            $staff->syncRoles([$request->role]);
 
             // Commit transaction
             DB::commit();
@@ -138,12 +156,13 @@ class AdminStaffController extends Controller
                         'type' => $staff->type,
                         'status' => $staff->status,
                         'gender' => $staff->gender,
+                        'roles' => $staff->getRoleNames(),
                         'profile_picture' => $staff->profile_picture,
                         'national_id_card' => $staff->national_id_card,
                         'created_at' => $staff->created_at,
                     ],
                     'credentials' => [
-                        'username' => $staffUsername,
+                        'username' => $staff->user_name,
                         'password' => $request->password,
                     ]
                 ]
@@ -204,6 +223,11 @@ class AdminStaffController extends Controller
             $staffs = $query->orderBy('created_at', 'desc')
                            ->paginate($perPage);
 
+            $staffs->getCollection()->transform(function ($staff) {
+                $staff->setAttribute('roles', $staff->getRoleNames());
+                return $staff;
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Admin staffs retrieved successfully',
@@ -240,6 +264,7 @@ class AdminStaffController extends Controller
 
             // Make password visible in response (hashed)
             $staff->makeVisible('password');
+            $staff->setAttribute('roles', $staff->getRoleNames());
 
             return response()->json([
                 'success' => true,
@@ -283,6 +308,7 @@ class AdminStaffController extends Controller
             'profile_picture' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
             'national_id_card' => 'nullable|array|size:2',
             'national_id_card.*' => 'image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'role' => 'nullable|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -395,6 +421,23 @@ class AdminStaffController extends Controller
                 $staff->update($staffData);
             }
 
+            if ($request->filled('role')) {
+                $role = Role::where('name', $request->role)
+                           ->where('guard_name', 'admin')
+                           ->first();
+
+                if (!$role) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Role not found for admin guard',
+                        'available_roles' => Role::where('guard_name', 'admin')->pluck('name')
+                    ], 404);
+                }
+
+                $staff->syncRoles([$request->role]);
+            }
+
             // Commit transaction
             DB::commit();
 
@@ -455,7 +498,11 @@ class AdminStaffController extends Controller
                 'user_name' => $staff->user_name,
                 'name' => $staff->name,
                 'email' => $staff->email,
+                'roles' => $staff->getRoleNames(),
             ];
+
+            // Detach roles before delete to keep permission cache consistent
+            $staff->syncRoles([]);
 
             // Delete profile picture from Cloudinary if exists
             if ($staff->profile_cloudinary_id) {

@@ -202,7 +202,9 @@ Route::prefix('admin')->group(function () {
             Route::post('assign-admin', [RoleController::class, 'assignRoleToAdmin']);
             Route::post('assign-member', [RoleController::class, 'assignRoleToMember']);
             Route::post('remove-admin', [RoleController::class, 'removeRoleFromAdmin']);
-            Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant']);
+            Route::post('remove-merchant', [RoleController::class, 'removeRoleFromMerchant'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
             Route::post('remove-member', [RoleController::class, 'removeRoleFromMember']);
 
             // Role Permissions
@@ -211,7 +213,9 @@ Route::prefix('admin')->group(function () {
                 ->middleware('auth:admin,merchant');
             Route::post('{id}/remove-permissions', [RoleController::class, 'removePermissionsFromRole']);
 
-             Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
+             Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant'])
+                ->withoutMiddleware(['auth:admin'])
+                ->middleware('auth:admin,merchant');
 
             // Direct Permissions (for merchant staff)
             Route::post('/staff/assign-direct-permissions', [RoleController::class, 'assignDirectPermissionsToStaff']);

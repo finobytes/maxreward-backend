@@ -90,7 +90,7 @@ class MerchantStaffController extends Controller
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'email' => $request->email,
-                'password' => Hash::make($password),
+                'password' => Hash::make($request->password),
                 'type' => 'staff',
                 'status' => $request->status ?? 'active',
                 'gender_type' => $request->gender_type,
@@ -121,7 +121,7 @@ class MerchantStaffController extends Controller
                     ],
                     'credentials' => [
                         'username' => $staffUsername,
-                        'password' => $password,
+                        'password' => $request->password,
                     ]
                 ]
             ], 201);
