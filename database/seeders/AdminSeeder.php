@@ -7,6 +7,9 @@ use Illuminate\Database\Seeder;
 use App\Models\Admin;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class AdminSeeder extends Seeder
 {
@@ -25,7 +28,7 @@ class AdminSeeder extends Seeder
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         // Super Admin (Only admin)
-        Admin::create([
+        $superAdmin = Admin::create([
             'user_name'   => 'A100000001',
             'name'        => 'Super Admin',
             'phone'       => '01712345678',
@@ -37,6 +40,31 @@ class AdminSeeder extends Seeder
             'status'      => 'active',
             'gender'      => 'male',
         ]);
+
+        // Create or update the "super-admin" role and assign to the main admin
+        $roleName = 'super-admin';
+        $role = Role::where('name', $roleName)
+            ->where('guard_name', 'admin')
+            ->first();
+
+        if (!$role) {
+            $role = Role::create([
+                'name' => $roleName,
+                'guard_name' => 'admin',
+            ]);
+        }
+
+        $allAdminPermissions = Permission::where('guard_name', 'admin')
+            ->pluck('name')
+            ->toArray();
+
+        if (!empty($allAdminPermissions)) {
+            $role->syncPermissions($allAdminPermissions);
+        }
+
+        $superAdmin->syncRoles([$role]);
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Staff 1
         Admin::create([

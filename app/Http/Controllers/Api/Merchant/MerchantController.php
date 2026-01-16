@@ -29,6 +29,9 @@ use App\Traits\DistributeReferralPointsTrait;
 use App\Traits\CheckAndUnlockCpLevelsTrait;
 use App\Services\WhatsAppService;
 use App\Services\EmailService;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class MerchantController extends Controller
 {
@@ -323,6 +326,36 @@ class MerchantController extends Controller
                 'country_id' => $request->country_id,
                 'country_code' => $request->country_code
             ]);
+
+            // Create or update the merchant "super-admin" role with all merchant permissions
+            $roleName = 'super-admin';
+            $role = Role::where('name', $roleName)
+                ->where('guard_name', 'merchant')
+                ->where('merchant_id', $merchant->id)
+                ->first();
+
+            if (!$role) {
+                $role = Role::create([
+                    'name' => $roleName,
+                    'guard_name' => 'merchant',
+                ]);
+                $role->merchant_id = $merchant->id;
+                $role->save();
+            }
+
+            $allMerchantPermissions = Permission::where('guard_name', 'merchant')
+                ->pluck('name')
+                ->toArray();
+
+            if (!empty($allMerchantPermissions)) {
+                $role->syncPermissions($allMerchantPermissions);
+            }
+
+            // Assign "super-admin" role to the default merchant staff user
+            $merchantStaff->syncRoles([$role]);
+
+            // Clear permission cache
+            app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
             // Commit transaction
             DB::commit();
