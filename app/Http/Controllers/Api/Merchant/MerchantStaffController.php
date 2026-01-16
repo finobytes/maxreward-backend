@@ -12,6 +12,7 @@ use App\Models\MerchantStaff;
 use App\Models\Merchant;
 use App\Helpers\CloudinaryHelper;
 use App\Traits\MemberHelperTrait;
+use Spatie\Permission\Models\Role;
 
 class MerchantStaffController extends Controller
 {
@@ -48,6 +49,7 @@ class MerchantStaffController extends Controller
             'gender_type' => 'required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'role' => 'required|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -64,6 +66,23 @@ class MerchantStaffController extends Controller
 
             // Verify merchant exists
             $merchant = Merchant::findOrFail($request->merchant_id);
+
+            // Check if role exists for merchant guard
+            $role = Role::where('name', $request->role)
+                       ->where('guard_name', 'merchant')
+                       ->where('merchant_id', $merchant->id)
+                       ->first();
+
+            if (!$role) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Role not found for merchant guard',
+                    'available_roles' => Role::where('guard_name', 'merchant')
+                        ->where('merchant_id', $merchant->id)
+                        ->pluck('name')
+                ], 404);
+            }
 
             // Generate username/password from phone (same as MerchantController merchant staff creation)
             $staffUsername = 'M' . $request->phone;
@@ -98,6 +117,12 @@ class MerchantStaffController extends Controller
                 'image_cloudinary_id' => $imageCloudinaryId,
             ]);
 
+            // Assign role
+            $staff->syncRoles([$role]);
+
+            // Clear permission cache
+            app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
             // Commit transaction
             DB::commit();
 
@@ -115,6 +140,7 @@ class MerchantStaffController extends Controller
                         'type' => $staff->type,
                         'status' => $staff->status,
                         'gender_type' => $staff->gender_type,
+                        'roles' => $staff->getRoleNames(),
                         'image' => $staff->image,
                         'image_cloudinary_id' => $staff->image_cloudinary_id,
                         'created_at' => $staff->created_at,
@@ -211,6 +237,11 @@ class MerchantStaffController extends Controller
             $staffs = $query->orderBy('created_at', 'desc')
                            ->paginate($perPage);
 
+            $staffs->getCollection()->transform(function ($staff) {
+                $staff->setAttribute('roles', $staff->getRoleNames());
+                return $staff;
+            });
+
             return response()->json([
                 'success' => true,
                 'message' => 'Staffs retrieved successfully',
@@ -236,6 +267,7 @@ class MerchantStaffController extends Controller
     {
         try {
             $staff = MerchantStaff::with('merchant')->findOrFail($id);
+            $staff->setAttribute('roles', $staff->getRoleNames());
 
             return response()->json([
                 'success' => true,
@@ -275,6 +307,7 @@ class MerchantStaffController extends Controller
             'gender_type' => 'sometimes|required|in:male,female,others',
             'status' => 'nullable|in:active,inactive',
             'image' => 'nullable|image|mimes:jpeg,jpg,png,gif,svg|max:5120',
+            'role' => 'nullable|string|exists:roles,name',
         ]);
 
         if ($validator->fails()) {
@@ -337,11 +370,33 @@ class MerchantStaffController extends Controller
                 $staff->update($staffData);
             }
 
+            if ($request->filled('role')) {
+                $role = Role::where('name', $request->role)
+                           ->where('guard_name', 'merchant')
+                           ->where('merchant_id', $staff->merchant_id)
+                           ->first();
+
+                if (!$role) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Role not found for merchant guard',
+                        'available_roles' => Role::where('guard_name', 'merchant')
+                            ->where('merchant_id', $staff->merchant_id)
+                            ->pluck('name')
+                    ], 404);
+                }
+
+                $staff->syncRoles([$role]);
+                app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+            }
+
             // Commit transaction
             DB::commit();
 
             // Load fresh data with relationship
             $staff->load('merchant');
+            $staff->setAttribute('roles', $staff->getRoleNames());
 
             return response()->json([
                 'success' => true,
@@ -388,7 +443,11 @@ class MerchantStaffController extends Controller
                 'user_name' => $staff->user_name,
                 'name' => $staff->name,
                 'email' => $staff->email,
+                'roles' => $staff->getRoleNames(),
             ];
+
+            // Detach roles before delete to keep permission cache consistent
+            $staff->syncRoles([]);
 
             // Delete the staff
             $staff->delete();
@@ -437,6 +496,11 @@ class MerchantStaffController extends Controller
                                    ->where('type', 'staff')
                                    ->orderBy('created_at', 'desc')
                                    ->get();
+
+            $staffs->transform(function ($staff) {
+                $staff->setAttribute('roles', $staff->getRoleNames());
+                return $staff;
+            });
 
             return response()->json([
                 'success' => true,
