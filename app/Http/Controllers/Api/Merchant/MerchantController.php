@@ -69,6 +69,7 @@ class MerchantController extends Controller
 
     public function store(Request $request)
     {
+        // return $request->all();
         // Validate request
         $validator = Validator::make($request->all(), [
             // Merchant Basic Info
@@ -328,10 +329,9 @@ class MerchantController extends Controller
             ]);
 
             // Create or update the merchant "super-admin" role with all merchant permissions
-            $roleName = 'super-admin';
+            $roleName = 'super-admin-' . $merchant->id;
             $role = Role::where('name', $roleName)
                 ->where('guard_name', 'merchant')
-                ->where('merchant_id', $merchant->id)
                 ->first();
 
             if (!$role) {
@@ -339,6 +339,8 @@ class MerchantController extends Controller
                     'name' => $roleName,
                     'guard_name' => 'merchant',
                 ]);
+            }
+            if (empty($role->merchant_id)) {
                 $role->merchant_id = $merchant->id;
                 $role->save();
             }
