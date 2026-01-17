@@ -68,6 +68,7 @@ class ForgotPasswordController extends Controller
             'message' => 'Reset code sent successfully',
             'data' => [
                 'expires_in' => self::CODE_TTL_SECONDS,
+                'user_id' => $request->user_id,
             ],
         ]);
     }
@@ -127,6 +128,8 @@ class ForgotPasswordController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Reset code verified',
+            'user_id' => $request->user_id,
+            'code' => $request->code
         ]);
     }
 
