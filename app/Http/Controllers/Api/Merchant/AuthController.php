@@ -73,13 +73,11 @@ class AuthController extends Controller implements HasMiddleware
         ->count();
 
         $user->referred_members = CommonFunctionHelper::sponsoredMembers($corporateMemberId);
+        $user->permissions = $user->getAllPermissions()->pluck('name');
+        $user->roles = $user->getRoleNames();
 
         // Add permissions and roles to response
-        return response()->json([
-            'user' => $user,
-            'permissions' => $user->getAllPermissions()->pluck('name'),
-            'roles' => $user->getRoleNames(),
-        ]);
+        return response()->json($user);
     }
 
     public function logout()

@@ -73,11 +73,11 @@ class AuthController extends Controller implements HasMiddleware
         ->approved() // include this if you want only approved purchases
         ->sum('transaction_amount');
 
-        return response()->json([
-            'member' => $member,
-            'permissions' => $member->getAllPermissions()->pluck('name'),
-            'roles' => $member->getRoleNames(),
-        ]);
+
+        //  $member->permissions = $member->getAllPermissions()->pluck('name');
+        // $member->roles = $member->getRoleNames();
+
+        return response()->json($member);
     }
 
 

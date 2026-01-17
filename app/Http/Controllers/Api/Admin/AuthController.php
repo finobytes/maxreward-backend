@@ -40,12 +40,10 @@ class AuthController extends Controller implements HasMiddleware
     public function me()
     {
         $user = auth('admin')->user();
+        $user->permissions = $user->getAllPermissions()->pluck('name');
+        $user->roles = $user->getRoleNames();
 
-        return response()->json([
-            'user' => $user,
-            'permissions' => $user->getAllPermissions()->pluck('name'),
-            'roles' => $user->getRoleNames(),
-        ]);
+        return response()->json($user);
     }
 
 

@@ -46,6 +46,7 @@ use App\Http\Controllers\Api\Admin\CpUnlockHistoryController as AdminCpUnlockHis
 use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockHistoryController;
 use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
 use App\Http\Controllers\Api\Member\CartController;
+use App\Http\Controllers\Api\ForgotPasswordController;
 
 
 /*
@@ -96,6 +97,17 @@ Route::prefix('member')->group(function () {
         });
 
     });
+});
+
+/*
+|--------------------------------------------------------------------------
+| Forgot Password Routes (Public)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('forgot-password')->group(function () {
+    Route::post('request', [ForgotPasswordController::class, 'sendCode']);
+    Route::post('verify', [ForgotPasswordController::class, 'verifyCode']);
+    Route::post('reset', [ForgotPasswordController::class, 'resetPassword']);
 });
 
 
