@@ -31,11 +31,6 @@ class PermissionMiddleware
         // Get the guard name for the authenticated user
         $guardName = $this->getAuthenticatedGuard();
 
-        // Member guard does not require permission checks
-        if ($guardName === 'member') {
-            return $next($request);
-        }
-
         // Build permission patterns to check based on user's roles
         $permissionsToCheck = $this->buildPermissionPatterns($user, $permission, $guardName);
 
