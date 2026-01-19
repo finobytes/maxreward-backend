@@ -530,7 +530,7 @@ Route::prefix('products')->middleware('auth:admin,merchant,member')->group(funct
     
     Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member');
      Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant,member');
     Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
     Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
     Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
