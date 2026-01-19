@@ -173,6 +173,8 @@ Route::prefix('admin')->group(function () {
 
     // Get dashboard statistics
     Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats'])->middleware('auth:admin');
+    Route::get('/voucher-purchase-stats', [DashboardController::class, 'getVoucherPurchaseStats'])->middleware('auth:admin');
+    // Route::get('/real-time-transactions', [DashboardController::class, 'getRealTimeTransactions'])->middleware('auth:admin');
 
     // Protected routes - require JWT authentication
     Route::middleware('auth:admin')->group(function () {
