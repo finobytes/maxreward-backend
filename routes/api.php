@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockH
 use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
 use App\Http\Controllers\Api\Member\CartController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\OrderController;
 
 
 /*
