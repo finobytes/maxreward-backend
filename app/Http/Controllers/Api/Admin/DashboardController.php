@@ -22,8 +22,16 @@ class DashboardController extends Controller
     public function getDashboardStats()
     {
         try {
+            $now = Carbon::now();
+
             // Get total members count
             $totalMembers = Member::count();
+
+            // Get total active members count
+            $totalActiveMembers = Member::where('status', 'active')->count();
+
+            // Get new members joined in last 7 days
+            $newMembersLast7Days = Member::where('created_at', '>=', $now->copy()->subDays(7))->count();
 
             // Get approved merchants count
             $approvedMerchants = Merchant::where('status', 'approved')->count();
@@ -33,6 +41,9 @@ class DashboardController extends Controller
 
             // Get total transactions count
             $totalTransactions = Transaction::count();
+
+            // Get total earned points (sum of available points in member wallets)
+            $totalPointsEarned = (float) MemberWallet::sum('available_points');
 
             // Get total merchant approvals (merchants with 'approved' status)
             $totalPendingVouchers = Voucher::where('status', 'pending')->count();
@@ -79,9 +90,12 @@ class DashboardController extends Controller
                 'message' => 'Dashboard statistics retrieved successfully',
                 'data' => [
                     'total_members' => $totalMembers,
+                    'total_active_members' => $totalActiveMembers,
+                    'new_members_last_7_days' => $newMembersLast7Days,
                     'approved_merchants' => $approvedMerchants,
                     'total_transactions' => $totalTransactions,
                     'pending_merchants' => $pendingMerchants,
+                    'total_points_earned' => $totalPointsEarned,
                     'total_pending_vouchers' => $totalPendingVouchers,
                     'points_redeemed_statistics' => [
                         'total_points_redeemed' => $totalPointsRedeemed,
@@ -163,5 +177,57 @@ class DashboardController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
+
+    public function getRealTimeTransactions()
+    {
+        try {
+            $now = Carbon::now();
+            $start = $now->copy()->subMonths(11)->startOfMonth();
+
+            $rows = Purchase::where('status', 'approved')
+                ->whereBetween('created_at', [$start, $now->copy()->endOfMonth()])
+                ->selectRaw('YEAR(created_at) as year, MONTH(created_at) as month')
+                ->selectRaw('SUM(transaction_amount) as purchased_amount')
+                ->selectRaw('SUM(redeem_amount) as redeemed_amount')
+                ->groupBy('year', 'month')
+                ->orderBy('year')
+                ->orderBy('month')
+                ->get()
+                ->keyBy(function ($row) {
+                    return $row->year . '-' . str_pad($row->month, 2, '0', STR_PAD_LEFT);
+                });
+
+            $labels = [];
+            $purchased = [];
+            $redeemed = [];
+
+            for ($i = 0; $i < 12; $i++) {
+                $date = $start->copy()->addMonths($i);
+                $key = $date->format('Y-m');
+                $labels[] = $date->format('M');
+
+                $row = $rows->get($key);
+                $purchased[] = $row ? (float) $row->purchased_amount : 0.0;
+                $redeemed[] = $row ? (float) $row->redeemed_amount : 0.0;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Real-time transactions retrieved successfully',
+                'data' => [
+                    'labels' => $labels,
+                    'purchased' => $purchased,
+                    'redeemed' => $redeemed
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve real-time transactions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
  
 }
