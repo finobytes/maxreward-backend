@@ -534,7 +534,7 @@ Route::prefix('products')->middleware('auth:admin,merchant,member')->group(funct
     Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
     Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
     Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
-    
+    Route::patch('/status/update/{id}', [ProductController::class, 'statusUpdate'])->middleware('role:merchant');
 });
 
 
