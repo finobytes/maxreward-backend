@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockH
 use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
 use App\Http\Controllers\Api\Member\CartController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\OrderController;
 
 
 /*
@@ -528,12 +529,13 @@ Route::prefix('products')->middleware('auth:admin,merchant,member')->group(funct
     Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant');
     Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant');
     
-    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,merchant');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
+    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member');
+     Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant,member');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant,member');
     Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
     Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
     Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
-    
+    Route::patch('/status/update/{id}', [ProductController::class, 'statusUpdate'])->middleware('role:merchant');
 });
 
 
@@ -770,6 +772,47 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
 
     // Get maxreward corporate member
     Route::get('/maxreward-corporate-{id}', [MemberController::class, 'getMaxrewardCorporateMember'])->middleware('role:admin,member');
+});
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Member Order Routes (Protected)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('member')->middleware('auth:member')->group(function () {
+    // Create orders (one per merchant)
+    Route::post('orders', [OrderController::class, 'createOrders']);
+    
+    // Get my orders
+    Route::get('orders', [OrderController::class, 'getMyOrders']);
+    
+    // Get single order details
+    Route::get('orders/{orderNumber}', [OrderController::class, 'getOrderDetails']);
+    
+    // Cancel order
+    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
+    
+    // Request return (Member initiates return)
+    Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Merchant Order Routes (Protected)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
+    // Get merchant orders
+    Route::get('orders', [OrderController::class, 'getMerchantOrders']);
+    
+    // Complete order
+    Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
+    
+    // Accept return (Merchant accepts return)
+    Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
 });
 
 
