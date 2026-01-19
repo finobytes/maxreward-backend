@@ -771,6 +771,47 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
 });
 
 
+
+/*
+|--------------------------------------------------------------------------
+| Member Order Routes (Protected)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('member')->middleware('auth:member')->group(function () {
+    // Create orders (one per merchant)
+    Route::post('orders', [OrderController::class, 'createOrders']);
+    
+    // Get my orders
+    Route::get('orders', [OrderController::class, 'getMyOrders']);
+    
+    // Get single order details
+    Route::get('orders/{orderNumber}', [OrderController::class, 'getOrderDetails']);
+    
+    // Cancel order
+    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
+    
+    // Request return (Member initiates return)
+    Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| Merchant Order Routes (Protected)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
+    // Get merchant orders
+    Route::get('orders', [OrderController::class, 'getMerchantOrders']);
+    
+    // Complete order
+    Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
+    
+    // Accept return (Merchant accepts return)
+    Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
+});
+
+
 /*
 |--------------------------------------------------------------------------
 | Git Webhook Auto Deploy (GET Only)
