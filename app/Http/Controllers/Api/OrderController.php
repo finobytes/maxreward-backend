@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Member;
 use App\Models\MemberWallet;
+use App\Models\Product;
+use App\Models\ProductVariation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -126,7 +128,7 @@ class OrderController extends Controller
                     $orderTotal += $itemData['points'] * $itemData['quantity'];
                     
                     // Get product weight (if available)
-                    $product = \App\Models\Product::find($itemData['product_id']);
+                    $product = Product::find($itemData['product_id']);
                     if ($product) {
                         $totalWeight += ($product->unit_weight ?? 0) * $itemData['quantity'];
                     }
@@ -153,9 +155,9 @@ class OrderController extends Controller
 
                 // Create order items
                 foreach ($merchantData['items'] as $itemData) {
-                    $product = \App\Models\Product::find($itemData['product_id']);
+                    $product = Product::find($itemData['product_id']);
                     $variation = $itemData['product_variation_id'] 
-                        ? \App\Models\ProductVariation::find($itemData['product_variation_id']) 
+                        ? ProductVariation::find($itemData['product_variation_id']) 
                         : null;
 
                     OrderItem::create([
@@ -164,8 +166,8 @@ class OrderController extends Controller
                         'member_id' => $member->id,
                         'product_id' => $itemData['product_id'],
                         'product_variation_id' => $itemData['product_variation_id'],
-                        'name' => $variation ? $variation->name : $product->name,
-                        'sku' => $variation ? $variation->sku : $product->sku_short_code,
+                        'name' => $product ? $product->name : null,
+                        'sku' => $variation ? $variation->sku : null,
                         'quantity' => $itemData['quantity'],
                         'points' => $itemData['points'],
                     ]);
