@@ -47,6 +47,7 @@ use App\Http\Controllers\Api\Member\CpUnlockHistoryController as MemberCpUnlockH
 use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnlockHistoryController;
 use App\Http\Controllers\Api\Member\CartController;
 use App\Http\Controllers\Api\ForgotPasswordController;
+use App\Http\Controllers\Api\OrderController;
 
 
 /*
@@ -173,6 +174,8 @@ Route::prefix('admin')->group(function () {
 
     // Get dashboard statistics
     Route::get('/dashboard-stats', [DashboardController::class, 'getDashboardStats'])->middleware('auth:admin');
+    Route::get('/voucher-purchase-stats', [DashboardController::class, 'getVoucherPurchaseStats'])->middleware('auth:admin');
+    Route::get('/real-time-transactions', [DashboardController::class, 'getRealTimeTransactions'])->middleware('auth:admin');
 
     // Protected routes - require JWT authentication
     Route::middleware('auth:admin')->group(function () {
@@ -528,7 +531,7 @@ Route::prefix('products')->middleware('auth:admin,merchant,member')->group(funct
     
     Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member');
      Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant,member');
     Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
     Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
     Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
