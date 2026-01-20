@@ -212,7 +212,7 @@ class OrderController extends Controller
     public function getMyOrders(Request $request)
     {
         $member = auth('member')->user();
-        
+
         $query = Order::with(['merchant', 'items'])
             ->where('member_id', $member->id)
             ->whereNull('deleted_at');
@@ -256,6 +256,16 @@ class OrderController extends Controller
             'data' => ['order' => $order]
         ]);
     }
+
+
+    // Available Reason Types:
+
+    // out_of_stock - Product out of stock
+    // customer_request - Customer requested cancellation
+    // wrong_order - Wrong order placed
+    // payment_issue - Payment issue
+    // delivery_issue - Delivery not possible
+    // other - Other reason
 
     /**
      * Cancel order (Member)
@@ -391,6 +401,16 @@ class OrderController extends Controller
             'data' => ['order' => $order]
         ]);
     }
+
+
+    // Available Return Reason Types:
+
+    // defective_product - Product is defective/damaged
+    // wrong_item - Received wrong item
+    // not_as_described - Product not as described
+    // changed_mind - Customer changed mind
+    // quality_issue - Quality not satisfactory
+    // other - Other reason
 
     /**
      * Return order (Member - Request Return)
