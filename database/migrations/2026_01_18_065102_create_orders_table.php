@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('merchant_id');
             $table->unsignedBigInteger('member_id');
+            $table->unsignedBigInteger('shipping_zone_id')->nullable();
+            $table->unsignedBigInteger('shipping_method_id')->nullable();
             
             $table->string('order_number')->unique()->comment('Auto: YYYYMMDDHMS-8 unique character');
             
@@ -62,6 +64,8 @@ return new class extends Migration
             
             $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('restrict');
             $table->foreign('member_id')->references('id')->on('members')->onDelete('restrict');
+            $table->foreign('shipping_zone_id')->references('id')->on('shipping_zones')->onDelete('set null');
+            $table->foreign('shipping_method_id')->references('id')->on('shipping_methods')->onDelete('set null');
         });
     }
 
