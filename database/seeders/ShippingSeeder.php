@@ -70,7 +70,7 @@ class ShippingSeeder extends Seeder
 
         foreach ($zones as $zoneData) {
             $zone = ShippingZone::create([
-                'name' => $zoneData['name'],
+                'name' => $zoneData['name'],    
                 'zone_code' => $zoneData['zone_code'],
                 'region' => $zoneData['region'],
             ]);

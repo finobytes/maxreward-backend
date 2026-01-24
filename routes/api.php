@@ -50,6 +50,7 @@ use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\Merchant\MerchantShippingController;
 use App\Http\Controllers\Api\Admin\ShippingZoneController;
+use App\Http\Controllers\Api\Admin\ShippingMethodController;
 
 /*
 |--------------------------------------------------------------------------
@@ -299,7 +300,7 @@ Route::prefix('admin')->group(function () {
 
         Route::get('get-all-merchants-purchases-data', [MerchantController::class, 'getAllMerchantsPurchasesData']);
 
-        // Shipping Zones
+        // Shipping Zones Management
         Route::get('shipping-zones', [ShippingZoneController::class, 'index']);
         Route::get('shipping-zones/{id}', [ShippingZoneController::class, 'show']);
         Route::post('shipping-zones', [ShippingZoneController::class, 'store']);
@@ -308,7 +309,7 @@ Route::prefix('admin')->group(function () {
         Route::patch('shipping-zones/{id}/toggle-status', [ShippingZoneController::class, 'toggleStatus']);
         Route::get('shipping-zones/regions', [ShippingZoneController::class, 'getRegions']);
 
-        //Shipping Methods
+        // Shipping Methods Management
         Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
         Route::get('shipping-methods/{id}', [ShippingMethodController::class, 'show']);
         Route::post('shipping-methods', [ShippingMethodController::class, 'store']);
