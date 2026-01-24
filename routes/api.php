@@ -48,7 +48,8 @@ use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnl
 use App\Http\Controllers\Api\Member\CartController;
 use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\OrderController;
-
+use App\Http\Controllers\Api\Merchant\MerchantShippingController;
+use App\Http\Controllers\Api\Admin\ShippingZoneController;
 
 /*
 |--------------------------------------------------------------------------
@@ -148,6 +149,20 @@ Route::prefix('merchant')->group(function () {
             Route::get('/', [MerchantCpUnlockHistoryController::class, 'index']);
             Route::get('/{id}', [MerchantCpUnlockHistoryController::class, 'show']);
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Shipping Routes (Merchant)
+        |--------------------------------------------------------------------------
+        */
+
+        // Get merchant's shipping configuration
+        Route::get('shipping-rates', [MerchantShippingController::class, 'index']);
+        Route::post('shipping-rates', [MerchantShippingController::class, 'store']);
+        Route::put('shipping-rates/{id}', [MerchantShippingController::class, 'update']);
+        Route::delete('shipping-rates/{id}', [MerchantShippingController::class, 'destroy']);
+        Route::post('shipping-rates/bulk-setup', [MerchantShippingController::class, 'bulkSetup']);
+
     });
 });
 
@@ -284,6 +299,24 @@ Route::prefix('admin')->group(function () {
 
         Route::get('get-all-merchants-purchases-data', [MerchantController::class, 'getAllMerchantsPurchasesData']);
 
+        // Shipping Zones
+        Route::get('shipping-zones', [ShippingZoneController::class, 'index']);
+        Route::get('shipping-zones/{id}', [ShippingZoneController::class, 'show']);
+        Route::post('shipping-zones', [ShippingZoneController::class, 'store']);
+        Route::put('shipping-zones/{id}', [ShippingZoneController::class, 'update']);
+        Route::delete('shipping-zones/{id}', [ShippingZoneController::class, 'destroy']);
+        Route::patch('shipping-zones/{id}/toggle-status', [ShippingZoneController::class, 'toggleStatus']);
+        Route::get('shipping-zones/regions', [ShippingZoneController::class, 'getRegions']);
+
+        //Shipping Methods
+        Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
+        Route::get('shipping-methods/{id}', [ShippingMethodController::class, 'show']);
+        Route::post('shipping-methods', [ShippingMethodController::class, 'store']);
+        Route::put('shipping-methods/{id}', [ShippingMethodController::class, 'update']);
+        Route::delete('shipping-methods/{id}', [ShippingMethodController::class, 'destroy']);
+        Route::patch('shipping-methods/{id}/toggle-status', [ShippingMethodController::class, 'toggleStatus']);
+        Route::post('shipping-methods/reorder', [ShippingMethodController::class, 'reorder']);
+        Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods']);
     });
 });
 
@@ -814,7 +847,6 @@ Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
     // Accept return (Merchant accepts return)
     Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
 });
-
 
 /*
 |--------------------------------------------------------------------------

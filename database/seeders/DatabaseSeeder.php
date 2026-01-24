@@ -25,7 +25,8 @@ class DatabaseSeeder extends Seeder
             MemberTreeSeeder::class,
             DenominationSeeder::class,
             BusinessTypeSeeder::class,
-            CountrySeeder::class
+            CountrySeeder::class,
+            ShippingSeeder::class
         ]);
 
         // User::factory()->create([
