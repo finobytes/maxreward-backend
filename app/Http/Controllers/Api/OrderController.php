@@ -347,7 +347,7 @@ class OrderController extends Controller
         $merchant = auth('merchant')->user();
         
         $query = Order::with(['member', 'items'])
-            ->where('merchant_id', $merchant->id)
+            ->where('merchant_id', $merchant->merchant_id)
             ->whereNull('deleted_at');
 
         // Filter by status
@@ -372,7 +372,7 @@ class OrderController extends Controller
         $merchant = auth('merchant')->user();
         
         $order = Order::where('order_number', $orderNumber)
-            ->where('merchant_id', $merchant->id)
+            ->where('merchant_id', $merchant->merchant_id)
             ->first();
 
         if (!$order) {
@@ -513,7 +513,7 @@ class OrderController extends Controller
         $merchant = auth('merchant')->user();
         
         $order = Order::where('order_number', $orderNumber)
-            ->where('merchant_id', $merchant->id)
+            ->where('merchant_id', $merchant->merchant_id)
             ->first();
 
         if (!$order) {
