@@ -22,7 +22,7 @@ class MerchantShippingRateController extends Controller
             $merchant = auth('merchant')->user();
             
             $query = MerchantShippingRate::with(['zone', 'method'])
-                ->where('merchant_id', $merchant->id);
+                ->where('merchant_id', $merchant->merchant_id);
 
             // Filter by zone
             if ($request->has('zone_id') && $request->zone_id) {
@@ -135,7 +135,7 @@ class MerchantShippingRateController extends Controller
             $merchant = auth('merchant')->user();
             
             $rate = MerchantShippingRate::with(['zone', 'method'])
-                ->where('merchant_id', $merchant->id)
+                ->where('merchant_id', $merchant->merchant_id)
                 ->findOrFail($id);
 
             return response()->json([
@@ -198,7 +198,7 @@ class MerchantShippingRateController extends Controller
 
         try {
             // Check for overlapping weight ranges
-            $existing = MerchantShippingRate::where('merchant_id', $merchant->id)
+            $existing = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                 ->where('zone_id', $request->zone_id)
                 ->where('method_id', $request->method_id)
                 ->where(function($q) use ($request) {
@@ -219,7 +219,7 @@ class MerchantShippingRateController extends Controller
             }
 
             $rate = MerchantShippingRate::create([
-                'merchant_id' => $merchant->id,
+                'merchant_id' => $merchant->merchant_id,
                 'zone_id' => $request->zone_id,
                 'method_id' => $request->method_id,
                 'weight_from' => $request->weight_from,
@@ -273,7 +273,7 @@ class MerchantShippingRateController extends Controller
         $merchant = auth('merchant')->user();
 
         try {
-            $rate = MerchantShippingRate::where('merchant_id', $merchant->id)
+            $rate = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                 ->findOrFail($id);
 
             // Validate weight_to > weight_from if both provided
@@ -289,7 +289,7 @@ class MerchantShippingRateController extends Controller
 
             // Check for overlapping if weight range changed
             if ($request->has('weight_from') || $request->has('weight_to')) {
-                $existing = MerchantShippingRate::where('merchant_id', $merchant->id)
+                $existing = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                     ->where('zone_id', $rate->zone_id)
                     ->where('method_id', $rate->method_id)
                     ->where('id', '!=', $id)
@@ -348,7 +348,7 @@ class MerchantShippingRateController extends Controller
         try {
             $merchant = auth('merchant')->user();
             
-            $rate = MerchantShippingRate::where('merchant_id', $merchant->id)
+            $rate = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                 ->findOrFail($id);
 
             $rate->delete();
@@ -382,7 +382,7 @@ class MerchantShippingRateController extends Controller
         try {
             $merchant = auth('merchant')->user();
             
-            $rate = MerchantShippingRate::where('merchant_id', $merchant->id)
+            $rate = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                 ->findOrFail($id);
                 
             $rate->is_active = !$rate->is_active;
@@ -476,7 +476,7 @@ class MerchantShippingRateController extends Controller
             foreach ($zones as $zone) {
                 foreach ($request->weight_ranges as $range) {
                     // Check if already exists
-                    $exists = MerchantShippingRate::where('merchant_id', $merchant->id)
+                    $exists = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                         ->where('zone_id', $zone->id)
                         ->where('method_id', $request->method_id)
                         ->where(function($q) use ($range) {
@@ -495,7 +495,7 @@ class MerchantShippingRateController extends Controller
                     }
 
                     MerchantShippingRate::create([
-                        'merchant_id' => $merchant->id,
+                        'merchant_id' => $merchant->merchant_id,
                         'zone_id' => $zone->id,
                         'method_id' => $request->method_id,
                         'weight_from' => $range['from'],
@@ -559,7 +559,7 @@ class MerchantShippingRateController extends Controller
         try {
             $merchant = auth('merchant')->user();
             
-            $deleted = MerchantShippingRate::where('merchant_id', $merchant->id)
+            $deleted = MerchantShippingRate::where('merchant_id', $merchant->merchant_id)
                 ->where('zone_id', $request->zone_id)
                 ->where('method_id', $request->method_id)
                 ->delete();
