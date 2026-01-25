@@ -13,9 +13,128 @@ use App\Models\OrderCancelReason;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\ShippingZone;
+use App\Models\MerchantShippingRate;
 
 class OrderController extends Controller
 {
+
+    // ===================================================================
+    // CALCULATE SHIPPING API - Updated Weight Logic
+    // ===================================================================
+
+    public function calculateShipping(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'customer_postcode' => 'required|string',
+            'merchants' => 'required|array|min:1',
+            'merchants.*.merchant_id' => 'required|exists:merchants,id',
+            'merchants.*.shipping_method_id' => 'required|exists:shipping_methods,id',
+            'merchants.*.items' => 'required|array|min:1',
+            'merchants.*.items.*.product_id' => 'required|exists:products,id',
+            'merchants.*.items.*.product_variation_id' => 'required|exists:product_variations,id',
+            'merchants.*.items.*.quantity' => 'required|integer|min:1',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Detect shipping zone from postcode
+        $zone = ShippingZone::detectZoneByPostcode($request->customer_postcode);
+        
+        if (!$zone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid postcode or shipping zone not found'
+            ], 400);
+        }
+
+        $shippingDetails = [];
+        $totalShipping = 0;
+
+        foreach ($request->merchants as $merchantData) {
+            $merchantId = $merchantData['merchant_id'];
+            $methodId = $merchantData['shipping_method_id'];
+            
+            // Calculate total weight for this merchant
+            $totalWeight = 0;
+            $merchantSubtotal = 0;
+            
+            foreach ($merchantData['items'] as $item) {
+                // ✅ Try variation first, then product
+                $variation = ProductVariation::find($item['product_variation_id']);
+                $product = Product::find($item['product_id']);
+                
+                // Weight calculation: variation > product
+                $unitWeight = 0;
+                if ($variation && $variation->unit_weight > 0) {
+                    $unitWeight = $variation->unit_weight;
+                } elseif ($product) {
+                    $unitWeight = $product->unit_weight ?? 0;
+                }
+                
+                $totalWeight += $unitWeight * $item['quantity'];
+                
+                // Calculate subtotal for free shipping check - variation price > product price
+                $price = 0;
+                if ($variation) {
+                    $price = $variation->sale_point ?? $variation->regular_point;
+                } elseif ($product) {
+                    $price = $product->sale_point ?? $product->regular_point;
+                }
+                $merchantSubtotal += $price * $item['quantity'];
+            }
+
+            // Calculate shipping cost
+            $shippingCalc = MerchantShippingRate::calculateShipping(
+                $merchantId,
+                $zone->id,
+                $methodId,
+                $totalWeight,
+                $merchantSubtotal
+            );
+
+            if (!$shippingCalc) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No shipping rate found for merchant {$merchantId} to {$zone->name}",
+                    'merchant_id' => $merchantId,
+                    'zone' => $zone->name,
+                ], 400);
+            }
+
+            $shippingDetails[] = [
+                'merchant_id' => $merchantId,
+                'shipping_zone_id' => $zone->id,
+                'shipping_zone_name' => $zone->name,
+                'shipping_method_id' => $methodId,
+                'total_weight' => $totalWeight,
+                'shipping_points' => $shippingCalc['shipping_points'],
+                'is_free_shipping' => $shippingCalc['is_free_shipping'],
+            ];
+
+            $totalShipping += $shippingCalc['shipping_points'];
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'detected_zone' => [
+                    'id' => $zone->id,
+                    'name' => $zone->name,
+                    'code' => $zone->zone_code,
+                ],
+                'shipping_by_merchant' => $shippingDetails,
+                'total_shipping_points' => $totalShipping,
+            ]
+        ]);
+    }
+
+
     /**
      * Create orders (multiple orders - one per merchant)
      * 
@@ -58,24 +177,176 @@ class OrderController extends Controller
      *   ]
      * }
      */
+    // public function createOrders_OLD(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'customer_info' => 'required|array',
+    //         'customer_info.full_name' => 'required|string|max:200',
+    //         'customer_info.email' => 'nullable|email|max:100',
+    //         'customer_info.phone' => 'required|string|max:20',
+    //         'customer_info.address' => 'required|string',
+    //         'customer_info.postcode' => 'nullable|string|max:20',
+    //         'customer_info.city' => 'nullable|string|max:100',
+    //         'customer_info.state' => 'nullable|string|max:100',
+    //         'customer_info.country' => 'nullable|string|max:100',
+    //         'merchants' => 'required|array|min:1',
+    //         'merchants.*.merchant_id' => 'required|exists:merchants,id',
+    //         'merchants.*.shipping_points' => 'nullable|numeric|min:0',
+    //         'merchants.*.items' => 'required|array|min:1',
+    //         'merchants.*.items.*.product_id' => 'required|exists:products,id',
+    //         'merchants.*.items.*.product_variation_id' => 'nullable|exists:product_variations,id',
+    //         'merchants.*.items.*.quantity' => 'required|integer|min:1',
+    //         'merchants.*.items.*.points' => 'required|numeric|min:0',
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $member = auth('member')->user();
+    //     $wallet = $member->wallet;
+
+    //     // Calculate total points needed
+    //     $totalPointsNeeded = 0;
+    //     foreach ($request->merchants as $merchantData) {
+    //         $merchantTotal = $merchantData['shipping_points'] ?? 0;
+    //         foreach ($merchantData['items'] as $item) {
+    //             $merchantTotal += $item['points'] * $item['quantity'];
+    //         }
+    //         $totalPointsNeeded += $merchantTotal;
+    //     }
+
+    //     // Check if member has sufficient points
+    //     if ($wallet->available_points < $totalPointsNeeded) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Insufficient points',
+    //             'required_points' => $totalPointsNeeded,
+    //             'available_points' => $wallet->available_points,
+    //             'shortage' => $totalPointsNeeded - $wallet->available_points
+    //         ], 400);
+    //     }
+
+    //     DB::beginTransaction();
+        
+    //     try {
+    //         $createdOrders = [];
+
+    //         // Create separate order for each merchant
+    //         foreach ($request->merchants as $merchantData) {
+    //             $merchantId = $merchantData['merchant_id'];
+    //             $shippingPoints = $merchantData['shipping_points'] ?? 0;
+                
+    //             // Calculate order total
+    //             $orderTotal = $shippingPoints;
+    //             $totalWeight = 0;
+                
+    //             foreach ($merchantData['items'] as $itemData) {
+    //                 $orderTotal += $itemData['points'] * $itemData['quantity'];
+                    
+    //                 // Get product weight (if available)
+    //                 $product = Product::find($itemData['product_id']);
+    //                 if ($product) {
+    //                     $totalWeight += ($product->unit_weight ?? 0) * $itemData['quantity'];
+    //                 }
+    //             }
+
+    //             // Create order
+    //             $order = Order::create([
+    //                 'merchant_id' => $merchantId,
+    //                 'member_id' => $member->id,
+    //                 'order_number' => Order::generateOrderNumber(),
+    //                 'status' => 'pending',
+    //                 'shipping_points' => $shippingPoints,
+    //                 'total_points' => $orderTotal,
+    //                 'customer_full_name' => $request->customer_info['full_name'],
+    //                 'customer_email' => $request->customer_info['email'] ?? null,
+    //                 'customer_phone' => $request->customer_info['phone'],
+    //                 'customer_address' => $request->customer_info['address'],
+    //                 'customer_postcode' => $request->customer_info['postcode'] ?? null,
+    //                 'customer_city' => $request->customer_info['city'] ?? null,
+    //                 'customer_state' => $request->customer_info['state'] ?? null,
+    //                 'customer_country' => $request->customer_info['country'] ?? 'Malaysia',
+    //                 'total_weight' => $totalWeight,
+    //             ]);
+
+    //             // Create order items
+    //             foreach ($merchantData['items'] as $itemData) {
+    //                 $product = Product::find($itemData['product_id']);
+    //                 $variation = $itemData['product_variation_id'] 
+    //                     ? ProductVariation::find($itemData['product_variation_id']) 
+    //                     : null;
+
+    //                 OrderItem::create([
+    //                     'order_id' => $order->id,
+    //                     'merchant_id' => $merchantId,
+    //                     'member_id' => $member->id,
+    //                     'product_id' => $itemData['product_id'],
+    //                     'product_variation_id' => $itemData['product_variation_id'],
+    //                     'name' => $product ? $product->name : null,
+    //                     'sku' => $variation ? $variation->sku : null,
+    //                     'quantity' => $itemData['quantity'],
+    //                     'points' => $itemData['points'],
+    //                 ]);
+    //             }
+
+    //             $createdOrders[] = $order->load('items');
+    //         }
+
+    //         // Deduct total points from member wallet
+    //         $wallet->available_points -= $totalPointsNeeded;
+    //         $wallet->save();
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => count($createdOrders) . ' order(s) created successfully',
+    //             'data' => [
+    //                 'orders' => $createdOrders,
+    //                 'total_orders' => count($createdOrders),
+    //                 'total_points_spent' => $totalPointsNeeded,
+    //                 'remaining_points' => $wallet->available_points,
+    //             ]
+    //         ], 201);
+
+    //     } catch (\Exception $e) {
+    //         DB::rollback();
+            
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to create orders',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
+
+
+    // ===================================================================
+    // CREATE ORDERS API - Updated Weight Logic + Validation
+    // ===================================================================
+
     public function createOrders(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'customer_info' => 'required|array',
             'customer_info.full_name' => 'required|string|max:200',
-            'customer_info.email' => 'nullable|email|max:100',
+            'customer_info.email' => 'required|email|max:100',  // ✅ Required
             'customer_info.phone' => 'required|string|max:20',
             'customer_info.address' => 'required|string',
-            'customer_info.postcode' => 'nullable|string|max:20',
-            'customer_info.city' => 'nullable|string|max:100',
-            'customer_info.state' => 'nullable|string|max:100',
+            'customer_info.postcode' => 'required|string|max:20',
+            'customer_info.city' => 'required|string|max:100',
+            'customer_info.state' => 'required|string|max:100',
             'customer_info.country' => 'nullable|string|max:100',
             'merchants' => 'required|array|min:1',
             'merchants.*.merchant_id' => 'required|exists:merchants,id',
-            'merchants.*.shipping_points' => 'nullable|numeric|min:0',
+            'merchants.*.shipping_method_id' => 'required|exists:shipping_methods,id',
             'merchants.*.items' => 'required|array|min:1',
             'merchants.*.items.*.product_id' => 'required|exists:products,id',
-            'merchants.*.items.*.product_variation_id' => 'nullable|exists:product_variations,id',
+            'merchants.*.items.*.product_variation_id' => 'required|exists:product_variations,id',  // ✅ Required
             'merchants.*.items.*.quantity' => 'required|integer|min:1',
             'merchants.*.items.*.points' => 'required|numeric|min:0',
         ]);
@@ -90,14 +361,70 @@ class OrderController extends Controller
         $member = auth('member')->user();
         $wallet = $member->wallet;
 
+        // Detect shipping zone
+        $zone = ShippingZone::detectZoneByPostcode($request->customer_info['postcode']);
+        
+        if (!$zone) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid postcode or shipping zone not found'
+            ], 400);
+        }
+
         // Calculate total points needed
         $totalPointsNeeded = 0;
+        $shippingBreakdown = [];
+
         foreach ($request->merchants as $merchantData) {
-            $merchantTotal = $merchantData['shipping_points'] ?? 0;
+            $merchantId = $merchantData['merchant_id'];
+            $methodId = $merchantData['shipping_method_id'];
+            
+            // Calculate merchant subtotal and weight
+            $merchantSubtotal = 0;
+            $totalWeight = 0;
+            
             foreach ($merchantData['items'] as $item) {
-                $merchantTotal += $item['points'] * $item['quantity'];
+                $merchantSubtotal += $item['points'] * $item['quantity'];
+                
+                // ✅ Try variation first, then product
+                $variation = ProductVariation::find($item['product_variation_id']);
+                $product = Product::find($item['product_id']);
+                
+                // Weight calculation: variation > product
+                $unitWeight = 0;
+                if ($variation && $variation->unit_weight > 0) {
+                    $unitWeight = $variation->unit_weight;
+                } elseif ($product) {
+                    $unitWeight = $product->unit_weight ?? 0;
+                }
+                
+                $totalWeight += $unitWeight * $item['quantity'];
             }
-            $totalPointsNeeded += $merchantTotal;
+
+            // Calculate shipping
+            $shippingCalc = MerchantShippingRate::calculateShipping(
+                $merchantId,
+                $zone->id,
+                $methodId,
+                $totalWeight,
+                $merchantSubtotal
+            );
+
+            if (!$shippingCalc) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No shipping rate available for merchant {$merchantId}",
+                ], 400);
+            }
+
+            $shippingPoints = $shippingCalc['shipping_points'];
+            $shippingBreakdown[$merchantId] = [
+                'weight' => $totalWeight,
+                'shipping_points' => $shippingPoints,
+                'is_free' => $shippingCalc['is_free_shipping'],
+            ];
+
+            $totalPointsNeeded += $merchantSubtotal + $shippingPoints;
         }
 
         // Check if member has sufficient points
@@ -116,23 +443,17 @@ class OrderController extends Controller
         try {
             $createdOrders = [];
 
-            // Create separate order for each merchant
+            // Create orders
             foreach ($request->merchants as $merchantData) {
                 $merchantId = $merchantData['merchant_id'];
-                $shippingPoints = $merchantData['shipping_points'] ?? 0;
+                $methodId = $merchantData['shipping_method_id'];
+                
+                $shippingData = $shippingBreakdown[$merchantId];
                 
                 // Calculate order total
-                $orderTotal = $shippingPoints;
-                $totalWeight = 0;
-                
-                foreach ($merchantData['items'] as $itemData) {
-                    $orderTotal += $itemData['points'] * $itemData['quantity'];
-                    
-                    // Get product weight (if available)
-                    $product = Product::find($itemData['product_id']);
-                    if ($product) {
-                        $totalWeight += ($product->unit_weight ?? 0) * $itemData['quantity'];
-                    }
+                $orderTotal = 0;
+                foreach ($merchantData['items'] as $item) {
+                    $orderTotal += $item['points'] * $item['quantity'];
                 }
 
                 // Create order
@@ -141,25 +462,25 @@ class OrderController extends Controller
                     'member_id' => $member->id,
                     'order_number' => Order::generateOrderNumber(),
                     'status' => 'pending',
-                    'shipping_points' => $shippingPoints,
-                    'total_points' => $orderTotal,
+                    'shipping_zone_id' => $zone->id,
+                    'shipping_method_id' => $methodId,
+                    'shipping_points' => $shippingData['shipping_points'],
+                    'total_points' => $orderTotal + $shippingData['shipping_points'],
                     'customer_full_name' => $request->customer_info['full_name'],
-                    'customer_email' => $request->customer_info['email'] ?? null,
+                    'customer_email' => $request->customer_info['email'],  // ✅ Now required
                     'customer_phone' => $request->customer_info['phone'],
                     'customer_address' => $request->customer_info['address'],
-                    'customer_postcode' => $request->customer_info['postcode'] ?? null,
-                    'customer_city' => $request->customer_info['city'] ?? null,
-                    'customer_state' => $request->customer_info['state'] ?? null,
+                    'customer_postcode' => $request->customer_info['postcode'],
+                    'customer_city' => $request->customer_info['city'],
+                    'customer_state' => $request->customer_info['state'],
                     'customer_country' => $request->customer_info['country'] ?? 'Malaysia',
-                    'total_weight' => $totalWeight,
+                    'total_weight' => $shippingData['weight'],
                 ]);
 
                 // Create order items
                 foreach ($merchantData['items'] as $itemData) {
                     $product = Product::find($itemData['product_id']);
-                    $variation = $itemData['product_variation_id'] 
-                        ? ProductVariation::find($itemData['product_variation_id']) 
-                        : null;
+                    $variation = ProductVariation::find($itemData['product_variation_id']);
 
                     OrderItem::create([
                         'order_id' => $order->id,
@@ -174,10 +495,10 @@ class OrderController extends Controller
                     ]);
                 }
 
-                $createdOrders[] = $order->load('items');
+                $createdOrders[] = $order->load(['items', 'shippingZone', 'shippingMethod']);
             }
 
-            // Deduct total points from member wallet
+            // Deduct points
             $wallet->available_points -= $totalPointsNeeded;
             $wallet->save();
 
@@ -191,6 +512,10 @@ class OrderController extends Controller
                     'total_orders' => count($createdOrders),
                     'total_points_spent' => $totalPointsNeeded,
                     'remaining_points' => $wallet->available_points,
+                    'shipping_zone' => [
+                        'name' => $zone->name,
+                        'code' => $zone->zone_code,
+                    ]
                 ]
             ], 201);
 
@@ -204,8 +529,6 @@ class OrderController extends Controller
             ], 500);
         }
     }
-
-
 
     /**
      * Get member's orders

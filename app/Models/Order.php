@@ -17,7 +17,7 @@ class Order extends Model
         'merchant_id',
         'member_id',
         'shipping_zone_id',
-        'shipping_method_id',
+        'shipping_method_id',   
         'order_number',
         'status',
         'shipping_points',
@@ -69,6 +69,17 @@ class Order extends Model
     public function cancelReason()
     {
         return $this->hasOne(OrderCancelReason::class, 'order_id');
+    }
+
+    // ✅ Added shipping relationships
+    public function shippingZone()
+    {
+        return $this->belongsTo(ShippingZone::class, 'shipping_zone_id');
+    }
+
+    public function shippingMethod()
+    {
+        return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
     }
 
     /**
