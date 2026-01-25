@@ -48,7 +48,7 @@ use App\Http\Controllers\Api\Merchant\CpUnlockHistoryController as MerchantCpUnl
 use App\Http\Controllers\Api\Member\CartController;
 use App\Http\Controllers\Api\ForgotPasswordController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\Merchant\MerchantShippingController;
+use App\Http\Controllers\Api\Merchant\MerchantShippingRateController;
 use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
 
@@ -153,16 +153,31 @@ Route::prefix('merchant')->group(function () {
 
         /*
         |--------------------------------------------------------------------------
-        | Shipping Routes (Merchant)
+        | Merchant Shipping Rates
         |--------------------------------------------------------------------------
         */
 
-        // Get merchant's shipping configuration
-        Route::get('shipping-rates', [MerchantShippingController::class, 'index']);
-        Route::post('shipping-rates', [MerchantShippingController::class, 'store']);
-        Route::put('shipping-rates/{id}', [MerchantShippingController::class, 'update']);
-        Route::delete('shipping-rates/{id}', [MerchantShippingController::class, 'destroy']);
-        Route::post('shipping-rates/bulk-setup', [MerchantShippingController::class, 'bulkSetup']);
+        Route::prefix('shipping-rates')->group(function () {
+            //Get merchant's shipping rates
+            Route::get('/', [MerchantShippingRateController::class, 'index']);
+            //Get available zones and methods for setup
+            Route::get('/options', [MerchantShippingRateController::class, 'getOptions']);
+            //Get single shipping rate
+            Route::get('/{id}', [MerchantShippingRateController::class, 'show']);
+            //Create new shipping rate
+            Route::post('/', [MerchantShippingRateController::class, 'store']);
+            //Update shipping rate
+            Route::put('/{id}', [MerchantShippingRateController::class, 'update']);
+            //Delete shipping rate
+            Route::delete('/{id}', [MerchantShippingRateController::class, 'destroy']);
+            //Toggle rate status
+            Route::patch('/{id}/toggle-status', [MerchantShippingRateController::class, 'toggleStatus']);
+            
+            //Bulk create shipping rates for all zones
+            Route::post('/bulk-create', [MerchantShippingRateController::class, 'bulkCreate']);
+            //Delete all rates for a specific zone/method combination
+            Route::delete('/bulk-delete', [MerchantShippingRateController::class, 'bulkDelete']);
+        });
 
     });
 });
