@@ -325,6 +325,7 @@ Route::prefix('admin')->group(function () {
         Route::get('shipping-zones/regions', [ShippingZoneController::class, 'getRegions']);
 
         // Shipping Methods Management
+        Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods']);
         Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
         Route::get('shipping-methods/{id}', [ShippingMethodController::class, 'show']);
         Route::post('shipping-methods', [ShippingMethodController::class, 'store']);
@@ -332,8 +333,8 @@ Route::prefix('admin')->group(function () {
         Route::delete('shipping-methods/{id}', [ShippingMethodController::class, 'destroy']);
         Route::patch('shipping-methods/{id}/toggle-status', [ShippingMethodController::class, 'toggleStatus']);
         Route::post('shipping-methods/reorder', [ShippingMethodController::class, 'reorder']);
-        Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods']);
     });
+
 });
 
 

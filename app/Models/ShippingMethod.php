@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ShippingMethod extends Model
 {
+    protected $table = 'shipping_methods';
+
     protected $fillable = ['name', 'code', 'description', 'min_days', 'max_days', 'is_active', 'sort_order'];
 
     public function merchantRates()
