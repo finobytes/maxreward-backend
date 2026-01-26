@@ -99,6 +99,8 @@ Route::prefix('member')->group(function () {
             Route::get('/count', [CartController::class, 'count']);
         });
 
+        Route::post('calculate-shipping', [OrderController::class, 'calculateShipping']);
+
     });
 });
 
