@@ -98,7 +98,7 @@ Route::prefix('member')->group(function () {
             Route::delete('/', [CartController::class, 'clear']);
             Route::get('/count', [CartController::class, 'count']);
         });
-
+        // member calculate shipping
         Route::post('calculate-shipping', [OrderController::class, 'calculateShipping']);
 
     });
@@ -195,8 +195,11 @@ Route::prefix('roles')->middleware('auth:admin,merchant')->group(function () {
     // Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
 });
 
-// Get active shipping methods
+// Get active shipping methods (for public use)
 Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods'])->middleware('auth:admin,merchant,member');
+
+// Detect zone by postcode (for public use)
+Route::get('shipping-zones/detect', [ShippingZoneController::class, 'detectByPostcode'])->middleware('auth:admin,merchant,member');
 
 /*
 |--------------------------------------------------------------------------
