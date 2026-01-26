@@ -193,6 +193,8 @@ Route::prefix('roles')->middleware('auth:admin,merchant')->group(function () {
     // Route::post('assign-merchant', [RoleController::class, 'assignRoleToMerchant']);
 });
 
+// Get active shipping methods
+Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods'])->middleware('auth:admin,merchant,member');
 
 /*
 |--------------------------------------------------------------------------
@@ -325,7 +327,6 @@ Route::prefix('admin')->group(function () {
         Route::get('shipping-zones/regions', [ShippingZoneController::class, 'getRegions']);
 
         // Shipping Methods Management
-        Route::get('shipping-methods/active', [ShippingMethodController::class, 'getActiveMethods']);
         Route::get('shipping-methods', [ShippingMethodController::class, 'index']);
         Route::get('shipping-methods/{id}', [ShippingMethodController::class, 'show']);
         Route::post('shipping-methods', [ShippingMethodController::class, 'store']);
