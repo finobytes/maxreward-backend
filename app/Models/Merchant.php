@@ -110,4 +110,44 @@ class Merchant extends Model
     {
         return $this->belongsTo(BusinessType::class, 'business_type_id');
     }
+
+    /**
+     * Get all shipping rates for this merchant
+     */
+    public function shippingRates()
+    {
+        return $this->hasMany(MerchantShippingRate::class, 'merchant_id');
+    }
+
+    /**
+     * Get active shipping rates only
+     */
+    public function activeShippingRates()
+    {
+        return $this->hasMany(MerchantShippingRate::class, 'merchant_id')
+                    ->where('is_active', true);
+    }
+
+    /**
+     * Check if merchant has any shipping rates
+     */
+    public function hasShippingRates()
+    {
+        return $this->shippingRates()->exists();
+    }
+
+    /**
+     * Get shipping rate for specific zone, method and weight
+     */
+    public function getShippingRate($zoneId, $methodId, $weight)
+    {
+        return $this->shippingRates()
+                    ->where('zone_id', $zoneId)
+                    ->where('method_id', $methodId)
+                    ->where('weight_from', '<=', $weight)
+                    ->where('weight_to', '>=', $weight)
+                    ->where('is_active', true)
+                    ->first();
+    }
+
 }

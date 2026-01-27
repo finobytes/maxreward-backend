@@ -61,11 +61,13 @@ return new class extends Migration
             $table->index('customer_postcode');
             $table->index('customer_city');
             $table->index('customer_country');
+            $table->index('shipping_zone_id');
+            $table->index('shipping_method_id');
             
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('restrict');
-            $table->foreign('member_id')->references('id')->on('members')->onDelete('restrict');
-            $table->foreign('shipping_zone_id')->references('id')->on('shipping_zones')->onDelete('set null');
-            $table->foreign('shipping_method_id')->references('id')->on('shipping_methods')->onDelete('set null');
+            // $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('cascade');
+            // $table->foreign('member_id')->references('id')->on('members')->onDelete('cascade');
+            // $table->foreign('shipping_zone_id')->references('id')->on('shipping_zones')->onDelete('set null');
+            // $table->foreign('shipping_method_id')->references('id')->on('shipping_methods')->onDelete('set null');
         });
     }
 

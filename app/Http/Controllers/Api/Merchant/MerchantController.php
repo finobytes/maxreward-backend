@@ -32,6 +32,7 @@ use App\Services\EmailService;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
+use App\Services\MerchantShippingRateService;
 
 class MerchantController extends Controller
 {
@@ -40,12 +41,20 @@ class MerchantController extends Controller
     protected $treeService;
     protected $whatsappService;
     protected $settingAttributes;
+    protected $shippingRateService;
 
-    public function __construct(CommunityTreeService $treeService, WhatsAppService $whatsappService, CommonFunctionHelper $commonFunctionHelper, EmailService $emailService) {
+    public function __construct(
+        CommunityTreeService $treeService, 
+        WhatsAppService $whatsappService, 
+        CommonFunctionHelper $commonFunctionHelper, 
+        EmailService $emailService,
+        MerchantShippingRateService $shippingRateService
+    ) {
         $this->treeService = $treeService;
         $this->whatsappService = $whatsappService;
         $this->emailService = $emailService;
         $this->settingAttributes = $commonFunctionHelper->settingAttributes()['maxreward'];
+        $this->shippingRateService = $shippingRateService;
     }
 
     /**
@@ -358,6 +367,34 @@ class MerchantController extends Controller
 
             // Clear permission cache
             app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+            Log::info('Step 7: Create default shipping rates for merchant');
+
+            // Create default shipping rates for all Malaysian zones and methods
+            try {
+                $shippingRatesCreated = $this->shippingRateService->createDefaultRates($merchant);
+                
+                if ($shippingRatesCreated) {
+                    Log::info('Default shipping rates created successfully', [
+                        'merchant_id' => $merchant->id,
+                        'merchant_name' => $merchant->business_name
+                    ]);
+                } else {
+                    Log::warning('Failed to create default shipping rates', [
+                        'merchant_id' => $merchant->id,
+                        'merchant_name' => $merchant->business_name,
+                        'note' => 'Shipping zones or methods may not be seeded yet'
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Error creating default shipping rates', [
+                    'merchant_id' => $merchant->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Don't throw exception here - let merchant creation continue
+                // Shipping rates can be added manually later if needed
+            }
 
             // Commit transaction
             DB::commit();
