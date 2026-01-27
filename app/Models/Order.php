@@ -98,6 +98,38 @@ class Order extends Model
     }
 
     /**
+     * Reduce product variation quantities when order is created
+     */
+    public function reduceInventory()
+    {
+        foreach ($this->items as $item) {
+            if ($item->product_variation_id) {
+                $variation = ProductVariation::find($item->product_variation_id);
+                if ($variation) {
+                    $variation->actual_quantity -= $item->quantity;
+                    $variation->save();
+                }
+            }
+        }
+    }
+
+    /**
+     * Restore product variation quantities when order is cancelled or returned
+     */
+    public function restoreInventory()
+    {
+        foreach ($this->items as $item) {
+            if ($item->product_variation_id) {
+                $variation = ProductVariation::find($item->product_variation_id);
+                if ($variation) {
+                    $variation->actual_quantity += $item->quantity;
+                    $variation->save();
+                }
+            }
+        }
+    }
+
+    /**
      * Mark order as completed
      */
     public function markAsCompleted()
@@ -118,6 +150,9 @@ class Order extends Model
         $this->cancelled_by = $cancelledById;
         $this->save();
 
+        // Restore inventory when order is cancelled
+        $this->restoreInventory();
+
         // Create cancel reason record
         OrderCancelReason::create([
             'order_id' => $this->id,
@@ -137,6 +172,9 @@ class Order extends Model
     {
         $this->status = 'returned';
         $this->save();
+
+        // Restore inventory when order is returned
+        $this->restoreInventory();
 
         return $this;
     }

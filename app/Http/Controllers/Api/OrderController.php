@@ -495,6 +495,9 @@ class OrderController extends Controller
                     ]);
                 }
 
+                // ✅ Reduce inventory after order is created
+                $order->reduceInventory();
+
                 $createdOrders[] = $order->load(['items', 'shippingZone', 'shippingMethod']);
             }
 
