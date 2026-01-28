@@ -50,22 +50,7 @@ class MemberTreeSeeder extends Seeder
         DB::beginTransaction();
 
         try {
-            echo "🌱 Starting Member Tree Seeding with Branding Inheritance...\n\n";
-
-            // Get or create company info first
-            $company = CompanyInfo::first();
-            if (!$company) {
-                echo "⚠️  Company info not found, creating default company...\n";
-                $company = CompanyInfo::create([
-                    'name' => 'MaxReward Sdn Bhd',
-                    'address' => 'Level 10, Menara MaxReward, Jalan Sultan Ismail, 50250 Kuala Lumpur, Malaysia',
-                    'phone' => '60123456789',
-                    'email' => 'info@maxreward.com',
-                    'logo' => null,
-                    'cr_points' => 0,
-                ]);
-                echo "✅ Company created with ID: {$company->id}\n\n";
-            }
+            echo "🌱 Starting Member Tree Seeding with Full Point Distribution...\n\n";
 
             // Array to store created member IDs
             $createdMemberIds = [];
@@ -76,7 +61,7 @@ class MemberTreeSeeder extends Seeder
                 echo "Creating Member {$i}/31...\n";
                 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
 
-                // Generate Malaysian phone number with serial (60160000001 to 60160000031)
+                // Generate Malaysian phone number with serial (60160000001 to 60160000030)
                 $phone = '60160' . str_pad($i, 6, '0', STR_PAD_LEFT);
                 
                 $userName = $this->formatPhoneNumber($phone);
@@ -84,34 +69,7 @@ class MemberTreeSeeder extends Seeder
                 $password = $lastSix;
                 $referralCode = $this->generateUniqueReferralCode();
 
-                // Determine referrer (previous member)
-                $referrerId = $i > 1 ? $createdMemberIds[$i - 1] : null;
-                $referrer = $referrerId ? Member::find($referrerId) : null;
-
-                // NEW LOGIC: Determine company_id and merchant_id based on referrer
-                $companyId = null;
-                $merchantId = null;
-
-                if ($i === 1) {
-                    // First member gets company branding
-                    $companyId = $company->id;
-                    echo "🏢 First member - assigned Company ID: {$companyId}\n";
-                } else {
-                    // Inherit from referrer
-                    if ($referrer) {
-                        if ($referrer->merchant_id) {
-                            // Referrer has merchant - inherit merchant branding
-                            $merchantId = $referrer->merchant_id;
-                            echo "🏪 Inheriting Merchant ID: {$merchantId} from referrer\n";
-                        } elseif ($referrer->company_id) {
-                            // Referrer has company - inherit company branding
-                            $companyId = $referrer->company_id;
-                            echo "🏢 Inheriting Company ID: {$companyId} from referrer\n";
-                        }
-                    }
-                }
-
-                // Step 1: Create member with branding inheritance
+                // Step 1: Create member
                 $newMember = Member::create([
                     'user_name' => $userName,
                     'name' => "Test Member {$i}",
@@ -122,11 +80,9 @@ class MemberTreeSeeder extends Seeder
                     'member_type' => 'general',
                     'gender_type' => 'male',
                     'status' => 'active',
-                    'company_id' => $companyId,      // NEW: Company branding
-                    'merchant_id' => $merchantId,    // NEW: Merchant branding
+                    'merchant_id' => null,
                     'member_created_by' => $i === 1 ? null : 'general',
                     'referral_code' => $referralCode,
-                    'referred_by' => $referrerId,    // NEW: Track who referred
                     'country_id' => 1,
                     'country_code' => 60,
                 ]);
@@ -139,14 +95,7 @@ class MemberTreeSeeder extends Seeder
                 echo "   Phone: {$phone}\n";
                 echo "   Username: {$userName}\n";
                 echo "   Password: {$password}\n";
-                echo "   Referral Code: {$referralCode}\n";
-                if ($companyId) {
-                    echo "   🏢 Company ID: {$companyId}\n";
-                }
-                if ($merchantId) {
-                    echo "   🏪 Merchant ID: {$merchantId}\n";
-                }
-                echo "\n";
+                echo "   Referral Code: {$referralCode}\n\n";
 
                 // Step 2: Create wallet for new member
                 $newMemberWallet = MemberWallet::create([
@@ -176,7 +125,7 @@ class MemberTreeSeeder extends Seeder
                     continue;
                 }
 
-                // For members 2-31: Follow referNewMember function
+                // For members 2-30: Follow referNewMember function
                 // Get the previous member as referrer
                 $referrerId = $createdMemberIds[$i - 1];
                 $referrer = Member::find($referrerId);
@@ -308,7 +257,7 @@ class MemberTreeSeeder extends Seeder
 
             DB::commit();
 
-            echo "\n🎉 Successfully created 31 members with branding inheritance!\n";
+            echo "\n🎉 Successfully created 31 members in hierarchical tree!\n";
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
 
             // Display summary
@@ -336,17 +285,6 @@ class MemberTreeSeeder extends Seeder
         echo "Total Members Created: {$totalMembers}\n";
         echo "Total Referrals: {$totalReferrals}\n";
         echo "Total Transactions: {$totalTransactions}\n";
-
-        // NEW: Branding Statistics
-        echo "\n🎨 BRANDING DISTRIBUTION\n";
-        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-        $membersWithCompany = Member::whereNotNull('company_id')->count();
-        $membersWithMerchant = Member::whereNotNull('merchant_id')->count();
-        $membersWithoutBranding = Member::whereNull('company_id')->whereNull('merchant_id')->count();
-        
-        echo "Members with Company Branding: {$membersWithCompany}\n";
-        echo "Members with Merchant Branding: {$membersWithMerchant}\n";
-        echo "Members without Branding: {$membersWithoutBranding}\n";
         
         // Get tree statistics for Member 1 (root)
         if ($totalMembers > 0) {

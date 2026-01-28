@@ -182,6 +182,34 @@ class MerchantController extends Controller
                 ], 401);
             }
 
+            // IMPORTANT: Check if this phone already has a corporate member
+            $existingCorporateMember = Member::where('phone', $request->phone)
+                ->where('member_type', 'corporate')
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($existingCorporateMember) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This phone number has already been used to create a merchant account. Each phone number can only create one merchant.',
+                    'error' => 'Duplicate merchant application with same phone number'
+                ], 422);
+            }
+
+            // Check if this email already has a corporate member
+            $existingCorporateEmail = Member::where('email', $request->email)
+                ->where('member_type', 'corporate')
+                ->whereNull('deleted_at')
+                ->first();
+
+            if ($existingCorporateEmail) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This email has already been used to create a merchant account. Each email can only create one merchant.',
+                    'error' => 'Duplicate merchant application with same email'
+                ], 422);
+            }
+
             $referrerWallet = $referrer->wallet;
 
             Log::info('Step 1: Check if referrer has sufficient referral balance (>= 100)');
@@ -259,17 +287,26 @@ class MerchantController extends Controller
 
             Log::info('Step 3: Create new corporate member');
 
+            // Corporate member will get merchant_id (their own merchant)
+            // company_id will be NULL because merchant branding takes priority
+            // The referrer (general member who applied) keeps their company_id unchanged
+
             // Create Corporate Member
+            // NOTE: Now phone and email can be same as general member because of composite unique constraint
             $corporateMember = Member::create([
                 'user_name' => $corporateUsername,
                 'name' => $merchant->business_name,
                 'phone' => $request->phone,
                 'email' => $request->email,
                 'password' => Hash::make($password),
-                'member_type' => 'corporate',
+                'member_type' => 'corporate', // This is the key - different member_type allows same phone/email
                 'gender_type' => $request->gender,
                 'status' => 'active',
-                'merchant_id' => $merchant->id,
+
+                // BRANDING: Corporate member gets merchant branding
+                'merchant_id' => $merchant->id,      // Link to their own merchant
+                'company_id' => null,                // Clear company_id (merchant takes priority)
+
                 'member_created_by' => 'merchant', /// here to be considered
                 'referral_code' => $referralCode,
                 'country_id' => $request->country_id,
@@ -279,6 +316,11 @@ class MerchantController extends Controller
 
             // Update merchant with corporate_member_id
             $merchant->update(['corporate_member_id' => $corporateMember->id]);
+
+            // ⚠️ IMPORTANT NOTE: 
+            // The referrer (general member) DOES NOT get merchant_id
+            // They keep their original branding (company_id)
+            // Only when CORPORATE member refers someone, that new member gets merchant_id
 
             Log::info('Step 4: Create wallet for new corporate member');
 
@@ -439,39 +481,39 @@ class MerchantController extends Controller
             DB::rollBack();
 
             // Handle specific database constraint violations
-            if ($e->errorInfo[1] == 1062) { // Duplicate entry error code
-                $errorMessage = $e->getMessage();
+            // if ($e->errorInfo[1] == 1062) { // Duplicate entry error code
+            //     $errorMessage = $e->getMessage();
 
-                if (strpos($errorMessage, 'merchants_phone_unique') !== false) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Validation error',
-                        'errors' => [
-                            'phone' => ['The phone number has already been taken.']
-                        ]
-                    ], 422);
-                }
+            //     if (strpos($errorMessage, 'merchants_phone_unique') !== false) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => 'Validation error',
+            //             'errors' => [
+            //                 'phone' => ['The phone number has already been taken.']
+            //             ]
+            //         ], 422);
+            //     }
 
-                if (strpos($errorMessage, 'merchants_email_unique') !== false) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Validation error',
-                        'errors' => [
-                            'email' => ['The email has already been taken.']
-                        ]
-                    ], 422);
-                }
+            //     if (strpos($errorMessage, 'merchants_email_unique') !== false) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => 'Validation error',
+            //             'errors' => [
+            //                 'email' => ['The email has already been taken.']
+            //             ]
+            //         ], 422);
+            //     }
 
-                if (strpos($errorMessage, 'merchants_license_number_unique') !== false) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Validation error',
-                        'errors' => [
-                            'license_number' => ['The license number has already been taken.']
-                        ]
-                    ], 422);
-                }
-            }
+            //     if (strpos($errorMessage, 'merchants_license_number_unique') !== false) {
+            //         return response()->json([
+            //             'success' => false,
+            //             'message' => 'Validation error',
+            //             'errors' => [
+            //                 'license_number' => ['The license number has already been taken.']
+            //             ]
+            //         ], 422);
+            //     }
+            // }
 
             return response()->json([
                 'success' => false,

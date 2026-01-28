@@ -29,7 +29,8 @@ class Member extends Authenticatable implements JWTSubject
         'member_type',
         'gender_type',
         'status',
-        'merchant_id',
+        'company_id',        // NEW: for company logo inheritance
+        'merchant_id',       // MODIFIED: can be used for both corporate members and general members under merchants
         'member_created_by',
         'referral_code',
         'suspended_reason',
@@ -68,8 +69,16 @@ class Member extends Authenticatable implements JWTSubject
         ];
     }
 
-        /**
-     * Get the merchant that this member belongs to (for corporate members)
+    /**
+     * Get the company that this member belongs to (for branding/logo)
+     */
+    public function company()
+    {
+        return $this->belongsTo(CompanyInfo::class, 'company_id');
+    }
+
+    /**
+     * Get the merchant that this member belongs to (for corporate members or members under merchants)
      */
     public function merchant()
     {
@@ -84,7 +93,6 @@ class Member extends Authenticatable implements JWTSubject
         return $this->hasOne(MemberWallet::class, 'member_id');
     }
 
-
     /** 
      * Get sponsored member info
      */
@@ -92,7 +100,6 @@ class Member extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(Referral::class, 'child_member_id');
     }
-
 
     public function purchases()
     {
@@ -115,4 +122,106 @@ class Member extends Authenticatable implements JWTSubject
         return $this->belongsTo(Admin::class, 'blocked_by');
     }
 
+    /**
+     * Get the member who referred this member
+     */
+    public function referrer()
+    {
+        return $this->belongsTo(Member::class, 'referred_by');
+    }
+
+    /**
+     * Get all members referred by this member
+     */
+    public function referredMembers()
+    {
+        return $this->hasMany(Member::class, 'referred_by');
+    }
+
+    /**
+     * NEW: Get the display logo for dashboard (gift card style)
+     * Priority: Merchant Logo > Company Logo
+     */
+    public function getDisplayLogoAttribute()
+    {
+        // If member has merchant_id, show merchant logo
+        if ($this->merchant_id && $this->merchant) {
+            return [
+                'type' => 'merchant',
+                'logo_url' => $this->merchant->business_logo,
+                'logo_id' => $this->merchant->logo_cloudinary_id,
+                'name' => $this->merchant->business_name,
+                'merchant_id' => $this->merchant_id,
+            ];
+        }
+
+        // If member has company_id, show company logo
+        if ($this->company_id && $this->company) {
+            return [
+                'type' => 'company',
+                'logo_url' => $this->company->logo,
+                'logo_id' => $this->company->logo_cloudinary_id,
+                'name' => $this->company->name,
+                'company_id' => $this->company_id,
+            ];
+        }
+
+        // Default: No logo
+        return null;
+    }
+
+    /**
+     * NEW: Get the branding info for member card/dashboard
+     */
+    public function getBrandingInfoAttribute()
+    {
+        $displayLogo = $this->display_logo;
+        
+        if (!$displayLogo) {
+            return null;
+        }
+
+        return [
+            'logo_url' => $displayLogo['logo_url'],
+            'brand_name' => $displayLogo['name'],
+            'brand_type' => $displayLogo['type'], // 'merchant' or 'company'
+        ];
+    }
+
+    /**
+     * NEW: Check if member has any branding (company or merchant)
+     */
+    public function hasBranding()
+    {
+        return $this->company_id || $this->merchant_id;
+    }
+
+    /**
+     * NEW: Inherit branding from referrer
+     * This should be called when creating a new member
+     */
+    public function inheritBrandingFromReferrer($referrer)
+    {
+        if (!$referrer) {
+            return;
+        }
+
+        // If referrer is corporate member with merchant
+        if ($referrer->member_type === 'corporate' && $referrer->merchant_id) {
+            $this->merchant_id = $referrer->merchant_id;
+            $this->company_id = null; // Clear company_id if merchant is set
+        }
+        // If referrer has merchant_id (was referred by corporate member)
+        elseif ($referrer->merchant_id) {
+            $this->merchant_id = $referrer->merchant_id;
+            $this->company_id = null;
+        }
+        // If referrer has company_id only
+        elseif ($referrer->company_id) {
+            $this->company_id = $referrer->company_id;
+            $this->merchant_id = null;
+        }
+
+        $this->save();
+    }
 }

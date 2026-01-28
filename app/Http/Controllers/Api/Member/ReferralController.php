@@ -139,7 +139,22 @@ class ReferralController extends Controller
 
             Log::info('Step 3: Create new member');
 
-            
+            $companyId = null;
+            $merchantId = null;
+
+            // Priority: Merchant branding > Company branding
+            if ($referrer->merchant_id) {
+                // Referrer has merchant branding - inherit it
+                $merchantId = $referrer->merchant_id;
+                Log::info("Inheriting merchant_id: {$merchantId} from referrer {$referrer->id}");
+            } elseif ($referrer->company_id) {
+                // Referrer has company branding - inherit it
+                $companyId = $referrer->company_id;
+                Log::info("Inheriting company_id: {$companyId} from referrer {$referrer->id}");
+            } else {
+                // No branding to inherit - this shouldn't happen normally
+                Log::warning("Referrer {$referrer->id} has no branding to inherit");
+            }
 
             // Step 3: Create new member
             $newMember = Member::create([
@@ -152,9 +167,14 @@ class ReferralController extends Controller
                 'member_type' => 'general', // New members are always general
                 'gender_type' => $request->gender_type,
                 'status' => 'active',
-                'merchant_id' => null,
+
+                // NEW: Branding Inheritance Fields
+                'company_id' => $companyId,      // Inherited company branding
+                'merchant_id' => $merchantId,    // Inherited merchant branding
+
                 'member_created_by' => $referrer->member_type, // 'general' or 'corporate'
                 'referral_code' => $referralCode,
+                'referred_by' => $referrer->id,  // Track who referred this member
                 'country_id' => $request->country_id,
                 'country_code' => $request->country_code,
             ]);
@@ -285,6 +305,9 @@ class ReferralController extends Controller
 
             DB::commit();
 
+            // Get display branding for response
+            $displayBranding = $newMember->display_logo; // Uses the model accessor
+
             return response()->json([
                 'success' => true,
                 'message' => 'New member registered successfully!',
@@ -310,7 +333,8 @@ class ReferralController extends Controller
                         'user_name' => $userName,
                         'password' => $password,
                         'message' => 'Login credentials sent via Email',
-                    ]
+                    ],
+                    'branding' => $displayBranding, // Include branding info
                 ]
             ], 201);
 
