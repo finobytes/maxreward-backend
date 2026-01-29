@@ -62,7 +62,7 @@ class AuthController extends Controller implements HasMiddleware
     public function me()
     {
         // return response()->json(auth('member')->user());
-        $member = auth('member')->user()->load('wallet');
+        $member = auth('member')->user()->load(['wallet','company','merchant']);
 
         // Load statistics from your tree service
         $statistics = $this->treeService->getTreeStatistics($member->id);
@@ -73,6 +73,11 @@ class AuthController extends Controller implements HasMiddleware
         ->approved() // include this if you want only approved purchases
         ->sum('transaction_amount');
 
+        // Get display branding using the model accessor
+        $branding = $member->display_logo;
+    
+        // Add branding to response
+        $member->branding = $branding;
 
         //  $member->permissions = $member->getAllPermissions()->pluck('name');
         // $member->roles = $member->getRoleNames();

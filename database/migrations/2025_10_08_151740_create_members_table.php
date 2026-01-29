@@ -43,8 +43,8 @@ return new class extends Migration
             $table->softDeletes();
 
             // Foreign keys
-            $table->foreign('company_id')->references('id')->on('company_infos')->onDelete('set null');
-            $table->foreign('merchant_id')->references('id')->on('merchants')->onDelete('set null');
+            // $table->foreign('company_id')->references('id')->on('company_infos')->onDelete('set null');
+            $table->foreign('merchant_id')->references('id')->on('merchants');
 
             // IMPORTANT: Composite unique constraint
             // This allows same phone to be used once for 'general' and once for 'corporate'
