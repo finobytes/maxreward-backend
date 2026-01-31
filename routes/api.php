@@ -60,6 +60,9 @@ use App\Http\Controllers\Api\Admin\ShippingMethodController;
 Route::prefix('member')->group(function () {
     Route::post('login', [MemberAuthController::class, 'login']);
 
+    // Get member by username
+    Route::get('/username/{username}', [MemberController::class, 'getByUsername']);
+
     // Protected routes - require JWT authentication
     Route::middleware(['auth:member', 'member.status'])->group(function () {
         Route::post('logout', [MemberAuthController::class, 'logout']);
