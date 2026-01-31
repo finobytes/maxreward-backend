@@ -62,7 +62,9 @@ class AuthController extends Controller implements HasMiddleware
     public function me()
     {
         // return response()->json(auth('member')->user());
-        $member = auth('member')->user()->load(['wallet','company','merchant']);
+        $member = auth('member')->user()->load(['wallet','company','merchant','sponsoredMemberInfo' => function($query) {
+                    $query->with('sponsorMember');
+                }]);
 
         // Load statistics from your tree service
         $statistics = $this->treeService->getTreeStatistics($member->id);
