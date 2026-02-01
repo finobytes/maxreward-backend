@@ -103,6 +103,10 @@ class ReferralController extends Controller
                 
             }
 
+            if ($request->refer_type == "qr_code") {
+                $referrer = Member::where("id", $request->member_id)->first();
+            }
+
             // dd("ok", $referrer);
 
             $referrerWallet = $referrer->wallet;
