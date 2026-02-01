@@ -46,6 +46,17 @@ class AuthController extends Controller implements HasMiddleware
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
 
+        // Block login if the parent merchant account is suspended
+        $user = auth('merchant')->user();
+        $merchant = $user?->merchant;
+        if ($merchant && $merchant->status === 'suspended') {
+            auth('merchant')->logout();
+            return response()->json([
+                'error' => 'Merchant account is suspended',
+                'suspended_reason' => $merchant->suspended_reason,
+            ], 403);
+        }
+
         return $this->respondWithToken($token);
     }
 

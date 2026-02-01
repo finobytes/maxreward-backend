@@ -1711,6 +1711,55 @@ class MerchantController extends Controller
     }
 
     /**
+     * Unsuspend merchant (Admin only)
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function unsuspendMerchant(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'merchant_id' => 'required|exists:merchants,id',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $merchant = Merchant::findOrFail($request->merchant_id);
+
+            $merchant->status = 'active';
+            $merchant->suspended_reason = null;
+            $merchant->suspended_by = null;
+            $merchant->save();
+
+            $merchant->load(['wallet', 'corporateMember', 'staffs', 'suspendedBy']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Merchant unsuspended successfully',
+                'data' => $merchant
+            ], 200);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found'
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to unsuspend merchant',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Reject or activate a merchant
      *
      * @param Request $request
