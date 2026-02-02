@@ -26,7 +26,8 @@ class DatabaseSeeder extends Seeder
             DenominationSeeder::class,
             BusinessTypeSeeder::class,
             CountrySeeder::class,
-            ShippingSeeder::class
+            ShippingSeeder::class,
+            MasterDataSeeder::class
         ]);
 
         // User::factory()->create([
