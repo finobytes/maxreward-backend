@@ -84,27 +84,27 @@ class ReferralController extends Controller
             // Get authenticated (referrer)
 
             $referrer = '';
-            $auth = auth()->user(); // Can be general or corporate member
-            // dd($referrer);
-            if ($auth->member_type == "general" || $auth->member_type == "corporate") {
-                $referrer = $auth;
-            }
-            
-            if ($auth->type == "merchant" || $auth->type == "staff") {
-                $merchant_info = Merchant::where("id", $auth->merchant_id)->first();
-                $member_info = Member::where("merchant_id", $merchant_info->id)->first();
-                $referrer = $member_info;
-            }
 
-            if ($auth->type == "admin" || $auth->type == "staff") {
-                if ($request->has('member_id')) {
-                    $referrer = Member::where("id", $request->member_id)->first();
+            if ($request->refer_type !== "qr_code") {
+                $auth = auth()->user(); // Can be general or corporate member
+                // dd($referrer);
+                if ($auth->member_type == "general" || $auth->member_type == "corporate") {
+                    $referrer = $auth;
                 }
                 
-            }
+                if ($auth->type == "merchant" || $auth->type == "staff") {
+                    $merchant_info = Merchant::where("id", $auth->merchant_id)->first();
+                    $member_info = Member::where("merchant_id", $merchant_info->id)->first();
+                    $referrer = $member_info;
+                }
 
-            if ($request->refer_type == "qr_code") {
-                $referrer = Member::where("id", $request->member_id)->first();
+                if ($auth->type == "admin" || $auth->type == "staff") {
+                    if ($request->has('member_id')) {
+                        $referrer = Member::where("id", $request->member_id)->first();
+                    }   
+                }  
+            } else {
+                $referrer = Member::where("id", $request->referral_code)->first();
             }
 
             // dd("ok", $referrer);

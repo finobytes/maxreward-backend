@@ -63,7 +63,7 @@ Route::prefix('member')->group(function () {
     // Get member by username by qr code
     Route::get('/username/{username}', [MemberController::class, 'getByUsername']);
     // Refer new member (Both General & Corporate Members)
-    // Route::post('/refer-new-member', [ReferralController::class, 'referNewMember']);
+    Route::post('/refer-new-member-qr', [ReferralController::class, 'referNewMember']);
 
     // Protected routes - require JWT authentication
     Route::middleware(['auth:member', 'member.status'])->group(function () {
