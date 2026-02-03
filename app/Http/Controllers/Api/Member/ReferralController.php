@@ -104,7 +104,7 @@ class ReferralController extends Controller
                     }   
                 }  
             } else {
-                $referrer = Member::where("id", $request->referral_code)->first();
+                $referrer = Member::where("referral_code", $request->referral_code)->first();
             }
 
             // dd("ok", $referrer);
