@@ -99,8 +99,8 @@ class ReferralController extends Controller
                 }
 
                 if ($auth->type == "admin" || $auth->type == "staff") {
-                    if ($request->has('member_id')) {
-                        $referrer = Member::where("id", $request->member_id)->first();
+                    if ($request->has('referral_code')) {
+                        $referrer = Member::where("referral_code", $request->referral_code)->first();
                     }   
                 }  
             } else {
