@@ -58,6 +58,15 @@ trait DistributeReferralPointsTrait
             'bop' => $newMemberWallet->onhold_points
         ]);
 
+        Log::info('notification_reason: Personal Points from registration');
+
+        Notification::createForMember([
+            'member_id' => $newMember->id,
+            'type' => 'personal_points_earned',
+            'title' => 'Personal Points Earned!',
+            'message' => "You've earned {$ppAmount} points!"
+        ]);
+
         Log::info('2️ RP: 20 points to who Directly sponsored');
 
         // 2️ RP: 20 points to who Directly sponsored

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -34,10 +33,8 @@ class Order extends Model
         'tracking_number',
         'total_weight',
         'completed_at',
-        'shipped_at',
         'cancelled_by',
         'cancelled_reason',
-        'cancelled_reason_type',
         'deleted_by',
     ];
 
@@ -46,7 +43,6 @@ class Order extends Model
         'total_points' => 'double',
         'total_weight' => 'decimal:2',
         'completed_at' => 'datetime',
-        'shipped_at' => 'datetime',
         'deleted_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -75,6 +71,7 @@ class Order extends Model
         return $this->hasOne(OrderCancelReason::class, 'order_id');
     }
 
+    // ✅ Added shipping relationships
     public function shippingZone()
     {
         return $this->belongsTo(ShippingZone::class, 'shipping_zone_id');
@@ -85,46 +82,19 @@ class Order extends Model
         return $this->belongsTo(ShippingMethod::class, 'shipping_method_id');
     }
 
-    public function onholdPoints()
-    {
-        return $this->hasOne(OrderOnholdPoint::class, 'order_id');
-    }
-
-    public function exchanges()
-    {
-        return $this->hasMany(OrderExchange::class, 'order_id');
-    }
-
     /**
-     * Generate unique order number: ORD-YYYYMMDD-XXXXXX
-     * Example: ORD-20260204-200201
+     * Generate unique order number: YYYYMMDDHMS-8chars
+     * Example: 20250118143025-AB3XY9ZQ
      */
     public static function generateOrderNumber()
     {
-        return DB::transaction(function () {
-            $date = Carbon::now()->format('Ymd'); // YYYYMMDD
-            $prefix = "ORD-{$date}-";
-            
-            // Get the last order number for today
-            $lastOrder = self::where('order_number', 'LIKE', "{$prefix}%")
-                ->orderBy('order_number', 'desc')
-                ->lockForUpdate()
-                ->first();
-            
-            if ($lastOrder) {
-                // Extract the sequential number
-                $lastNumber = (int) substr($lastOrder->order_number, -6);
-                $nextNumber = $lastNumber + 1;
-            } else {
-                // Start from 200201 for new day
-                $nextNumber = 200201;
-            }
-            
-            // Format as 6 digits
-            $sequential = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
-            
-            return $prefix . $sequential;
-        });
+        do {
+            $timestamp = Carbon::now()->format('YmdHis'); // YYYYMMDDHMS
+            $random = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 8));
+            $orderNumber = $timestamp . '-' . $random;
+        } while (self::where('order_number', $orderNumber)->exists());
+
+        return $orderNumber;
     }
 
     /**
@@ -144,7 +114,7 @@ class Order extends Model
     }
 
     /**
-     * Restore product variation quantities when order is cancelled
+     * Restore product variation quantities when order is cancelled or returned
      */
     public function restoreInventory()
     {
@@ -160,36 +130,10 @@ class Order extends Model
     }
 
     /**
-     * Mark order as shipped with tracking number
-     */
-    public function markAsShipped($trackingNumber, $autoReleaseDays = 5)
-    {
-        if ($this->status !== 'pending') {
-            return false;
-        }
-
-        $this->status = 'shipped';
-        $this->tracking_number = $trackingNumber;
-        $this->shipped_at = Carbon::now();
-        $this->save();
-
-        // Update onhold points with auto-release date
-        if ($this->onholdPoints) {
-            $this->onholdPoints->markAsShipped($autoReleaseDays);
-        }
-
-        return $this;
-    }
-
-    /**
-     * Mark order as completed (auto or manual)
+     * Mark order as completed
      */
     public function markAsCompleted()
     {
-        if (!in_array($this->status, ['shipped'])) {
-            return false;
-        }
-
         $this->status = 'completed';
         $this->completed_at = Carbon::now();
         $this->save();
@@ -198,46 +142,16 @@ class Order extends Model
     }
 
     /**
-     * Cancel order (merchant only, pending status only)
+     * Cancel order with reason
      */
     public function cancelOrder($cancelledByType, $cancelledById, $reasonType, $reasonDetails = null)
     {
-        // Only pending orders can be cancelled
-        if ($this->status !== 'pending') {
-            return false;
-        }
-
         $this->status = 'cancelled';
         $this->cancelled_by = $cancelledById;
-        $this->cancelled_reason = $reasonDetails;
-        $this->cancelled_reason_type = $reasonType;
         $this->save();
 
-        // Restore inventory
+        // Restore inventory when order is cancelled
         $this->restoreInventory();
-
-        // Refund points from onhold back to member
-        if ($this->onholdPoints) {
-            $this->onholdPoints->refundPoints($reasonDetails);
-            
-            // Add points back to member wallet
-            $member = $this->member;
-            if ($member && $member->wallet) {
-                $member->wallet->increment('available_points', $this->total_points);
-                
-                // Transaction record
-                Transaction::create([
-                    'member_id' => $member->id,
-                    'transaction_points' => $this->total_points,
-                    'transaction_type' => Transaction::TYPE_AP,
-                    'points_type' => Transaction::POINTS_CREDITED,
-                    'transaction_reason' => "Order {$this->order_number} cancelled. Points refunded.",
-                    'bap' => $member->wallet->available_points,
-                    'bop' => $member->wallet->onhold_points,
-                    'brp' => $member->wallet->total_rp
-                ]);
-            }
-        }
 
         // Create cancel reason record
         OrderCancelReason::create([
@@ -247,6 +161,20 @@ class Order extends Model
             'reason_type' => $reasonType,
             'reason_details' => $reasonDetails,
         ]);
+
+        return $this;
+    }
+
+    /**
+     * Mark order as returned
+     */
+    public function markAsReturned()
+    {
+        $this->status = 'returned';
+        $this->save();
+
+        // Restore inventory when order is returned
+        $this->restoreInventory();
 
         return $this;
     }
@@ -270,11 +198,6 @@ class Order extends Model
         return $query->where('status', 'pending');
     }
 
-    public function scopeShipped($query)
-    {
-        return $query->where('status', 'shipped');
-    }
-
     public function scopeCompleted($query)
     {
         return $query->where('status', 'completed');
@@ -285,9 +208,9 @@ class Order extends Model
         return $query->where('status', 'cancelled');
     }
 
-    public function scopeExchanged($query)
+    public function scopeReturned($query)
     {
-        return $query->where('status', 'exchanged');
+        return $query->where('status', 'returned');
     }
 
     public function scopeByMerchant($query, $merchantId)
@@ -310,27 +233,9 @@ class Order extends Model
             'status' => $this->status,
             'total_points' => $this->total_points,
             'items_count' => $this->items->count(),
-            'merchant' => $this->merchant->business_name ?? 'N/A',
+            'merchant' => $this->merchant->business_name,
             'customer' => $this->customer_full_name,
             'created_at' => $this->created_at,
-            'shipped_at' => $this->shipped_at,
-            'completed_at' => $this->completed_at,
         ];
-    }
-
-    /**
-     * Check if order can be cancelled by merchant
-     */
-    public function canBeCancelledByMerchant()
-    {
-        return $this->status === 'pending';
-    }
-
-    /**
-     * Check if order can be shipped
-     */
-    public function canBeShipped()
-    {
-        return $this->status === 'pending';
     }
 }

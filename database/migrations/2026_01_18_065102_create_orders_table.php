@@ -18,9 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('shipping_zone_id')->nullable();
             $table->unsignedBigInteger('shipping_method_id')->nullable();
             
-            $table->string('order_number')->unique()->comment('Auto: YYYYMMDDHMS-8 unique character');
+            $table->string('order_number')->unique()->comment('Auto: ORD-YYYYMMDD-XXXXXX Example: ORD-20260204-200201');
             
-            $table->enum('status', ['pending', 'completed', 'returned', 'cancelled'])->default('pending');
+            $table->enum('status', ['pending', 'shipped', 'completed', 'cancelled', 'exchanged'])->default('pending');
             
             // Points breakdown
             $table->double('shipping_points')->default(0);
@@ -37,23 +37,26 @@ return new class extends Migration
             $table->string('customer_country')->nullable();
             
             // Shipping details
-            $table->string('tracking_number')->nullable();
+            $table->string('tracking_number')->nullable()->unique();
             $table->decimal('total_weight', 10, 2)->nullable()->comment('Total order weight in grams');
             
             // Timestamps
             $table->dateTime('completed_at')->nullable();
+            $table->dateTime('shipped_at')->nullable();
             
-            $table->unsignedBigInteger('cancelled_by')->nullable()->comment('merchant_staff_id or admin_id');
+            $table->unsignedBigInteger('cancelled_by')->nullable()->comment('merchant_staff_id');
+            $table->string('cancelled_reason_type')->nullable()->comment('out_of_stock, customer_request, wrong_order, etc.');
             $table->text('cancelled_reason')->nullable();
             
             $table->unsignedBigInteger('deleted_by')->nullable();
-            $table->dateTime('deleted_at')->nullable();
+
+            $table->softDeletes();
             
             $table->timestamps();
             
-            $table->index('merchant_id');
-            $table->index('member_id');
-            $table->index('order_number');
+            $table->index(['merchant_id', 'status']);
+            $table->index(['member_id', 'status']);
+
             $table->index('status');
             $table->index('created_at');
             $table->index('customer_full_name');

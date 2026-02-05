@@ -1509,6 +1509,22 @@ class MerchantController extends Controller
                 'bop' => $purchaseMemberWallet->onhold_points
             ]);
 
+            Log::info('transaction_reason: Personal Points from purchase approval');
+
+            Notification::create([
+                'member_id' => $purchase->member_id,
+                'type' => 'personal_points_earned',
+                'title' => 'Purchase Approved!',
+                'message' => "Your purchase of Amount {$purchase->transaction_amount} has been approved. You've earned {$totalPoints} points!",
+                'data' => [
+                    'purchase_id' => $purchase->id,
+                    'member_name' => $purchase->member->name,
+                    'member_phone' => $purchase->member->phone,
+                    'transaction_amount' => $purchase->transaction_amount,
+                    'approved_at' => now()->toDateTimeString()
+                ]
+            ]);
+
             Log::info('2️ RP: total rp points add to who Directly sponsored');
 
             // 2️ RP: total rp points add to who Directly sponsored
