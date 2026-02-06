@@ -1161,7 +1161,7 @@ class OrderController extends Controller
 
             // Step 7: Distribute CP (Community Points) - 30 level distribution
             $cpAmount = $totalPoints * ($this->settingAttributes['cp_points'] / 100);
-            $this->distributeCommunityPoints($member, $member->id, $member->id, $cpAmount, 'order', $order->id, null, $totalPoints);
+            $this->distributeCommunityPoints($member, $member->id, $member->id, $cpAmount, 'order', null, null, $totalPoints, $order->order_number);
 
             // Step 8: Add CR (Company Reserve)
             $crAmount = $totalPoints * ($this->settingAttributes['cr_points'] / 100);

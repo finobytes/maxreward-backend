@@ -26,6 +26,7 @@ return new class extends Migration
             $table->dateTime('released_at')->nullable()->comment('When locked CP was released');
             $table->dateTime('locked_at')->nullable()->comment('When locked CP was locked');
             $table->integer('total_referrals')->default(0);
+            $table->string('order_number')->nullable();
             $table->timestamps();
             
             $table->index('purchase_id');
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->index('receiver_member_id');
             $table->index('status');
             $table->index('level');
+            $table->index('order_number');
             
             $table->foreign('source_member_id')->references('id')->on('members');
             $table->foreign('receiver_member_id')->references('id')->on('members');
