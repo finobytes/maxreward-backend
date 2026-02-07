@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\Merchant;
 
+use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderExchange;
