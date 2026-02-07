@@ -85,7 +85,7 @@ class EmailService
             ];
 
         } catch (\Exception $e) {
-            Log::log("Email send failed: " . $e->getMessage());
+            Log::error("Email send failed: " . $e->getMessage());
             return [
                 'success' => false,
                 'error' => $e->getMessage()
