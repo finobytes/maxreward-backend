@@ -288,7 +288,7 @@ class OrderExchangeController extends Controller
             // Notification for member
             Notification::create([
                 'member_id' => $exchange->member_id,
-                'type' => 'system_alert',
+                'type' => 'order_type_alert',
                 'title' => 'Exchange Approved',
                 'message' => "Your exchange request for order {$exchange->order->order_number} has been approved. Original: {$exchange->original_variant_name}, New: {$exchange->exchange_variant_name}",
                 'data' => [
@@ -374,7 +374,7 @@ class OrderExchangeController extends Controller
             // Notification for member
             Notification::create([
                 'member_id' => $exchange->member_id,
-                'type' => 'system_alert',
+                'type' => 'order_type_alert',
                 'title' => 'Exchange Rejected',
                 'message' => "Your exchange request for order {$exchange->order->order_number} has been rejected. Reason: {$request->rejection_reason}",
                 'data' => [
@@ -442,7 +442,7 @@ class OrderExchangeController extends Controller
             // Notification for member
             Notification::create([
                 'member_id' => $exchange->member_id,
-                'type' => 'system_alert',
+                'type' => 'order_type_alert',
                 'title' => 'Exchange Completed',
                 'message' => "Your exchange for order {$exchange->order->order_number} has been completed.",
                 'data' => [
