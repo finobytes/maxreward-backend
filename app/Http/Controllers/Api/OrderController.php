@@ -338,7 +338,7 @@ class OrderController extends Controller
                 // Transaction record - Points deducted from member
                 Transaction::create([
                     'member_id' => $member->id,
-                    'transaction_points' => $orderData['total_points'],
+                    'transaction_points' => $order->total_points,
                     'transaction_type' => Transaction::TYPE_DP,
                     'points_type' => Transaction::POINTS_DEBITED,
                     'transaction_reason' => "Order {$orderNumber} placed. Points on hold.",
@@ -352,11 +352,11 @@ class OrderController extends Controller
                     'member_id' => $member->id,
                     'type' => 'order_type_alert',
                     'title' => 'Order Placed Successfully',
-                    'message' => "Your order {$orderNumber} has been placed. Total: {$orderData['total_points']} points.",
+                    'message' => "Your order {$orderNumber} has been placed. Total: {$order->total_points} points.",
                     'data' => [
                         'order_id' => $order->id,
                         'order_number' => $orderNumber,
-                        'total_points' => $orderData['total_points'],
+                        'total_points' => $order->total_points,
                     ],
                     'status' => 'unread',
                     'is_read' => false
@@ -364,15 +364,15 @@ class OrderController extends Controller
 
                 // Notification for merchant
                 Notification::create([
-                    'merchant_id' => $orderData['merchant_id'],
+                    'merchant_id' => $order->merchant_id,
                     'type' => 'order_type_alert',
                     'title' => 'New Order Received',
-                    'message' => "New order {$orderNumber} from {$member->name}. Total: {$orderData['total_points']} points.",
+                    'message' => "New order {$orderNumber} from {$member->name}. Total: {$order->total_points} points.",
                     'data' => [
                         'order_id' => $order->id,
                         'order_number' => $orderNumber,
                         'member_name' => $member->name,
-                        'total_points' => $orderData['total_points'],
+                        'total_points' => $order->total_points,
                     ],
                     'status' => 'unread',
                     'is_read' => false
@@ -413,275 +413,6 @@ class OrderController extends Controller
         }
     }
 
-
-
-    /**
-     * Create orders (one per merchant)
-     * Member Route: POST /member/orders
-     */
-    // public function createOrders_follow(Request $request)
-    // {
-    //     $validator = Validator::make($request->all(), [
-    //         'customer_info.full_name' => 'required|string',
-    //         'customer_info.phone' => 'required|string',
-    //         'customer_info.address' => 'required|string',
-    //         'customer_info.city' => 'required|string',
-    //         'customer_info.state' => 'required|string',
-    //         'customer_info.postcode' => 'required|string',
-    //         'customer_info.country' => 'required|string',
-    //         'customer_info.email' => 'nullable|email',
-    //         'merchants' => 'required|array',
-    //         'merchants.*.merchant_id' => 'required|exists:merchants,id',
-    //         'merchants.*.shipping_method_id' => 'required',
-    //         'merchants.*.items' => 'required|array',
-    //         'merchants.*.items.*.product_id' => 'required|exists:products,id',
-    //         'merchants.*.items.*.product_variation_id' => 'required|exists:product_variations,id',
-    //         'merchants.*.items.*.quantity' => 'required|integer|min:1',
-    //         'merchants.*.items.*.points' => 'required|numeric|min:0',
-    //     ]);
-
-    //     if ($validator->fails()) {
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validation error',
-    //             'errors' => $validator->errors()
-    //         ], 422);
-    //     }
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         $member = Auth::guard('member')->user();
-    //         $wallet = $member->wallet;
-
-    //         if (!$wallet) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Member wallet not found'
-    //             ], 404);
-    //         }
-
-    //         // Detect shipping zone
-    //         $zone = ShippingZone::detectZoneByPostcode($request->customer_info['postcode']);
-            
-    //         if (!$zone) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Invalid postcode or shipping zone not found'
-    //             ], 400);
-    //         }
-
-    //         // Calculate total points needed and validate stock
-    //         $totalPointsNeeded = 0;
-    //         $merchantOrders = [];
-
-    //         foreach ($request->merchants as $merchantData) {
-    //             $merchantId = $merchantData['merchant_id'];
-    //             $methodId = $merchantData['shipping_method_id'];
-                
-    //             $merchantSubtotal = 0;
-    //             $totalWeight = 0;
-    //             $validatedItems = [];
-                
-    //             foreach ($merchantData['items'] as $item) {
-    //                 // Validate stock
-    //                 $variation = ProductVariation::find($item['product_variation_id']);
-    //                 if (!$variation || $variation->actual_quantity < $item['quantity']) {
-    //                     DB::rollBack();
-    //                     return response()->json([
-    //                         'success' => false,
-    //                         'message' => "Insufficient stock for product variation ID {$item['product_variation_id']}"
-    //                     ], 400);
-    //                 }
-
-    //                 $product = Product::find($item['product_id']);
-                    
-    //                 // Calculate weight
-    //                 $unitWeight = 0;
-    //                 if ($variation && $variation->unit_weight > 0) {
-    //                     $unitWeight = $variation->unit_weight;
-    //                 } elseif ($product) {
-    //                     $unitWeight = $product->unit_weight ?? 0;
-    //                 }
-                    
-    //                 $merchantSubtotal += $item['points'] * $item['quantity'];
-    //                 $totalWeight += $unitWeight * $item['quantity'];
-                    
-    //                 $validatedItems[] = [
-    //                     'product_id' => $item['product_id'],
-    //                     'product_variation_id' => $item['product_variation_id'],
-    //                     'name' => $variation->variation_name ?? $product->product_name,
-    //                     'sku' => $variation->sku ?? $product->sku,
-    //                     'quantity' => $item['quantity'],
-    //                     'points' => $item['points'],
-    //                 ];
-    //             }
-
-    //             // Calculate shipping
-    //             $shippingCalc = MerchantShippingRate::calculateShipping(
-    //                 $merchantId,
-    //                 $zone->id,
-    //                 $methodId,
-    //                 $totalWeight,
-    //                 $merchantSubtotal
-    //             );
-
-    //             if (!$shippingCalc) {
-    //                 DB::rollBack();
-    //                 return response()->json([
-    //                     'success' => false,
-    //                     'message' => "No shipping rate available for merchant {$merchantId}",
-    //                 ], 400);
-    //             }
-
-    //             $shippingPoints = $shippingCalc['shipping_points'];
-    //             $orderTotal = $merchantSubtotal + $shippingPoints;
-                
-    //             $merchantOrders[] = [
-    //                 'merchant_id' => $merchantId,
-    //                 'shipping_method_id' => $methodId,
-    //                 'shipping_zone_id' => $zone->id,
-    //                 'items' => $validatedItems,
-    //                 'total_weight' => $totalWeight,
-    //                 'shipping_points' => $shippingPoints,
-    //                 'items_points' => $merchantSubtotal,
-    //                 'total_points' => $orderTotal,
-    //             ];
-
-    //             $totalPointsNeeded += $orderTotal;
-    //         }
-
-    //         // Check if member has sufficient points
-    //         if ($wallet->available_points < $totalPointsNeeded) {
-    //             DB::rollBack();
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Insufficient points',
-    //                 'required_points' => $totalPointsNeeded,
-    //                 'available_points' => $wallet->available_points,
-    //                 'shortage' => $totalPointsNeeded - $wallet->available_points
-    //             ], 400);
-    //         }
-
-    //         // Deduct total points from member wallet
-    //         $wallet->decrement('available_points', $totalPointsNeeded);
-
-    //         // Create orders
-    //         $createdOrders = [];
-
-    //         foreach ($merchantOrders as $orderData) {
-    //             // Generate order number
-    //             $orderNumber = Order::generateOrderNumber();
-
-    //             // Create order
-    //             $order = Order::create([
-    //                 'merchant_id' => $orderData['merchant_id'],
-    //                 'member_id' => $member->id,
-    //                 'shipping_zone_id' => $orderData['shipping_zone_id'],
-    //                 'shipping_method_id' => $orderData['shipping_method_id'],
-    //                 'order_number' => $orderNumber,
-    //                 'status' => 'pending',
-    //                 'shipping_points' => $orderData['shipping_points'],
-    //                 'total_points' => $orderData['total_points'],
-    //                 'customer_full_name' => $request->customer_info['full_name'],
-    //                 'customer_email' => $request->customer_info['email'] ?? null,
-    //                 'customer_phone' => $request->customer_info['phone'],
-    //                 'customer_address' => $request->customer_info['address'],
-    //                 'customer_postcode' => $request->customer_info['postcode'],
-    //                 'customer_city' => $request->customer_info['city'],
-    //                 'customer_state' => $request->customer_info['state'],
-    //                 'customer_country' => $request->customer_info['country'],
-    //                 'total_weight' => $orderData['total_weight'],
-    //             ]);
-
-    //             // Create order items
-    //             foreach ($orderData['items'] as $itemData) {
-    //                 OrderItem::create([
-    //                     'order_id' => $order->id,
-    //                     'merchant_id' => $orderData['merchant_id'],
-    //                     'member_id' => $member->id,
-    //                     'product_id' => $itemData['product_id'],
-    //                     'product_variation_id' => $itemData['product_variation_id'],
-    //                     'name' => $itemData['name'],
-    //                     'sku' => $itemData['sku'],
-    //                     'quantity' => $itemData['quantity'],
-    //                     'points' => $itemData['points'],
-    //                 ]);
-    //             }
-
-    //             // Reduce inventory
-    //             $order->reduceInventory();
-
-    //             // Create onhold points record
-    //             OrderOnholdPoint::createFromOrder($order);
-
-    //             // Transaction record - Points deducted from member
-    //             Transaction::create([
-    //                 'member_id' => $member->id,
-    //                 'transaction_points' => $orderData['total_points'],
-    //                 'transaction_type' => Transaction::TYPE_DP,
-    //                 'points_type' => Transaction::POINTS_DEBITED,
-    //                 'transaction_reason' => "Order {$orderNumber} placed. Points on hold.",
-    //                 'bap' => $wallet->available_points,
-    //                 'bop' => $wallet->onhold_points,
-    //                 'brp' => $wallet->total_rp
-    //             ]);
-
-    //             // Notification for member
-    //             Notification::create([
-    //                 'member_id' => $member->id,
-    //                 'type' => 'order_type_alert',
-    //                 'title' => 'Order Placed Successfully',
-    //                 'message' => "Your order {$orderNumber} has been placed. Total: {$orderData['total_points']} points.",
-    //                 'data' => [
-    //                     'order_id' => $order->id,
-    //                     'order_number' => $orderNumber,
-    //                     'total_points' => $orderData['total_points'],
-    //                 ],
-    //                 'status' => 'unread',
-    //                 'is_read' => false
-    //             ]);
-
-    //             // Notification for merchant
-    //             Notification::create([
-    //                 'merchant_id' => $orderData['merchant_id'],
-    //                 'type' => 'order_type_alert',
-    //                 'title' => 'New Order Received',
-    //                 'message' => "New order {$orderNumber} from {$member->name}. Total: {$orderData['total_points']} points.",
-    //                 'data' => [
-    //                     'order_id' => $order->id,
-    //                     'order_number' => $orderNumber,
-    //                     'member_name' => $member->name,
-    //                     'total_points' => $orderData['total_points'],
-    //                 ],
-    //                 'status' => 'unread',
-    //                 'is_read' => false
-    //             ]);
-
-    //             $createdOrders[] = $order->getSummary();
-    //         }
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Orders created successfully',
-    //             'data' => [
-    //                 'orders' => $createdOrders,
-    //                 'total_points_used' => $totalPointsNeeded,
-    //                 'remaining_points' => $wallet->available_points
-    //             ]
-    //         ], 201);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to create orders',
-    //             'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-    //         ], 500);
-    //     }
-    // }
 
     /**
      * Get member's orders
