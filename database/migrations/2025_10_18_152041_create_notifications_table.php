@@ -16,6 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('member_id')->nullable();
             $table->unsignedBigInteger('merchant_id')->nullable();
             $table->enum('type', [
+                'personal_points_earned',
                 'referral_points_earned',
                 'community_points_earned',
                 'point_approval',
@@ -28,6 +29,7 @@ return new class extends Migration
                 'voucher_purchase',
                 'level_unlocked',
                 'system_alert',
+                'order_type_alert',
                 'voucher_created',
                 'voucher_approved',
                 'voucher_rejected',

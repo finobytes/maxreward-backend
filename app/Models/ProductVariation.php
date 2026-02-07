@@ -147,4 +147,25 @@ class ProductVariation extends Model
             $variation->variationAttributes()->delete();
         });
     }
+
+    /**
+     * Get variation name from attributes
+     */
+    public function getVariationNameAttribute()
+    {
+        // এখানে ইগার লোড ব্যবহার করুন
+        $this->loadMissing(['variationAttributes.attribute', 'variationAttributes.attributeItem']);
+        
+        $nameParts = [];
+        
+        if ($this->variationAttributes) {
+            foreach ($this->variationAttributes as $attr) {
+                if ($attr->attribute && $attr->attributeItem) {
+                    $nameParts[] = $attr->attribute->name . ': ' . $attr->attributeItem->name;
+                }
+            }
+        }
+        
+        return empty($nameParts) ? 'No Attributes' : implode(', ', $nameParts);
+    }
 }

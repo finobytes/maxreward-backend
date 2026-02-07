@@ -854,10 +854,10 @@ Route::prefix('member')->middleware('auth:member')->group(function () {
     Route::get('orders/{orderNumber}', [OrderController::class, 'getOrderDetails']);
     
     // Cancel order
-    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
+    // Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
     
     // Request return (Member initiates return)
-    Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
+    // Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
 });
 
 
@@ -869,12 +869,45 @@ Route::prefix('member')->middleware('auth:member')->group(function () {
 Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
     // Get merchant orders
     Route::get('orders', [OrderController::class, 'getMerchantOrders']);
+
+    // Ship order
+    Route::post('orders/{orderNumber}/ship', [OrderController::class, 'shipOrder']);
+
+    // Cancel order (pending only)
+    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
     
     // Complete order
-    Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
+    // Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
     
     // Accept return (Merchant accepts return)
-    Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
+    // Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
+
+    // Exchange routes
+    Route::prefix('exchanges')->group(function () {
+        // Get all exchange requests
+        Route::get('/', [OrderExchangeController::class, 'getMerchantExchanges']);
+        
+        // Get single exchange details
+        Route::get('/{id}', [OrderExchangeController::class, 'getExchangeDetails']);
+        
+        // Create exchange request
+        Route::post('/', [OrderExchangeController::class, 'createExchange']);
+        
+        // Approve exchange
+        Route::post('/{id}/approve', [OrderExchangeController::class, 'approveExchange']);
+        
+        // Reject exchange
+        Route::post('/{id}/reject', [OrderExchangeController::class, 'rejectExchange']);
+        
+        // Complete exchange
+        Route::post('/{id}/complete', [OrderExchangeController::class, 'completeExchange']);
+        
+        // Get available variations for exchange
+        Route::get('/available-variations/{orderItemId}', [OrderExchangeController::class, 'getAvailableVariations']);
+        
+        // Get statistics
+        Route::get('/statistics', [OrderExchangeController::class, 'getExchangeStatistics']);
+    });
 });
 
 /*

@@ -20,7 +20,7 @@ trait PointDistributionTrait
      * Based on CpLevelConfig distribution rules
      * ✅ SHARED TRAIT FOR BOTH CONTROLLERS 1. ReferralController 2. MerchantController
      */
-    private function distributeCommunityPoints($sourceMember, $sourceMemberId, $newMemberId, $totalCp, $reason, $purchase_id = null, $transaction_id = null, $transaction_amount)
+    private function distributeCommunityPoints($sourceMember, $sourceMemberId, $newMemberId, $totalCp, $reason, $purchase_id = null, $transaction_id = null, $transaction_amount, $order_number = null)
     {
         Log::info('Start :: Distribute Community Points (CP) across 30 levels for: ' . $reason);
 
@@ -78,6 +78,7 @@ trait PointDistributionTrait
             // Create CP transaction record
             $cpTransaction = CpTransaction::createCpTransaction([
                 'purchase_id' => $purchase_id ?? null,
+                'order_number' => $order_number ?? null,
                 'source_member_id' => $sourceMemberId,
                 'receiver_member_id' => $receiverMemberId,
                 'level' => $level,
@@ -106,9 +107,17 @@ trait PointDistributionTrait
             $receiverWallet->save();
 
             // Create transaction record
-            $transactionReason = $reason === 'purchase' 
-                ? "Community Points (Level {$level}) from purchase" 
-                : "Community Points (Level {$level}) from new member registration";
+            // $transactionReason = $reason === 'purchase' 
+            //     ? "Community Points (Level {$level}) from purchase" 
+            //     : "Community Points (Level {$level}) from new member registration";
+
+            // Create transaction record
+            $transactionReason = match ($reason) {
+                'purchase' => "Community Points (Level {$level}) from purchase",
+                'order'    => "Community Points (Level {$level}) from order",
+                default    => "Community Points (Level {$level}) from new member registration",
+            };
+
 
             Transaction::createTransaction([
                 'member_id' => $receiverMemberId,
@@ -122,10 +131,17 @@ trait PointDistributionTrait
                 'bop' => $receiverWallet->onhold_points
             ]);
 
+            // // Notification
+            // $message = $reason === 'purchase'
+            //     ? "You earned {$cpAmount} CP at Level {$level} from purchase"
+            //     : "You earned {$cpAmount} CP at Level {$level} from new member";
+
             // Notification
-            $message = $reason === 'purchase'
-                ? "You earned {$cpAmount} CP at Level {$level} from purchase"
-                : "You earned {$cpAmount} CP at Level {$level} from new member";
+            $message = match ($reason) {
+                'purchase' => "You earned {$cpAmount} CP at Level {$level} from purchase",
+                'order'    => "You earned {$cpAmount} CP at Level {$level} from order",
+                default    => "You earned {$cpAmount} CP at Level {$level} from new member",
+            };
 
             Notification::createForMember([
                 'member_id' => $receiverMemberId,
@@ -141,7 +157,7 @@ trait PointDistributionTrait
         $new_member = Member::findOrFail($newMemberId);
 
         $cpDistributionPool = CpDistributionPool::create([
-            'transaction_id' => $transaction_id ?? 'Ref-new-' . $new_member->phone,
+            'transaction_id' => $transaction_id ?? $order_number ?? 'Ref-new-' . $new_member->phone,
             'source_member_id' => $sourceMemberId,
             'total_cp_distributed' => $total_cp_distributed,
             'total_cp_amount' => $totalCp,
