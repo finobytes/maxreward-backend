@@ -854,10 +854,10 @@ Route::prefix('member')->middleware('auth:member')->group(function () {
     Route::get('orders/{orderNumber}', [OrderController::class, 'getOrderDetails']);
     
     // Cancel order
-    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
+    // Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
     
     // Request return (Member initiates return)
-    Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
+    // Route::post('orders/{orderNumber}/return', [OrderController::class, 'requestReturn']);
 });
 
 
@@ -869,12 +869,18 @@ Route::prefix('member')->middleware('auth:member')->group(function () {
 Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
     // Get merchant orders
     Route::get('orders', [OrderController::class, 'getMerchantOrders']);
+
+    // Ship order
+    Route::post('orders/{orderNumber}/ship', [OrderController::class, 'shipOrder']);
+
+    // Cancel order (pending only)
+    Route::post('orders/{orderNumber}/cancel', [OrderController::class, 'cancelOrder']);
     
     // Complete order
-    Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
+    // Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
     
     // Accept return (Merchant accepts return)
-    Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
+    // Route::post('orders/{orderNumber}/return', [OrderController::class, 'returnOrder']);
 });
 
 /*
