@@ -51,6 +51,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\Merchant\MerchantShippingRateController;
 use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
+use App\Http\Controllers\Api\Merchant\OrderExchangeController;
 
 /*
 |--------------------------------------------------------------------------
