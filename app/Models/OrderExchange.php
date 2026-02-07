@@ -170,4 +170,40 @@ class OrderExchange extends Model
     {
         return $query->where('member_id', $memberId);
     }
+
+    /**
+     * Get original variation name (dynamic if not stored)
+     */
+    public function getOriginalVariantNameAttribute($value)
+    {
+        // If value exists in database, return it
+        if (!empty($value)) {
+            return $value;
+        }
+        
+        // Otherwise generate dynamically
+        if ($this->relationLoaded('originalVariation') && $this->originalVariation) {
+            return $this->originalVariation->getVariationNameAttribute();
+        }
+        
+        return $value;
+    }
+
+    /**
+     * Get exchange variation name (dynamic if not stored)
+     */
+    public function getExchangeVariantNameAttribute($value)
+    {
+        // If value exists in database, return it
+        if (!empty($value)) {
+            return $value;
+        }
+        
+        // Otherwise generate dynamically
+        if ($this->relationLoaded('exchangeVariation') && $this->exchangeVariation) {
+            return $this->exchangeVariation->getVariationNameAttribute();
+        }
+        
+        return $value;
+    }
 }
