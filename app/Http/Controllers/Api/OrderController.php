@@ -700,7 +700,7 @@ class OrderController extends Controller
             }
 
             // Get auto-release days from settings
-            $autoReleaseDays = $this->settingAttributes['auto_release_days'] ?? 3;
+            $autoReleaseDays = $this->settingAttributes['auto_release_days'] ?? 5;
 
             // Mark as shipped
             $order->markAsShipped($request->tracking_number, $autoReleaseDays);
@@ -813,8 +813,12 @@ class OrderController extends Controller
                 ];
             }
 
+            Log::info("✅ Step 1: Add total points {$totalPoints} to merchant wallet");
+
             // Step 1: Add total points to merchant wallet
             $merchant->wallet->increment('total_points', $totalPoints);
+
+           Log::info("✅ Step 2: Transaction for merchant wallet increment {$totalPoints} points");    
 
             Transaction::create([
                 'merchant_id' => $merchant->id,
@@ -825,9 +829,13 @@ class OrderController extends Controller
                 'merchant_balance' => $merchant->wallet->total_points
             ]);
 
-            // Step 2: Add total points to merchant corporate member wallet
+            Log::info("✅ Step 3: Add total points {$totalPoints} to merchant corporate member wallet");
+
+            // Step 3: Add total points to merchant corporate member wallet
             $merchant->corporateMember->wallet->increment('available_points', $totalPoints);
             $merchant->corporateMember->wallet->increment('total_points', $totalPoints);
+
+            Log::info("✅ Step 4: Transaction  for merchant corporate member wallet {$totalPoints} points");
 
             Transaction::create([
                 'member_id' => $merchant->corporateMember->id,
@@ -840,8 +848,12 @@ class OrderController extends Controller
                 'brp' => $merchant->corporateMember->wallet->total_rp
             ]);
 
-            // Step 3: Deduct reward budget points from Merchant wallet
+            Log::info("✅ Step 5: Deduct reward budget points {$totalPoints} from from Merchant wallet");
+
+            // Step 5: Deduct reward budget points from Merchant wallet
             $merchant->wallet->decrement('total_points', $totalPoints);
+
+            Log::info("✅ Step 6: Transaction reward budget deduct for merchant wallet {$totalPoints} points");
 
             Transaction::create([
                 'merchant_id' => $merchant->id,
@@ -852,8 +864,12 @@ class OrderController extends Controller
                 'merchant_balance' => $merchant->wallet->total_points
             ]);
 
-            // Step 4: Deduct reward budget points from Merchant corporate wallet
+            Log::info("✅ Step 7: Deduct reward budget points {$totalPoints} from Merchant corporate member wallet");
+
+            // Step 7: Deduct reward budget points from Merchant corporate wallet
             $merchant->corporateMember->wallet->decrement('available_points', $totalPoints);
+
+            Log::info("✅ Step 8: Transaction rerward budget deduct for merchant corporate member wallet {$totalPoints} points");
 
             Transaction::create([
                 'member_id' => $merchant->corporateMember->id,
@@ -866,11 +882,15 @@ class OrderController extends Controller
                 'brp' => $merchant->corporateMember->wallet->total_rp
             ]);
 
-            // Step 5: Distribute PP (Personal Points) to buyer
+            Log::info("✅ Step 9: Distribute PP {$ppAmount} (Personal Points) to buyer");
+
+            // Step 9: Distribute PP (Personal Points) to buyer
             $ppAmount = $totalPoints * ($this->settingAttributes['pp_points'] / 100);
             $member->wallet->increment('total_pp', $ppAmount);
             $member->wallet->increment('available_points', $ppAmount);
             $member->wallet->increment('total_points', $ppAmount);
+
+            Log::info("✅ Step 10: Transaction for buyer wallet {$ppAmount} points");
 
             Transaction::create([
                 'member_id' => $member->id,
@@ -882,6 +902,8 @@ class OrderController extends Controller
                 'brp' => $member->wallet->total_rp,
                 'bop' => $member->wallet->onhold_points
             ]);
+
+            Log::info("✅ Step 11: Notification for buyer");
 
             Notification::create([
                 'member_id' => $member->id,
@@ -897,6 +919,8 @@ class OrderController extends Controller
                 'is_read' => false
             ]);
 
+            Log::info("✅ Step 12: Notification for sponsor");
+
             // Step 6: Distribute RP (Referral Points) to sponsor
             $rpAmount = $totalPoints * ($this->settingAttributes['rp_points'] / 100);
             $sponsor = Referral::where('child_member_id', $member->id)->first();
@@ -906,6 +930,8 @@ class OrderController extends Controller
                 if ($sponsorMember && $sponsorMember->wallet) {
                     $sponsorMember->wallet->increment('available_points', $rpAmount);
                     $sponsorMember->wallet->increment('total_points', $rpAmount);
+
+                    Log::info("✅ Step 12.1: Transaction for sponsor wallet {$rpAmount} points");
 
                     Transaction::create([
                         'member_id' => $sponsorMember->id,
@@ -917,6 +943,8 @@ class OrderController extends Controller
                         'brp' => $sponsorMember->wallet->total_rp,
                         'bop' => $sponsorMember->wallet->onhold_points
                     ]);
+
+                    Log::info("✅ Step 12.2: Notification for sponsor");
 
                     Notification::create([
                         'member_id' => $sponsorMember->id,
@@ -935,14 +963,20 @@ class OrderController extends Controller
                 }
             }
 
-            // Step 7: Distribute CP (Community Points) - 30 level distribution
+            Log::info("✅ Step 13: Distribute CP (Community Points) - 30 level distribution");
+
+            // Step 13: Distribute CP (Community Points) - 30 level distribution
             $cpAmount = $totalPoints * ($this->settingAttributes['cp_points'] / 100);
             $this->distributeCommunityPoints($member, $member->id, $member->id, $cpAmount, 'order', null, null, $totalPoints, $order->order_number);
+
+            Log::info("✅ Step 14: Add CR (Company Reserve) to company wallet");
 
             // Step 8: Add CR (Company Reserve)
             $crAmount = $totalPoints * ($this->settingAttributes['cr_points'] / 100);
             $company = CompanyInfo::getCompany();
             $company->incrementCrPoint($crAmount);
+
+            Log::info("✅ Step 15: Transaction for company wallet {$crAmount} points");
 
             Transaction::create([
                 'transaction_points' => $crAmount,
@@ -952,11 +986,17 @@ class OrderController extends Controller
                 'cr_balance' => $company->cr_points
             ]);
 
-            // Step 9: Mark onhold points as released
+            Log::info("✅ Step 16: Mark onhold points as released");
+
+            // Step 16: Mark onhold points as released
             $order->onholdPoints->releasePoints();
 
-            // Step 10: Mark order as completed
+            Log::info("✅ Step 17: Mark order as completed");
+
+            // Step 17: Mark order as completed
             $order->markAsCompleted();
+
+            Log::info("✅ Step 18: Notification for merchant");
 
             // Notifications
             Notification::create([
@@ -1006,131 +1046,53 @@ class OrderController extends Controller
         }
     }
 
-    /**
-     * Distribute community points across 30-level tree
-     * This should match your existing distributeCommunityPoints method
-     */
-    // private function distributeCommunityPoints($sourceMember, $newMemberId, $purchaseMemberId, $cpAmount, $type = 'order', $referenceId = null, $transactionId = null, $transactionAmount = 0)
-    // {
-    //     // Use your existing distributeCommunityPoints logic from MerchantController
-    //     // This is a placeholder - implement according to your existing logic
-        
-    //     $levelPercentages = [
-    //         1 => 5, 2 => 5, 3 => 5, 4 => 5, 5 => 5,
-    //         6 => 4, 7 => 4, 8 => 4, 9 => 4, 10 => 4,
-    //         11 => 3, 12 => 3, 13 => 3, 14 => 3, 15 => 3,
-    //         16 => 2, 17 => 2, 18 => 2, 19 => 2, 20 => 2,
-    //         21 => 1.5, 22 => 1.5, 23 => 1.5, 24 => 1.5, 25 => 1.5,
-    //         26 => 1, 27 => 1, 28 => 1, 29 => 1, 30 => 1
-    //     ];
-
-    //     $currentMember = $sourceMember;
-    //     $level = 1;
-
-    //     while ($currentMember && $level <= 30) {
-    //         $sponsor = \App\Models\Referral::where('child_member_id', $currentMember->id)->first();
-            
-    //         if (!$sponsor) break;
-
-    //         $sponsorMember = \App\Models\Member::with('wallet')->find($sponsor->sponsor_member_id);
-            
-    //         if (!$sponsorMember || !$sponsorMember->wallet) {
-    //             $currentMember = $sponsorMember;
-    //             $level++;
-    //             continue;
-    //         }
-
-    //         $levelPercentage = $levelPercentages[$level] ?? 0;
-    //         $levelPoints = ($cpAmount * $levelPercentage) / 100;
-
-    //         // Check unlock level
-    //         $unlockedLevel = $sponsorMember->wallet->unlocked_level ?? 5;
-
-    //         if ($level <= $unlockedLevel) {
-    //             // Released to available points
-    //             $sponsorMember->wallet->increment('available_points', $levelPoints);
-    //             $sponsorMember->wallet->increment('total_cp', $levelPoints);
-    //             $sponsorMember->wallet->increment('total_points', $levelPoints);
-
-    //             Transaction::create([
-    //                 'member_id' => $sponsorMember->id,
-    //                 'transaction_points' => $levelPoints,
-    //                 'transaction_type' => Transaction::TYPE_CP,
-    //                 'points_type' => Transaction::POINTS_CREDITED,
-    //                 'transaction_reason' => "Level {$level} CP from order",
-    //                 'bap' => $sponsorMember->wallet->available_points,
-    //                 'brp' => $sponsorMember->wallet->total_rp,
-    //                 'bop' => $sponsorMember->wallet->onhold_points
-    //             ]);
-    //         } else {
-    //             // Locked in onhold points
-    //             $sponsorMember->wallet->increment('onhold_points', $levelPoints);
-    //             $sponsorMember->wallet->increment('total_cp', $levelPoints);
-    //             $sponsorMember->wallet->increment('total_points', $levelPoints);
-
-    //             Transaction::create([
-    //                 'member_id' => $sponsorMember->id,
-    //                 'transaction_points' => $levelPoints,
-    //                 'transaction_type' => Transaction::TYPE_CP,
-    //                 'points_type' => Transaction::POINTS_CREDITED,
-    //                 'transaction_reason' => "Level {$level} CP (locked) from order",
-    //                 'bap' => $sponsorMember->wallet->available_points,
-    //                 'brp' => $sponsorMember->wallet->total_rp,
-    //                 'bop' => $sponsorMember->wallet->onhold_points
-    //             ]);
-    //         }
-
-    //         $currentMember = $sponsorMember;
-    //         $level++;
-    //     }
-    // }
 
     /**
      * Auto-complete orders (run by cron job)
      * Command: php artisan orders:auto-complete
      */
-    public function autoCompleteOrders()
-    {
-        try {
-            // Find all orders ready for auto-completion
-            $readyOrders = OrderOnholdPoint::readyForRelease()
-                ->with('order')
-                ->get();
+    // public function autoCompleteOrders()
+    // {
+    //     try {
+    //         // Find all orders ready for auto-completion
+    //         $readyOrders = OrderOnholdPoint::readyForRelease()
+    //             ->with('order')
+    //             ->get();
 
-            $results = [
-                'total' => $readyOrders->count(),
-                'success' => 0,
-                'failed' => 0,
-                'errors' => []
-            ];
+    //         $results = [
+    //             'total' => $readyOrders->count(),
+    //             'success' => 0,
+    //             'failed' => 0,
+    //             'errors' => []
+    //         ];
 
-            foreach ($readyOrders as $onholdPoint) {
-                $result = $this->releaseOrderPoints($onholdPoint->order_id);
+    //         foreach ($readyOrders as $onholdPoint) {
+    //             $result = $this->releaseOrderPoints($onholdPoint->order_id);
                 
-                if ($result['success']) {
-                    $results['success']++;
-                } else {
-                    $results['failed']++;
-                    $results['errors'][] = [
-                        'order_id' => $onholdPoint->order_id,
-                        'error' => $result['message']
-                    ];
-                }
-            }
+    //             if ($result['success']) {
+    //                 $results['success']++;
+    //             } else {
+    //                 $results['failed']++;
+    //                 $results['errors'][] = [
+    //                     'order_id' => $onholdPoint->order_id,
+    //                     'error' => $result['message']
+    //                 ];
+    //             }
+    //         }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Auto-completion completed',
-                'data' => $results
-            ], 200);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Auto-completion completed',
+    //             'data' => $results
+    //         ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Auto-completion failed',
-                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-            ], 500);
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Auto-completion failed',
+    //             'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+    //         ], 500);
+    //     }
+    // }
 
 }

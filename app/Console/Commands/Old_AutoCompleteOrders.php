@@ -36,14 +36,15 @@ class AutoCompleteOrders extends Command
 
         $this->info("Found {$readyOrders->count()} orders ready for completion");
 
-        $controller = new OrderController();
+        // $controller = new OrderController();
+        $orderController = app(OrderController::class);
         $success = 0;
         $failed = 0;
 
         foreach ($readyOrders as $onholdPoint) {
             $this->line("Processing order ID: {$onholdPoint->order_id} ({$onholdPoint->order->order_number})");
             
-            $result = $controller->releaseOrderPoints($onholdPoint->order_id);
+            $result = $orderController->releaseOrderPoints($onholdPoint->order_id);
             
             if ($result['success']) {
                 $success++;
