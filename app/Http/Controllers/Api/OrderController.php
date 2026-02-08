@@ -790,11 +790,7 @@ class OrderController extends Controller
 
             // Calculate reward budget points
             $rewardBudget = $merchant->reward_budget ?? 10; // Default 10%
-            $totalRewardAmount = ($orderTotalPoints * $rewardBudget) / 100;
-
-            $rmPoints = $this->settingAttributes['rm_points'];
-
-            $totalPoints = $totalRewardAmount * $rmPoints;
+            $totalPoints = ($orderTotalPoints * $rewardBudget) / 100;
 
             // Check if merchant has enough points in corporate wallet
             if (!$merchant->corporateMember || !$merchant->corporateMember->wallet) {
