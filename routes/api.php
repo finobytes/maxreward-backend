@@ -53,6 +53,7 @@ use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
 use App\Http\Controllers\Api\Merchant\OrderExchangeController;
 use App\Http\Controllers\Api\Merchant\OrderAutoCompleteController as MerchantOrderAutoCompleteController;
+use App\Http\Controllers\Api\Admin\OrderAutoCompleteController as AdminOrderAutoCompleteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -349,10 +350,10 @@ Route::prefix('admin')->group(function () {
         Route::post('shipping-methods/reorder', [ShippingMethodController::class, 'reorder']);
 
         // Get all eligible orders across all merchants
-        Route::get('/orders/auto-complete/eligible', [OrderAutoCompleteController::class, 'adminGetAllEligibleOrders']);
+        Route::get('/orders/auto-complete/eligible', [AdminOrderAutoCompleteController::class, 'adminGetAllEligibleOrders']);
     
         // Trigger auto-completion for all merchants
-        Route::post('/orders/auto-complete/all', [OrderAutoCompleteController::class, 'adminAutoCompleteAll']);
+        Route::post('/orders/auto-complete/all', [AdminOrderAutoCompleteController::class, 'adminAutoCompleteAll']);
         
     });
 
