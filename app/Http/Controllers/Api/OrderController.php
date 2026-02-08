@@ -770,6 +770,7 @@ class OrderController extends Controller
 
             // Check if order is shipped and points are on hold
             if ($order->status !== 'shipped' || !$order->onholdPoints || $order->onholdPoints->status !== 'onhold') {
+                Log::info("Order {$orderId} is not eligible for point release");
                 return [
                     'success' => false,
                     'message' => 'Order not eligible for point release'
@@ -778,6 +779,7 @@ class OrderController extends Controller
 
             // Check if ready for release
             if (!$order->onholdPoints->isReadyForRelease()) {
+                Log::info("Order {$orderId} is not yet ready for auto-release");
                 return [
                     'success' => false,
                     'message' => 'Order not yet ready for auto-release'
@@ -794,6 +796,7 @@ class OrderController extends Controller
 
             // Check if merchant has enough points in corporate wallet
             if (!$merchant->corporateMember || !$merchant->corporateMember->wallet) {
+                Log::info("Merchant corporate account not found");
                 DB::rollBack();
                 return [
                     'success' => false,
@@ -802,6 +805,7 @@ class OrderController extends Controller
             }
 
             if ($merchant->corporateMember->wallet->available_points < $totalPoints) {
+                Log::info("Insufficient points in merchant corporate wallet for reward distribution");
                 DB::rollBack();
                 return [
                     'success' => false,

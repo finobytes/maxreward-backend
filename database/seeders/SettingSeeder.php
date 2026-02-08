@@ -25,7 +25,8 @@ class SettingSeeder extends Seeder
                         'cp_points' => 50,
                         'cr_points' => 20,
                         'max_level' => 30,
-                        'deductable_points' => 100
+                        'deductable_points' => 100,
+                        'auto_release_days' => 5
                     ]
                 ]
             ]

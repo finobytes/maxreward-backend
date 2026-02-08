@@ -46,11 +46,36 @@ class OrderAutoCompleteController extends Controller
                 ], 200);
             }
 
+            // Check if all orders failed
+            if ($results['failed'] > 0 && $results['success'] === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Auto-completion failed. {$results['failed']} order(s) could not be completed.",
+                    'data' => $results
+                ], 422);
+            }
+
+            // Partial success
+            if ($results['failed'] > 0 && $results['success'] > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Auto-completion partially completed. {$results['success']} order(s) completed, {$results['failed']} failed.",
+                    'data' => $results
+                ], 200);
+            }
+
+            // All success
             return response()->json([
                 'success' => true,
-                'message' => "Auto-completion completed. {$results['success']} orders completed successfully.",
+                'message' => "Auto-completion completed successfully. All {$results['success']} order(s) completed.",
                 'data' => $results
             ], 200);
+
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => "Auto-completion completed. {$results['success']} orders completed successfully.",
+            //     'data' => $results
+            // ], 200);
 
         } catch (\Exception $e) {
             Log::error('Merchant auto-completion failed: ' . $e->getMessage());
@@ -124,11 +149,36 @@ class OrderAutoCompleteController extends Controller
                 ], 200);
             }
 
+            // Check if all orders failed
+            if ($results['failed'] > 0 && $results['success'] === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Auto-completion failed. {$results['failed']} order(s) could not be completed.",
+                    'data' => $results
+                ], 422);
+            }
+
+            // Partial success
+            if ($results['failed'] > 0 && $results['success'] > 0) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Auto-completion partially completed. {$results['success']} order(s) completed out of {$results['total']}, {$results['failed']} failed.",
+                    'data' => $results
+                ], 200);
+            }
+
+            // All success
             return response()->json([
                 'success' => true,
-                'message' => "Auto-completion completed. {$results['success']} orders completed successfully out of {$results['total']}.",
+                'message' => "Auto-completion completed successfully. All {$results['success']} order(s) completed.",
                 'data' => $results
             ], 200);
+
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => "Auto-completion completed. {$results['success']} orders completed successfully out of {$results['total']}.",
+            //     'data' => $results
+            // ], 200);
 
         } catch (\Exception $e) {
             Log::error('Admin auto-completion failed: ' . $e->getMessage());
