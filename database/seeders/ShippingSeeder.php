@@ -30,8 +30,8 @@ class ShippingSeeder extends Seeder
                 'name' => 'Standard Delivery', 
                 'code' => 'STANDARD', 
                 'description' => 'Regular delivery within 3-5 days',
-                'min_days' => 3, 
-                'max_days' => 5,
+                'min_days' => 2, 
+                'max_days' => 3,
                 'is_active' => true,
                 'sort_order' => 2 // Medium priority
             ],
@@ -39,8 +39,8 @@ class ShippingSeeder extends Seeder
                 'name' => 'Economy Delivery', 
                 'code' => 'ECONOMY', 
                 'description' => 'Budget-friendly delivery within 5-7 days',
-                'min_days' => 5, 
-                'max_days' => 7,
+                'min_days' => 3, 
+                'max_days' => 5,
                 'is_active' => true,
                 'sort_order' => 3 // Lowest priority
             ],
