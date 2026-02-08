@@ -871,6 +871,9 @@ Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
     // Get merchant orders
     Route::get('orders', [OrderController::class, 'getMerchantOrders']);
 
+    // Get single order details (Merchant view)
+    Route::get('orders/{orderNumber}', [OrderController::class, 'getMerchantOrderDetails']);
+
     // Ship order
     Route::post('orders/{orderNumber}/ship', [OrderController::class, 'shipOrder']);
 

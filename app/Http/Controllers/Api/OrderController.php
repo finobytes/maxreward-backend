@@ -483,6 +483,50 @@ class OrderController extends Controller
         }
     }
 
+
+    /**
+     * Get single order details (Merchant View)
+     * Merchant Route: GET /merchant/orders/{orderNumber}
+     */
+    public function getMerchantOrderDetails($orderNumber)
+    {
+        try {
+            $merchant = auth('merchant')->user();
+            
+            $order = Order::with([
+                'member', 
+                'items.product', 
+                'items.productVariation', 
+                'onholdPoints', 
+                'exchanges',
+                'shippingZone',
+                'shippingMethod'
+            ])
+            ->where('order_number', $orderNumber)
+            ->byMerchant($merchant->merchant_id)
+            ->first();
+
+            if (!$order) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Order not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $order
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch order details',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
     /**
      * Get merchant's orders
      * Merchant Route: GET /merchant/orders

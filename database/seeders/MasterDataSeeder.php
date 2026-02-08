@@ -215,9 +215,9 @@ class MasterDataSeeder extends Seeder
                 'name' => 'Size',
                 'slug' => 'size',
                 'items' => [
-                    ['name' => 'Small', 'slug' => 'small'],
-                    ['name' => 'Medium', 'slug' => 'medium'],
-                    ['name' => 'Large', 'slug' => 'large'],
+                    ['name' => 'S', 'slug' => 's'],
+                    ['name' => 'M', 'slug' => 'm'],
+                    ['name' => 'L', 'slug' => 'l'],
                     ['name' => 'XL', 'slug' => 'xl'],
                     ['name' => 'XXL', 'slug' => 'xxl'],
                 ]
