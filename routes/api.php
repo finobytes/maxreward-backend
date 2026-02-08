@@ -52,6 +52,7 @@ use App\Http\Controllers\Api\Merchant\MerchantShippingRateController;
 use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
 use App\Http\Controllers\Api\Merchant\OrderExchangeController;
+use App\Http\Controllers\Api\Merchant\OrderAutoCompleteController as MerchantOrderAutoCompleteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -889,10 +890,10 @@ Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
 
     
     // Get eligible orders for auto-completion
-    Route::get('/orders/auto-complete/eligible', [OrderAutoCompleteController::class, 'getEligibleOrders']);
+    Route::get('/orders/auto-complete/eligible', [MerchantOrderAutoCompleteController::class, 'getEligibleOrders']);
     
     // Trigger manual auto-completion for merchant's orders
-    Route::post('/orders/auto-complete', [OrderAutoCompleteController::class, 'merchantAutoComplete']);
+    Route::post('/orders/auto-complete', [MerchantOrderAutoCompleteController::class, 'merchantAutoComplete']);
     
     // Complete order
     // Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
