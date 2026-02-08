@@ -352,7 +352,7 @@ class OrderController extends Controller
                     'member_id' => $member->id,
                     'type' => 'order_type_alert',
                     'title' => 'Order Placed Successfully',
-                    'message' => "Your order {$order->order_number} has been placed. Total: {$order->total_points} points.",
+                    'message' => "Your order {$order->order_number} has been placed. Total: {$order->total_points} points has been deducted.",
                     'data' => [
                         'order_id' => $order->id,
                         'order_number' => $order->order_number,
@@ -882,7 +882,7 @@ class OrderController extends Controller
                 'brp' => $merchant->corporateMember->wallet->total_rp
             ]);
 
-            Log::info("✅ Step 9: Distribute PP {$ppAmount} (Personal Points) to buyer");
+            Log::info("✅ Step 9: Distribute PP (Personal Points) to buyer");
 
             // Step 9: Distribute PP (Personal Points) to buyer
             $ppAmount = $totalPoints * ($this->settingAttributes['pp_points'] / 100);
