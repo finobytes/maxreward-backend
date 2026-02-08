@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\OrderOnholdPoint;
-use App\Http\Controllers\OrderController;
+use App\Http\Controllers\Api\OrderController;
 
 class AutoCompleteOrders extends Command
 {
