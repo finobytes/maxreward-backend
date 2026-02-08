@@ -52,8 +52,7 @@ use App\Http\Controllers\Api\Merchant\MerchantShippingRateController;
 use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
 use App\Http\Controllers\Api\Merchant\OrderExchangeController;
-use App\Http\Controllers\Api\Merchant\OrderAutoCompleteController as MerchantOrderAutoCompleteController;
-use App\Http\Controllers\Api\Admin\OrderAutoCompleteController as AdminOrderAutoCompleteController;
+use App\Http\Controllers\Api\OrderAutoCompleteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -350,10 +349,10 @@ Route::prefix('admin')->group(function () {
         Route::post('shipping-methods/reorder', [ShippingMethodController::class, 'reorder']);
 
         // Get all eligible orders across all merchants
-        Route::get('/orders/auto-complete/eligible', [AdminOrderAutoCompleteController::class, 'adminGetAllEligibleOrders']);
+        Route::get('/orders/auto-complete/eligible', [OrderAutoCompleteController::class, 'adminGetAllEligibleOrders']);
     
         // Trigger auto-completion for all merchants
-        Route::post('/orders/auto-complete/all', [AdminOrderAutoCompleteController::class, 'adminAutoCompleteAll']);
+        Route::post('/orders/auto-complete/all', [OrderAutoCompleteController::class, 'adminAutoCompleteAll']);
         
     });
 
@@ -891,10 +890,10 @@ Route::prefix('merchant')->middleware('auth:merchant')->group(function () {
 
     
     // Get eligible orders for auto-completion
-    Route::get('/orders/auto-complete/eligible', [MerchantOrderAutoCompleteController::class, 'getEligibleOrders']);
+    Route::get('/orders/auto-complete/eligible', [OrderAutoCompleteController::class, 'getEligibleOrders']);
     
     // Trigger manual auto-completion for merchant's orders
-    Route::post('/orders/auto-complete', [MerchantOrderAutoCompleteController::class, 'merchantAutoComplete']);
+    Route::post('/orders/auto-complete', [OrderAutoCompleteController::class, 'merchantAutoComplete']);
     
     // Complete order
     // Route::post('orders/{orderNumber}/complete', [OrderController::class, 'completeOrder']);
