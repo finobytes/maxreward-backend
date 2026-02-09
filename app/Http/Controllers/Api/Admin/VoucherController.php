@@ -197,107 +197,107 @@ class VoucherController extends Controller
 
 
 
-    public function approveVoucherOld(Request $request, $voucherId)
-    {
-        try {
-            DB::beginTransaction();
+    // public function approveVoucherOld(Request $request, $voucherId)
+    // {
+    //     try {
+    //         DB::beginTransaction();
 
-            // Find the voucher
-            $voucher = Voucher::find($voucherId);
+    //         // Find the voucher
+    //         $voucher = Voucher::find($voucherId);
 
-            if (!$voucher) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Voucher not found'
-                ], 404);
-            }
+    //         if (!$voucher) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Voucher not found'
+    //             ], 404);
+    //         }
 
-            // Check if voucher is pending
-            if ($voucher->status !== 'pending') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only pending vouchers can be approved. Current status: ' . $voucher->status
-                ], 400);
-            }
+    //         // Check if voucher is pending
+    //         if ($voucher->status !== 'pending') {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Only pending vouchers can be approved. Current status: ' . $voucher->status
+    //             ], 400);
+    //         }
 
-            // Get member wallet
-            $memberWallet = MemberWallet::where('member_id', $voucher->member_id)->first();
+    //         // Get member wallet
+    //         $memberWallet = MemberWallet::where('member_id', $voucher->member_id)->first();
 
-            if (!$memberWallet) {
-                DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Member wallet not found'
-                ], 404);
-            }
+    //         if (!$memberWallet) {
+    //             DB::rollBack();
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Member wallet not found'
+    //             ], 404);
+    //         }
 
-            $totalAmount = $voucher->total_amount;
+    //         $totalAmount = $voucher->total_amount;
 
-            // Update member wallet based on voucher type (logic from lines 135-155)
-            if ($voucher->voucher_type === 'refer') {
-                $memberWallet->total_rp += $totalAmount;
-                $memberWallet->total_points += $totalAmount;
+    //         // Update member wallet based on voucher type (logic from lines 135-155)
+    //         if ($voucher->voucher_type === 'refer') {
+    //             $memberWallet->total_rp += $totalAmount;
+    //             $memberWallet->total_points += $totalAmount;
 
-                // Create transaction record for referral points
-                Transaction::create([
-                    'member_id' => $voucher->member_id,
-                    'merchant_id' => null,
-                    'referral_member_id' => null,
-                    'transaction_points' => $totalAmount,
-                    'transaction_type' => Transaction::TYPE_VRP, // vrp = voucher referral points
-                    'points_type' => Transaction::POINTS_CREDITED,
-                    'transaction_reason' => 'Voucher approved - Referral Points',
-                    'brp' => $memberWallet->total_rp,
-                    'bap' => $memberWallet->available_points,
-                    'bop' => $memberWallet->onhold_points
-                ]);
+    //             // Create transaction record for referral points
+    //             Transaction::create([
+    //                 'member_id' => $voucher->member_id,
+    //                 'merchant_id' => null,
+    //                 'referral_member_id' => null,
+    //                 'transaction_points' => $totalAmount,
+    //                 'transaction_type' => Transaction::TYPE_VRP, // vrp = voucher referral points
+    //                 'points_type' => Transaction::POINTS_CREDITED,
+    //                 'transaction_reason' => 'Voucher approved - Referral Points',
+    //                 'brp' => $memberWallet->total_rp,
+    //                 'bap' => $memberWallet->available_points,
+    //                 'bop' => $memberWallet->onhold_points
+    //             ]);
 
-            } elseif ($voucher->voucher_type === 'max') {
-                $memberWallet->available_points += $totalAmount;
-                $memberWallet->total_points += $totalAmount;
+    //         } elseif ($voucher->voucher_type === 'max') {
+    //             $memberWallet->available_points += $totalAmount;
+    //             $memberWallet->total_points += $totalAmount;
 
-                // Create transaction record for available points
-                Transaction::create([
-                    'member_id' => $voucher->member_id,
-                    'merchant_id' => null,
-                    'referral_member_id' => null,
-                    'transaction_points' => $totalAmount,
-                    'transaction_type' => Transaction::TYPE_VAP, // vap = voucher available points
-                    'points_type' => Transaction::POINTS_CREDITED,
-                    'transaction_reason' => 'Voucher approved - Available Points',
-                    'bap' => $memberWallet->available_points,
-                    'bop' => $memberWallet->onhold_points,
-                    'brp' => $memberWallet->total_rp
-                ]);
-            }
+    //             // Create transaction record for available points
+    //             Transaction::create([
+    //                 'member_id' => $voucher->member_id,
+    //                 'merchant_id' => null,
+    //                 'referral_member_id' => null,
+    //                 'transaction_points' => $totalAmount,
+    //                 'transaction_type' => Transaction::TYPE_VAP, // vap = voucher available points
+    //                 'points_type' => Transaction::POINTS_CREDITED,
+    //                 'transaction_reason' => 'Voucher approved - Available Points',
+    //                 'bap' => $memberWallet->available_points,
+    //                 'bop' => $memberWallet->onhold_points,
+    //                 'brp' => $memberWallet->total_rp
+    //             ]);
+    //         }
 
-            $memberWallet->save();
+    //         $memberWallet->save();
 
-            // Update voucher status to success
-            $voucher->status = 'success';
-            $voucher->save();
+    //         // Update voucher status to success
+    //         $voucher->status = 'success';
+    //         $voucher->save();
 
-            DB::commit();
+    //         DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Voucher approved successfully',
-                'data' => [
-                    'voucher' => $voucher->load('denomination', 'member'),
-                    'wallet' => $memberWallet,
-                ]
-            ], 200);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Voucher approved successfully',
+    //             'data' => [
+    //                 'voucher' => $voucher->load('denomination', 'member'),
+    //                 'wallet' => $memberWallet,
+    //             ]
+    //         ], 200);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to approve voucher',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to approve voucher',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
 
     public function rejectVoucher(Request $request, $voucherId) {

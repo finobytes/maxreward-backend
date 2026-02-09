@@ -25,151 +25,151 @@ class VoucherController extends Controller
 
 
 
-    public function createVoucherOld2(Request $request)
-    {
+    // public function createVoucherOld2(Request $request)
+    // {
 
        
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'member_id' => 'required|exists:members,id',
-            'voucher_type' => 'required|in:max,refer',
-            'denomination_history' => 'required|array|min:1',
-            'denomination_history.*.denomination_id' => 'required|exists:denominations,id',
-            'denomination_history.*.quantity' => 'required|integer|min:1',
-            'payment_method' => 'required|in:online,manual',
-            'total_amount' => 'required|numeric|min:0',
-            'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
-        ]);
+    //     // Validate request
+    //     $validator = Validator::make($request->all(), [
+    //         'member_id' => 'required|exists:members,id',
+    //         'voucher_type' => 'required|in:max,refer',
+    //         'denomination_history' => 'required|array|min:1',
+    //         'denomination_history.*.denomination_id' => 'required|exists:denominations,id',
+    //         'denomination_history.*.quantity' => 'required|integer|min:1',
+    //         'payment_method' => 'required|in:online,manual',
+    //         'total_amount' => 'required|numeric|min:0',
+    //         'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
+    //     ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Get rm_points from settings
-            $setting = Setting::first();
+    //         // Get rm_points from settings
+    //         $setting = Setting::first();
 
-            if (!$setting) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Settings not found'
-                ], 500);
-            }
+    //         if (!$setting) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Settings not found'
+    //             ], 500);
+    //         }
 
-            // Decode setting_attribute if it's a string
-            $settingAttribute = is_string($setting->setting_attribute)
-                ? json_decode($setting->setting_attribute, true)
-                : $setting->setting_attribute;
+    //         // Decode setting_attribute if it's a string
+    //         $settingAttribute = is_string($setting->setting_attribute)
+    //             ? json_decode($setting->setting_attribute, true)
+    //             : $setting->setting_attribute;
 
 
               
 
-            if (!isset($settingAttribute['maxreward']['rm_points'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'rm_points not configured in settings'
-                ], 500);
-            }
+    //         if (!isset($settingAttribute['maxreward']['rm_points'])) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'rm_points not configured in settings'
+    //             ], 500);
+    //         }
 
-            $rmPoints = $settingAttribute['maxreward']['rm_points'];
+    //         $rmPoints = $settingAttribute['maxreward']['rm_points'];
 
-            // Process denomination_history and build JSON structure
-            $denominationHistoryData = [];
-            $calculatedTotalAmount = 0;
-            $totalQuantity = 0;
+    //         // Process denomination_history and build JSON structure
+    //         $denominationHistoryData = [];
+    //         $calculatedTotalAmount = 0;
+    //         $totalQuantity = 0;
 
-            foreach ($request->denomination_history as $item) {
-                // Get denomination details from database
-                $denomination = Denomination::find($item['denomination_id']);
+    //         foreach ($request->denomination_history as $item) {
+    //             // Get denomination details from database
+    //             $denomination = Denomination::find($item['denomination_id']);
 
-                if (!$denomination) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Denomination not found with ID: ' . $item['denomination_id']
-                    ], 404);
-                }
+    //             if (!$denomination) {
+    //                 return response()->json([
+    //                     'success' => false,
+    //                     'message' => 'Denomination not found with ID: ' . $item['denomination_id']
+    //                 ], 404);
+    //             }
 
-                $quantity = $item['quantity'];
-                $value = $denomination->value;
-                $totalAmount = $value * $quantity;
+    //             $quantity = $item['quantity'];
+    //             $value = $denomination->value;
+    //             $totalAmount = $value * $quantity;
 
-                // Build the history item
-                $denominationHistoryData[] = [
-                    'denomination_id' => $item['denomination_id'],
-                    'value' => $value,
-                    'quantity' => $quantity,
-                    'totalAmount' => $totalAmount,
-                ];
+    //             // Build the history item
+    //             $denominationHistoryData[] = [
+    //                 'denomination_id' => $item['denomination_id'],
+    //                 'value' => $value,
+    //                 'quantity' => $quantity,
+    //                 'totalAmount' => $totalAmount,
+    //             ];
 
-                $calculatedTotalAmount += $totalAmount;
-                $totalQuantity += $quantity;
-            }
+    //             $calculatedTotalAmount += $totalAmount;
+    //             $totalQuantity += $quantity;
+    //         }
 
-            // Verify total amount matches expected calculation
-            if ($request->total_amount != $calculatedTotalAmount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Total amount mismatch. Expected: ' . $calculatedTotalAmount . ', Received: ' . $request->total_amount
-                ], 400);
-            }
+    //         // Verify total amount matches expected calculation
+    //         if ($request->total_amount != $calculatedTotalAmount) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Total amount mismatch. Expected: ' . $calculatedTotalAmount . ', Received: ' . $request->total_amount
+    //             ], 400);
+    //         }
 
-            // Calculate final total amount with rm_points
-            $finalTotalAmount = $calculatedTotalAmount * $rmPoints;
+    //         // Calculate final total amount with rm_points
+    //         $finalTotalAmount = $calculatedTotalAmount * $rmPoints;
 
-            // Handle manual payment document upload to Cloudinary
-            $manualPaymentDocsUrl = null;
-            $manualPaymentDocsCloudinaryId = null;
+    //         // Handle manual payment document upload to Cloudinary
+    //         $manualPaymentDocsUrl = null;
+    //         $manualPaymentDocsCloudinaryId = null;
 
-            if ($request->payment_method === 'manual' && $request->hasFile('manual_payment_docs')) {
-                $uploadResult = CloudinaryHelper::uploadImage(
-                    $request->file('manual_payment_docs'),
-                    'maxreward/vouchers/payment-docs'
-                );
-                $manualPaymentDocsUrl = $uploadResult['url'];
-                $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
-            }
+    //         if ($request->payment_method === 'manual' && $request->hasFile('manual_payment_docs')) {
+    //             $uploadResult = CloudinaryHelper::uploadImage(
+    //                 $request->file('manual_payment_docs'),
+    //                 'maxreward/vouchers/payment-docs'
+    //             );
+    //             $manualPaymentDocsUrl = $uploadResult['url'];
+    //             $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
+    //         }
 
-            // Use DB transaction to keep voucher creation atomic (good practice)
+    //         // Use DB transaction to keep voucher creation atomic (good practice)
 
-            // Create voucher
-            $voucher = Voucher::create([
-                'member_id' => $request->member_id,
-                'voucher_type' => $request->voucher_type,
-                'denomination_history' => $denominationHistoryData,
-                'quantity' => $totalQuantity,
-                'payment_method' => $request->payment_method,
-                'total_amount' => $finalTotalAmount,
-                'manual_payment_docs_url' => $manualPaymentDocsUrl,
-                'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
-                'status' => 'pending',
-            ]);
+    //         // Create voucher
+    //         $voucher = Voucher::create([
+    //             'member_id' => $request->member_id,
+    //             'voucher_type' => $request->voucher_type,
+    //             'denomination_history' => $denominationHistoryData,
+    //             'quantity' => $totalQuantity,
+    //             'payment_method' => $request->payment_method,
+    //             'total_amount' => $finalTotalAmount,
+    //             'manual_payment_docs_url' => $manualPaymentDocsUrl,
+    //             'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
+    //             'status' => 'pending',
+    //         ]);
 
-            DB::commit();
+    //         DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Voucher created successfully',
-                'data' => [
-                    'voucher' => $voucher,
-                ]
-            ], 201);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Voucher created successfully',
+    //             'data' => [
+    //                 'voucher' => $voucher,
+    //             ]
+    //         ], 201);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create voucher',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to create voucher',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
 
     public function createVoucher(Request $request)
@@ -322,158 +322,158 @@ class VoucherController extends Controller
     }
 
 
-    public function createVoucherOld(Request $request)
-    {
+    // public function createVoucherOld(Request $request)
+    // {
 
-        // dd($request->all());
+    //     // dd($request->all());
 
-        // Validate request
-        $validator = Validator::make($request->all(), [
-            'member_id' => 'required|exists:members,id',
-            'voucher_type' => 'required|in:max,refer',
-            'denomination_history' => 'required',
-            'quantity' => 'required|integer|min:1',
-            'payment_method' => 'required|in:online,manual',
-            'total_amount' => 'required|numeric|min:0',
-            'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
-        ]);
+    //     // Validate request
+    //     $validator = Validator::make($request->all(), [
+    //         'member_id' => 'required|exists:members,id',
+    //         'voucher_type' => 'required|in:max,refer',
+    //         'denomination_history' => 'required',
+    //         'quantity' => 'required|integer|min:1',
+    //         'payment_method' => 'required|in:online,manual',
+    //         'total_amount' => 'required|numeric|min:0',
+    //         'manual_payment_docs' => 'required_if:payment_method,manual|file|mimes:jpeg,jpg,png,pdf|max:5120', // max 5MB
+    //     ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Get denomination to verify total amount
-            $denomination = Denomination::find($request->denomination_id);
-
-            
-            
-            if (!$denomination) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Denomination not found'
-                ], 404);
-            }
-
-            // Get rm_points from settings
-            $setting = Setting::first();
-
-            
-
-            if (!$setting) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Settings not found'
-                ], 500);
-            }
-
-            // Decode setting_attribute if it's a string
-            $settingAttribute = is_string($setting->setting_attribute)
-                ? json_decode($setting->setting_attribute, true)
-                : $setting->setting_attribute;
+    //         // Get denomination to verify total amount
+    //         $denomination = Denomination::find($request->denomination_id);
 
             
             
-            if (!isset($settingAttribute['maxreward']['rm_points'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'rm_points not configured in settings'
-                ], 500);
-            }
+    //         if (!$denomination) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Denomination not found'
+    //             ], 404);
+    //         }
 
-            $rmPoints = $settingAttribute['maxreward']['rm_points'];
+    //         // Get rm_points from settings
+    //         $setting = Setting::first();
 
-            $expectedAmount = $denomination->value * $request->quantity;
+            
 
-            // Verify total amount matches expected calculation
-            if ($request->total_amount != $expectedAmount) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Total amount mismatch. Expected: ' . $expectedAmount
-                ], 400);
-            }
+    //         if (!$setting) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Settings not found'
+    //             ], 500);
+    //         }
 
-            $totalAmount = $expectedAmount * $rmPoints;
+    //         // Decode setting_attribute if it's a string
+    //         $settingAttribute = is_string($setting->setting_attribute)
+    //             ? json_decode($setting->setting_attribute, true)
+    //             : $setting->setting_attribute;
+
+            
+            
+    //         if (!isset($settingAttribute['maxreward']['rm_points'])) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'rm_points not configured in settings'
+    //             ], 500);
+    //         }
+
+    //         $rmPoints = $settingAttribute['maxreward']['rm_points'];
+
+    //         $expectedAmount = $denomination->value * $request->quantity;
+
+    //         // Verify total amount matches expected calculation
+    //         if ($request->total_amount != $expectedAmount) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => 'Total amount mismatch. Expected: ' . $expectedAmount
+    //             ], 400);
+    //         }
+
+    //         $totalAmount = $expectedAmount * $rmPoints;
 
 
-            // Handle manual payment document upload to Cloudinary
-            $manualPaymentDocsUrl = null;
-            $manualPaymentDocsCloudinaryId = null;
+    //         // Handle manual payment document upload to Cloudinary
+    //         $manualPaymentDocsUrl = null;
+    //         $manualPaymentDocsCloudinaryId = null;
 
-            if ($request->payment_method === 'manual' && $request->hasFile('manual_payment_docs')) {
-                $uploadResult = CloudinaryHelper::uploadImage(
-                    $request->file('manual_payment_docs'),
-                    'maxreward/vouchers/payment-docs'
-                );
-                $manualPaymentDocsUrl = $uploadResult['url'];
-                $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
-            }
+    //         if ($request->payment_method === 'manual' && $request->hasFile('manual_payment_docs')) {
+    //             $uploadResult = CloudinaryHelper::uploadImage(
+    //                 $request->file('manual_payment_docs'),
+    //                 'maxreward/vouchers/payment-docs'
+    //             );
+    //             $manualPaymentDocsUrl = $uploadResult['url'];
+    //             $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
+    //         }
 
 
-            // dd($totalAmount);
+    //         // dd($totalAmount);
 
-            // Create voucher
-            $voucher = Voucher::create([
-                'member_id' => $request->member_id,
-                'voucher_type' => $request->voucher_type,
-                'denomination_id' => $request->denomination_id,
-                'quantity' => $request->quantity,
-                'payment_method' => $request->payment_method,
-                'total_amount' => $totalAmount,
-                'manual_payment_docs_url' => $manualPaymentDocsUrl,
-                'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
-                'status' => 'pending',
-            ]);
+    //         // Create voucher
+    //         $voucher = Voucher::create([
+    //             'member_id' => $request->member_id,
+    //             'voucher_type' => $request->voucher_type,
+    //             'denomination_id' => $request->denomination_id,
+    //             'quantity' => $request->quantity,
+    //             'payment_method' => $request->payment_method,
+    //             'total_amount' => $totalAmount,
+    //             'manual_payment_docs_url' => $manualPaymentDocsUrl,
+    //             'manual_payment_docs_cloudinary_id' => $manualPaymentDocsCloudinaryId,
+    //             'status' => 'pending',
+    //         ]);
 
-            // // Get member wallet
-            // $memberWallet = MemberWallet::where('member_id', $request->member_id)->first();
+    //         // // Get member wallet
+    //         // $memberWallet = MemberWallet::where('member_id', $request->member_id)->first();
 
-            // if (!$memberWallet) {
-            //     DB::rollBack();
-            //     return response()->json([
-            //         'success' => false,
-            //         'message' => 'Member wallet not found'
-            //     ], 404);
-            // }
+    //         // if (!$memberWallet) {
+    //         //     DB::rollBack();
+    //         //     return response()->json([
+    //         //         'success' => false,
+    //         //         'message' => 'Member wallet not found'
+    //         //     ], 404);
+    //         // }
 
-            // // Update member wallet based on voucher type
-            // if ($request->voucher_type === 'refer') {
-            //     $memberWallet->total_rp += $totalAmount;
-            //     $memberWallet->total_points += $totalAmount;
-            // } elseif ($request->voucher_type === 'max') {
-            //     $memberWallet->available_points += $totalAmount;
-            //     $memberWallet->total_points += $totalAmount;
-            // }
+    //         // // Update member wallet based on voucher type
+    //         // if ($request->voucher_type === 'refer') {
+    //         //     $memberWallet->total_rp += $totalAmount;
+    //         //     $memberWallet->total_points += $totalAmount;
+    //         // } elseif ($request->voucher_type === 'max') {
+    //         //     $memberWallet->available_points += $totalAmount;
+    //         //     $memberWallet->total_points += $totalAmount;
+    //         // }
 
-            // $memberWallet->save();
+    //         // $memberWallet->save();
 
-            DB::commit();
+    //         DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Voucher created successfully',
-                'data' => [
-                    'voucher' => $voucher->load('denomination'),
-                    // 'wallet' => $memberWallet
-                ]
-            ], 201);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Voucher created successfully',
+    //             'data' => [
+    //                 'voucher' => $voucher->load('denomination'),
+    //                 // 'wallet' => $memberWallet
+    //             ]
+    //         ], 201);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create voucher',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to create voucher',
+    //             'error' => $e->getMessage()
+    //         ], 500);
+    //     }
+    // }
 
     public function index()
     {

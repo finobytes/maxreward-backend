@@ -123,11 +123,11 @@ class OrderExchangeController extends Controller
         DB::beginTransaction();
 
         try {
-            $merchant = Auth::guard('merchant')->user();
+            $merchant = auth('merchant')->user();
 
             // Verify order belongs to merchant
             $order = Order::with(['items'])
-                ->byMerchant($merchant->id)
+                ->byMerchant($merchant->merchant_id)
                 ->find($request->order_id);
 
             if (!$order) {
@@ -192,7 +192,7 @@ class OrderExchangeController extends Controller
             $exchange = OrderExchange::create([
                 'order_id' => $order->id,
                 'order_item_id' => $orderItem->id,
-                'merchant_id' => $merchant->id,
+                'merchant_id' => $merchant->merchant_id,
                 'member_id' => $order->member_id,
                 'original_product_variation_id' => $originalVariation->id,
                 'original_variant_name' => $originalVariantName,

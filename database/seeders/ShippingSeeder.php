@@ -30,20 +30,20 @@ class ShippingSeeder extends Seeder
                 'name' => 'Standard Delivery', 
                 'code' => 'STANDARD', 
                 'description' => 'Regular delivery within 3-5 days',
-                'min_days' => 2, 
-                'max_days' => 3,
-                'is_active' => true,
-                'sort_order' => 2 // Medium priority
-            ],
-            [
-                'name' => 'Economy Delivery', 
-                'code' => 'ECONOMY', 
-                'description' => 'Budget-friendly delivery within 5-7 days',
                 'min_days' => 3, 
                 'max_days' => 5,
                 'is_active' => true,
-                'sort_order' => 3 // Lowest priority
+                'sort_order' => 2 // Medium priority
             ],
+            // [
+            //     'name' => 'Economy Delivery', 
+            //     'code' => 'ECONOMY', 
+            //     'description' => 'Budget-friendly delivery within 5-7 days',
+            //     'min_days' => 3, 
+            //     'max_days' => 5,
+            //     'is_active' => true,
+            //     'sort_order' => 3 // Lowest priority
+            // ],
         ];
 
         foreach ($methods as $method) {
