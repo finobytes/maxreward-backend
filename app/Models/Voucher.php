@@ -462,9 +462,4 @@ class Voucher extends Model
             ->get();
     }
 
-
-    public function rejectedBy()
-    {
-        return $this->belongsTo(Admin::class, 'rejected_by');
-    }
 }
