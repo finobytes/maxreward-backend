@@ -12,6 +12,7 @@
         "laravel/tinker": "^2.10.1",
         "php-open-source-saver/jwt-auth": "^2.8",
         "spatie/laravel-permission": "^6.24",
+        "stripe/stripe-php": "^19.3",
         "twilio/sdk": "^8.8"
     },
     "require-dev": {

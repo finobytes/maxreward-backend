@@ -53,6 +53,18 @@ use App\Http\Controllers\Api\Admin\ShippingZoneController;
 use App\Http\Controllers\Api\Admin\ShippingMethodController;
 use App\Http\Controllers\Api\Merchant\OrderExchangeController;
 use App\Http\Controllers\Api\OrderAutoCompleteController;
+use App\Http\Controllers\Api\StripeWebhookController; // NEW: Stripe Webhook Controller
+
+
+/*
+|--------------------------------------------------------------------------
+| Stripe Webhook Route (Public - No Authentication Required)
+|--------------------------------------------------------------------------
+| This must be placed BEFORE any auth middleware routes
+| Stripe will call this endpoint to notify payment status
+*/
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
+
 
 /*
 |--------------------------------------------------------------------------
@@ -303,6 +315,10 @@ Route::prefix('admin')->group(function () {
             Route::post('/{voucherId}/reject', [AdminVoucherController::class, 'rejectVoucher']);
             Route::post('/{voucherId}/status-change', [AdminVoucherController::class, 'changeVoucherStatus']);
             Route::get('/{voucherId}', [AdminVoucherController::class, 'getVoucher']);
+            // Get voucher statistics
+            Route::get('/statistics/overview', [AdminVoucherController::class, 'getStatistics']);
+            // Get pending vouchers count
+            Route::get('/pending/count', [AdminVoucherController::class, 'getPendingCount']);
         });
 
         // CP Transaction Management (Admin only)
@@ -832,6 +848,10 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     // Get upline members (up to 30 levels) for a authenticated member
     Route::get('/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:member');
 
+    /////////////////////////////////////////////////////////////////
+    ////////////////////// Member vouchers routes////////////////////
+    /////////////////////////////////////////////////////////////////
+
     // Voucher routes
     Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant');
 
@@ -840,6 +860,18 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
 
     // Get single voucher by ID
     Route::get('/{id}/vouchers', [VoucherController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
+
+    // Verify online payment after Stripe checkout
+    Route::post('/verify-payment/voucher', [VoucherController::class, 'verifyPayment']);
+
+    // Cancel payment
+    Route::post('/cancel-payment/voucher', [VoucherController::class, 'cancelPayment']);
+
+    // Get payment details by session ID
+    Route::get('/vouchers/payment-details/{session_id}', [VoucherController::class, 'getPaymentDetails']);
+
+    // Get voucher statistics
+    Route::get('/vouchers/statistics', [VoucherController::class, 'getVoucherStats']);
 
     // Get maxreward corporate member
     Route::get('/maxreward-corporate-{id}', [MemberController::class, 'getMaxrewardCorporateMember'])->middleware('role:admin,member');

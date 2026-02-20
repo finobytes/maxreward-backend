@@ -10,6 +10,7 @@ use App\Models\Notification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Models\RechargeRequestInfo;
 
 class VoucherController extends Controller
 {
@@ -22,30 +23,49 @@ class VoucherController extends Controller
     public function getAllVouchers(Request $request)
     {
         try {
-            $query = Voucher::with(['member', 'denomination']);
+            $query = Voucher::with(['member', 'denomination', 'rejectedBy']);
 
             // Filter by status
-            if ($request->has('status')) {
+            if ($request->has('status') && $request->status != '') {
                 $query->where('status', $request->status);
             }
 
-            // Filter by voucher type
-            if ($request->has('voucher_type')) {
-                $query->where('voucher_type', $request->voucher_type);
-            }
-
             // Filter by payment method
-            if ($request->has('payment_method')) {
+            if ($request->has('payment_method') && $request->payment_method != '') {
                 $query->where('payment_method', $request->payment_method);
             }
 
-            // Filter by member_id
-            if ($request->has('member_id')) {
+            // Filter by voucher type
+            if ($request->has('voucher_type') && $request->voucher_type != '') {
+                $query->where('voucher_type', $request->voucher_type);
+            }
+
+            // Filter by member
+            if ($request->has('member_id') && $request->member_id != '') {
                 $query->where('member_id', $request->member_id);
+            }
+
+            // Filter by date range
+            if ($request->has('from_date') && $request->from_date != '') {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            }
+
+            if ($request->has('to_date') && $request->to_date != '') {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
+
+            // Search by voucher_id
+            if ($request->has('search') && $request->search != '') {
+                $query->where('voucher_id', 'LIKE', '%' . $request->search . '%');
             }
 
             // Order by created_at descending (newest first)
             $query->orderBy('created_at', 'desc');
+
+            // Order by
+            // $orderBy = $request->get('order_by', 'created_at');
+            // $orderDirection = $request->get('order_direction', 'desc');
+            // $query->orderBy($orderBy, $orderDirection);
 
             // Paginate results
             $perPage = $request->get('per_page', 15);
@@ -87,6 +107,14 @@ class VoucherController extends Controller
                     'success' => false,
                     'message' => 'Voucher not found'
                 ], 404);
+            }
+
+            // Check if voucher is manual payment
+            if ($voucher->payment_method !== 'manual') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only manual payment vouchers can be approved'
+                ], 400);
             }
 
             // Check if voucher is pending
@@ -152,8 +180,22 @@ class VoucherController extends Controller
             $memberWallet->save();
 
             // Update voucher status to success
-            $voucher->status = 'success';
+            $voucher->status = 'approved';
+            $voucher->paid_at = now();
             $voucher->save();
+
+
+            // Log approval
+            RechargeRequestInfo::logAfterRequest(
+                $voucher->member_id,
+                null,
+                [
+                    'voucher_id' => $voucher->id,
+                    'status' => 'approved_by_admin',
+                    'approved_by' => auth()->id(),
+                    'approved_at' => now()->toDateTimeString(),
+                ]
+            );
 
             // Create notification for voucher approval
             Notification::create([
@@ -196,110 +238,6 @@ class VoucherController extends Controller
     }
 
 
-
-    // public function approveVoucherOld(Request $request, $voucherId)
-    // {
-    //     try {
-    //         DB::beginTransaction();
-
-    //         // Find the voucher
-    //         $voucher = Voucher::find($voucherId);
-
-    //         if (!$voucher) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Voucher not found'
-    //             ], 404);
-    //         }
-
-    //         // Check if voucher is pending
-    //         if ($voucher->status !== 'pending') {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Only pending vouchers can be approved. Current status: ' . $voucher->status
-    //             ], 400);
-    //         }
-
-    //         // Get member wallet
-    //         $memberWallet = MemberWallet::where('member_id', $voucher->member_id)->first();
-
-    //         if (!$memberWallet) {
-    //             DB::rollBack();
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Member wallet not found'
-    //             ], 404);
-    //         }
-
-    //         $totalAmount = $voucher->total_amount;
-
-    //         // Update member wallet based on voucher type (logic from lines 135-155)
-    //         if ($voucher->voucher_type === 'refer') {
-    //             $memberWallet->total_rp += $totalAmount;
-    //             $memberWallet->total_points += $totalAmount;
-
-    //             // Create transaction record for referral points
-    //             Transaction::create([
-    //                 'member_id' => $voucher->member_id,
-    //                 'merchant_id' => null,
-    //                 'referral_member_id' => null,
-    //                 'transaction_points' => $totalAmount,
-    //                 'transaction_type' => Transaction::TYPE_VRP, // vrp = voucher referral points
-    //                 'points_type' => Transaction::POINTS_CREDITED,
-    //                 'transaction_reason' => 'Voucher approved - Referral Points',
-    //                 'brp' => $memberWallet->total_rp,
-    //                 'bap' => $memberWallet->available_points,
-    //                 'bop' => $memberWallet->onhold_points
-    //             ]);
-
-    //         } elseif ($voucher->voucher_type === 'max') {
-    //             $memberWallet->available_points += $totalAmount;
-    //             $memberWallet->total_points += $totalAmount;
-
-    //             // Create transaction record for available points
-    //             Transaction::create([
-    //                 'member_id' => $voucher->member_id,
-    //                 'merchant_id' => null,
-    //                 'referral_member_id' => null,
-    //                 'transaction_points' => $totalAmount,
-    //                 'transaction_type' => Transaction::TYPE_VAP, // vap = voucher available points
-    //                 'points_type' => Transaction::POINTS_CREDITED,
-    //                 'transaction_reason' => 'Voucher approved - Available Points',
-    //                 'bap' => $memberWallet->available_points,
-    //                 'bop' => $memberWallet->onhold_points,
-    //                 'brp' => $memberWallet->total_rp
-    //             ]);
-    //         }
-
-    //         $memberWallet->save();
-
-    //         // Update voucher status to success
-    //         $voucher->status = 'success';
-    //         $voucher->save();
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Voucher approved successfully',
-    //             'data' => [
-    //                 'voucher' => $voucher->load('denomination', 'member'),
-    //                 'wallet' => $memberWallet,
-    //             ]
-    //         ], 200);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to approve voucher',
-    //             'error' => $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
-
     public function rejectVoucher(Request $request, $voucherId) {
         try {
             // Find the voucher
@@ -310,6 +248,13 @@ class VoucherController extends Controller
                     'success' => false,
                     'message' => 'Voucher not found'
                 ], 404);
+            }
+
+            if ($voucher->payment_method !== 'manual') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only manual payment vouchers can be rejected'
+                ], 400);
             }
 
             // Check if voucher is pending
@@ -323,7 +268,21 @@ class VoucherController extends Controller
             // Update voucher status to failed
             $voucher->status = $request->status;
             $voucher->rejected_reason = $request->reason;
+            $voucher->rejected_by = auth()->user()->id;
             $voucher->save();
+
+            // Log rejection
+            RechargeRequestInfo::logAfterRequest(
+                $voucher->member_id,
+                null,
+                [
+                    'voucher_id' => $voucher->id,
+                    'status' => 'rejected_by_admin',
+                    'rejected_by' => auth()->id(),
+                    'rejected_reason' => $request->reason,
+                    'rejected_at' => now()->toDateTimeString(),
+                ]
+            );
 
             return response()->json([
                 'success' => true,
@@ -424,6 +383,92 @@ class VoucherController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update voucher status',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get voucher statistics
+     * Only member vouchers
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getStatistics()
+    {
+        try {
+            $stats = [
+                // Overall statistics
+                'total_vouchers' => Voucher::count(),
+                'total_revenue' => Voucher::where('status', 'approved')->sum('total_amount'),
+                
+                // By status
+                'pending_count' => Voucher::where('status', 'pending')->count(),
+                'approved_count' => Voucher::where('status', 'approved')->count(),
+                'rejected_count' => Voucher::where('status', 'rejected')->count(),
+                'failed_count' => Voucher::where('status', 'failed')->count(),
+                
+                // By payment method
+                'online_payments' => Voucher::where('payment_method', 'online')->where('status', 'approved')->count(),
+                'manual_payments' => Voucher::where('payment_method', 'manual')->where('status', 'approved')->count(),
+                'online_revenue' => Voucher::where('payment_method', 'online')->where('status', 'approved')->sum('total_amount'),
+                'manual_revenue' => Voucher::where('payment_method', 'manual')->where('status', 'approved')->sum('total_amount'),
+                
+                // By voucher type
+                'max_vouchers' => Voucher::where('voucher_type', 'max')->where('status', 'approved')->count(),
+                'refer_vouchers' => Voucher::where('voucher_type', 'refer')->where('status', 'approved')->count(),
+                'max_revenue' => Voucher::where('voucher_type', 'max')->where('status', 'approved')->sum('total_amount'),
+                'refer_revenue' => Voucher::where('voucher_type', 'refer')->where('status', 'approved')->sum('total_amount'),
+                
+                // Recent statistics (last 7 days)
+                'recent_7_days' => Voucher::where('created_at', '>=', now()->subDays(7))->count(),
+                'recent_7_days_revenue' => Voucher::where('created_at', '>=', now()->subDays(7))->where('status', 'approved')->sum('total_amount'),
+                
+                // Recent statistics (last 30 days)
+                'recent_30_days' => Voucher::where('created_at', '>=', now()->subDays(30))->count(),
+                'recent_30_days_revenue' => Voucher::where('created_at', '>=', now()->subDays(30))->where('status', 'approved')->sum('total_amount'),
+                
+                // Pending manual payments (need admin review)
+                'pending_manual_payments' => Voucher::where('payment_method', 'manual')->where('status', 'pending')->count(),
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => $stats
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get pending vouchers count (for notifications)
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPendingCount()
+    {
+        try {
+            $count = Voucher::where('status', 'pending')
+                ->where('payment_method', 'manual')
+                ->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'pending_count' => $count
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get pending count',
                 'error' => $e->getMessage()
             ], 500);
         }

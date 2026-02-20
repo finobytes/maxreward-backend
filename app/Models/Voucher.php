@@ -30,7 +30,11 @@ class Voucher extends Model
         'rejected_reason',
         'rejected_by',
         'status',
-        'voucher_id'
+        'voucher_id',
+        'stripe_payment_intent_id',
+        'stripe_checkout_session_id',
+        'fpx_transaction_id',
+        'paid_at'
     ];
 
     /**
@@ -45,6 +49,7 @@ class Voucher extends Model
         'denomination_history' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'paid_at' => 'datetime',
     ];
 
     /**
@@ -69,6 +74,14 @@ class Voucher extends Model
     public function denomination()
     {
         return $this->belongsTo(Denomination::class, 'denomination_id');
+    }
+
+    /**
+     * Rejected by admin
+     */
+    public function rejectedBy()
+    {
+        return $this->belongsTo(Admin::class, 'rejected_by');
     }
 
     /**
@@ -112,6 +125,14 @@ class Voucher extends Model
     }
 
     /**
+     * Scope to get approved vouchers
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'approved');
+    }
+
+    /**
      * Scope to get pending vouchers
      */
     public function scopePending($query)
@@ -144,11 +165,12 @@ class Voucher extends Model
     }
 
     /**
-     * Mark voucher as successful
+     * Mark voucher as successful and approved (for online payments)
      */
     public function markAsSuccessful()
     {
-        $this->status = 'success';
+        $this->status = 'approved'; // Auto-approved for online payments
+        $this->paid_at = now();
         $this->save();
         
         return $this;
@@ -166,11 +188,30 @@ class Voucher extends Model
     }
 
     /**
+     * Mark voucher as pending (for manual payments)
+     */
+    public function markAsPending()
+    {
+        $this->status = 'pending';
+        $this->save();
+        
+        return $this;
+    }
+
+    /**
      * Check if voucher is successful
      */
     public function isSuccessful()
     {
         return $this->status === 'success';
+    }
+
+    /**
+     * Check if voucher is approved
+     */
+    public function isApproved()
+    {
+        return $this->status === 'approved';
     }
 
     /**
