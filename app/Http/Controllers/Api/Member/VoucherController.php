@@ -483,7 +483,7 @@ class VoucherController extends Controller
                 $member_id = $merchant->corporateMember->id;
             }
             
-            $vouchers = Voucher::with('denomination')->where('member_id', $memberId)
+            $vouchers = Voucher::with('denomination')->where('member_id', $member_id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
                 

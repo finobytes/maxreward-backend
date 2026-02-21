@@ -12,7 +12,7 @@ class RechargeRequestInfo extends Model
     /**
      * The table associated with the model.
      */
-    protected $table = 'recharge_request_info';
+    protected $table = 'recharge_request_infos';
 
     /**
      * The attributes that are mass assignable.
