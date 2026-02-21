@@ -282,9 +282,9 @@ class VoucherController extends Controller
                 'member_id' => $request->member_id,
                 'type' => 'voucher_created',
                 'title' => 'Voucher Created',
-                'message' => "Your voucher has been created successfully. Voucher ID: {$voucher_id}. Total Amount: {$finalTotalAmount} points. Status: Pending",
+                'message' => "Your voucher has been created successfully. Voucher ID: {$voucher->id}. Total Amount: {$finalTotalAmount} points. Status: Pending",
                 'data' => [
-                    'voucher_id' => $voucher_id,
+                    'voucher_id' => $voucher->id,
                     'voucher_type' => $request->voucher_type,
                     'total_amount' => $finalTotalAmount,
                     'quantity' => $totalQuantity,
