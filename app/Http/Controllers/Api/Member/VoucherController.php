@@ -260,8 +260,9 @@ class VoucherController extends Controller
                 $manualPaymentDocsCloudinaryId = $uploadResult['public_id'];
             }
 
-            // Generate unique voucher ID
-            $voucherId = $this->generateVoucherId();
+            // Generate voucher ID using the shared counter-based method
+            // Same method used by FPXPaymentService for online payments
+            $voucherId = $this->fpxService->generateVoucherId();
 
             // Create voucher - ONLY member_id, no merchant_id
             $voucher = Voucher::create([
@@ -533,17 +534,4 @@ class VoucherController extends Controller
         }
     }
 
-    /**
-     * Generate unique voucher ID
-     *
-     * @return string
-     */
-    private function generateVoucherId()
-    {
-        do {
-            $voucherId = 'VCH-' . strtoupper(\Illuminate\Support\Str::random(10));
-        } while (Voucher::where('voucher_id', $voucherId)->exists());
-
-        return $voucherId;
-    }
 }
