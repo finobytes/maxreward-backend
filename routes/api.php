@@ -294,10 +294,10 @@ Route::prefix('admin')->group(function () {
             Route::post('/staff/remove-direct-permissions', [RoleController::class, 'removeDirectPermissionsFromStaff']);
         });
 
-        Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
-        Route::post('/merchant-suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
-        Route::post('/merchant-unsuspend', [MerchantController::class, 'unsuspendMerchant'])->middleware('role:admin');
-        Route::post('/merchant-rejected', [MerchantController::class, 'rejectMerchant'])->middleware('role:admin');
+        Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin,staff');
+        Route::post('/merchant-suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin,staff');
+        Route::post('/merchant-unsuspend', [MerchantController::class, 'unsuspendMerchant'])->middleware('role:admin,staff');
+        Route::post('/merchant-rejected', [MerchantController::class, 'rejectMerchant'])->middleware('role:admin,staff');
 //
         // Company Info Management (Admin only)
         Route::prefix('company')->group(function () {
@@ -378,26 +378,26 @@ Route::prefix('admin')->group(function () {
 
 // Transaction Management (Admin only)
 Route::prefix('transactions')->middleware('auth:admin,member,merchant')->group(function () {
-    Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin');
-    Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin');
-    Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member');
-    Route::get('/{id}/member/available/transactions', [TransactionController::class, 'getMemberAvailableTransactions'])->middleware('role:member,admin,merchant');
-    Route::get('/{id}/member/refer/transactions', [TransactionController::class, 'getMemberReferTransactions'])->middleware('role:member,admin,merchant');
+    Route::get('/', [TransactionController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/all', [TransactionController::class, 'getAllTransactions'])->middleware('role:admin,staff');
+    Route::get('/{id}', [TransactionController::class, 'show'])->middleware('role:admin,member,staff');
+    Route::get('/{id}/member/available/transactions', [TransactionController::class, 'getMemberAvailableTransactions'])->middleware('role:member,admin,merchant,staff');
+    Route::get('/{id}/member/refer/transactions', [TransactionController::class, 'getMemberReferTransactions'])->middleware('role:member,admin,merchant,staff');
 });
 
 // Notification Management
 Route::prefix('notifications')->middleware('auth:admin,member,merchant')->group(function () {
-    Route::get('/', [NotificationController::class, 'index'])->middleware('role:admin');
-    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->middleware('role:admin');
+    Route::get('/', [NotificationController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/all', [NotificationController::class, 'getAllNotifications'])->middleware('role:admin,staff');
     Route::get('/member/all', [NotificationController::class, 'getMemberNotifications'])->middleware('role:member');
-    Route::get('/{id}/read', [NotificationController::class, 'readSingleMemberNotification'])->middleware('role:member,merchant,admin');
-    Route::get('/merchant/all', [NotificationController::class, 'getMerchantNotifications'])->middleware('role:merchant');
+    Route::get('/{id}/read', [NotificationController::class, 'readSingleMemberNotification'])->middleware('role:member,merchant,admin,staff');
+    Route::get('/merchant/all', [NotificationController::class, 'getMerchantNotifications'])->middleware('role:merchant,staff');
     // Route::get('/merchant/{id}/read', [NotificationController::class, 'readSingleMerchnatNotification'])->middleware('role:merchant');
-    Route::post('/admin/save-count', [NotificationController::class, 'saveAdminNotificationSaveCount'])->middleware('role:admin');
+    Route::post('/admin/save-count', [NotificationController::class, 'saveAdminNotificationSaveCount'])->middleware('role:admin,staff');
     Route::post('/member/save-count', [NotificationController::class, 'saveMemberNotificationSaveCount'])->middleware('role:member');
-    Route::post('/merchant/save-count', [NotificationController::class, 'saveMerchantNotificationSaveCount'])->middleware('role:merchant');
+    Route::post('/merchant/save-count', [NotificationController::class, 'saveMerchantNotificationSaveCount'])->middleware('role:merchant,staff');
     Route::get('/{id}', [NotificationController::class, 'show'])->middleware('role:admin,member,merchant');
-    Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 // WhatsApp Message Log Management (Admin only)
@@ -456,12 +456,12 @@ Route::prefix('admin-staffs')->middleware('auth:admin')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('business-types')->middleware('auth:admin,member')->group(function () {
-    Route::post('/', [BusinessTypeController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [BusinessTypeController::class, 'index'])->middleware('role:admin,member');
-    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes'])->middleware('role:admin,member');
-    Route::get('/{id}', [BusinessTypeController::class, 'show'])->middleware('role:admin');
-    Route::patch('/{id}', [BusinessTypeController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [BusinessTypeController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [BusinessTypeController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [BusinessTypeController::class, 'index'])->middleware('role:admin,member,staff');
+    Route::get('/all', [BusinessTypeController::class, 'getAllBusinessTypes'])->middleware('role:admin,member,staff');
+    Route::get('/{id}', [BusinessTypeController::class, 'show'])->middleware('role:admin,staff');
+    Route::patch('/{id}', [BusinessTypeController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [BusinessTypeController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -471,12 +471,12 @@ Route::prefix('business-types')->middleware('auth:admin,member')->group(function
 |--------------------------------------------------------------------------
 */
 Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(function () {
-    Route::post('/', [DenominationController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [DenominationController::class, 'index'])->middleware('role:admin,merchant,member');
-    Route::get('/all', [DenominationController::class, 'getAllDenominations'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [DenominationController::class, 'show'])->middleware('role:admin');
-    Route::patch('/{id}', [DenominationController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [DenominationController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [DenominationController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [DenominationController::class, 'index'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/all', [DenominationController::class, 'getAllDenominations'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/{id}', [DenominationController::class, 'show'])->middleware('role:admin,staff');
+    Route::patch('/{id}', [DenominationController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [DenominationController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -486,12 +486,12 @@ Route::prefix('denominations')->middleware('auth:admin,merchant,member')->group(
 |--------------------------------------------------------------------------
 */
 Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(function () {
-    Route::post('/', [CategoryController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,merchant,member');
-    Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [CategoryController::class, 'show'])->middleware('role:admin');
-    Route::post('/{id}', [CategoryController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [CategoryController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [CategoryController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [CategoryController::class, 'index'])->middleware('role:admin,staff,merchant,member');
+    Route::get('/all', [CategoryController::class, 'getAllCategories'])->middleware('role:admin,staff,merchant,member');
+    Route::get('/{id}', [CategoryController::class, 'show'])->middleware('role:admin,staff');
+    Route::post('/{id}', [CategoryController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [CategoryController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -501,12 +501,12 @@ Route::prefix('categories')->middleware('auth:admin,merchant,member')->group(fun
 |--------------------------------------------------------------------------
 */
 Route::prefix('sub-categories')->middleware('auth:admin,merchant')->group(function () {
-    Route::post('/', [SubCategoryController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [SubCategoryController::class, 'index'])->middleware('role:admin,merchant,member');
-    Route::get('/all', [SubCategoryController::class, 'getAllSubCategories'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [SubCategoryController::class, 'show'])->middleware('role:admin');
-    Route::post('/{id}', [SubCategoryController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [SubCategoryController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [SubCategoryController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [SubCategoryController::class, 'index'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/all', [SubCategoryController::class, 'getAllSubCategories'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/{id}', [SubCategoryController::class, 'show'])->middleware('role:admin,staff');
+    Route::post('/{id}', [SubCategoryController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [SubCategoryController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -516,12 +516,12 @@ Route::prefix('sub-categories')->middleware('auth:admin,merchant')->group(functi
 |--------------------------------------------------------------------------
 */
 Route::prefix('sections')->middleware('auth:admin')->group(function () {
-    Route::post('/', [SectionController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [SectionController::class, 'index'])->middleware('role:admin');
-    Route::get('/all', [SectionController::class, 'getAllSections'])->middleware('role:admin');
-    Route::get('/{id}', [SectionController::class, 'show'])->middleware('role:admin');
-    Route::patch('/{id}', [SectionController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [SectionController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [SectionController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [SectionController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/all', [SectionController::class, 'getAllSections'])->middleware('role:admin,staff');
+    Route::get('/{id}', [SectionController::class, 'show'])->middleware('role:admin,staff');
+    Route::patch('/{id}', [SectionController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [SectionController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -531,12 +531,12 @@ Route::prefix('sections')->middleware('auth:admin')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::prefix('actions')->middleware('auth:admin')->group(function () {
-    Route::post('/', [ActionController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [ActionController::class, 'index'])->middleware('role:admin');
-    Route::get('/all', [ActionController::class, 'getAllActions'])->middleware('role:admin');
-    Route::get('/{id}', [ActionController::class, 'show'])->middleware('role:admin');
-    Route::patch('/{id}', [ActionController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [ActionController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [ActionController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [ActionController::class, 'index'])->middleware('role:admin,staff');
+    Route::get('/all', [ActionController::class, 'getAllActions'])->middleware('role:admin,staff');
+    Route::get('/{id}', [ActionController::class, 'show'])->middleware('role:admin,staff');
+    Route::patch('/{id}', [ActionController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [ActionController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -555,12 +555,12 @@ Route::prefix('actions')->middleware('auth:admin')->group(function () {
 // });
 
 Route::prefix('models')->middleware('auth:admin,merchant')->group(function () {
-    Route::post('/', [ModelController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [ModelController::class, 'index'])->middleware('role:admin,merchant,member');
-    Route::get('/all', [ModelController::class, 'getAllModels'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [ModelController::class, 'show'])->middleware('role:admin');
-    Route::post('/{id}', [ModelController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [ModelController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [ModelController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [ModelController::class, 'index'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/all', [ModelController::class, 'getAllModels'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/{id}', [ModelController::class, 'show'])->middleware('role:admin,staff');
+    Route::post('/{id}', [ModelController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [ModelController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 /*
@@ -578,12 +578,12 @@ Route::prefix('models')->middleware('auth:admin,merchant')->group(function () {
 
 
 Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
-    Route::post('/', [BrandController::class, 'store'])->middleware('role:admin');
-    Route::get('/', [BrandController::class, 'index'])->middleware('role:admin,merchant,member');
-    Route::get('/all', [BrandController::class, 'getAllBrands'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [BrandController::class, 'show'])->middleware('role:admin');
-    Route::post('/{id}', [BrandController::class, 'update'])->middleware('role:admin');
-    Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('role:admin');
+    Route::post('/', [BrandController::class, 'store'])->middleware('role:admin,staff');
+    Route::get('/', [BrandController::class, 'index'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/all', [BrandController::class, 'getAllBrands'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/{id}', [BrandController::class, 'show'])->middleware('role:admin,staff');
+    Route::post('/{id}', [BrandController::class, 'update'])->middleware('role:admin,staff');
+    Route::delete('/{id}', [BrandController::class, 'destroy'])->middleware('role:admin,staff');
 });
 
 
@@ -613,16 +613,16 @@ Route::prefix('brands')->middleware('auth:admin,merchant')->group(function () {
 
 Route::prefix('products')->middleware('auth:admin,merchant,member')->group(function () {
     // Variation Helpers
-    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant');
-    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant');
+    Route::post('generate-variations', [ProductController::class, 'generateVariations'])->middleware('role:merchant,staff');
+    Route::post('validate-sku', [ProductController::class, 'validateSku'])->middleware('role:merchant,staff');
     
-    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member');
-     Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant,member');
-    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant,member');
-    Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant');
-    Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant');
-    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant');
-    Route::patch('/status/update/{id}', [ProductController::class, 'statusUpdate'])->middleware('role:merchant');
+    Route::get('/', [ProductController::class, 'index'])->middleware('role:admin,member,staff');
+     Route::get('/merchant/{id}', [ProductController::class, 'merchantIndex'])->middleware('role:admin,merchant,member,staff');
+    Route::get('/{id}', [ProductController::class, 'show'])->middleware('role:admin,merchant,member,staff');
+    Route::post('/', [ProductController::class, 'store'])->middleware('role:merchant,staff');
+    Route::post('/{id}', [ProductController::class, 'update'])->middleware('role:merchant,staff');
+    Route::delete('/{id}', [ProductController::class, 'destroy'])->middleware('role:merchant,staff');
+    Route::patch('/status/update/{id}', [ProductController::class, 'statusUpdate'])->middleware('role:merchant,staff');
 });
 
 
@@ -680,9 +680,9 @@ Route::prefix('admin/attribute-items')->middleware('auth:admin,merchant')->group
 |--------------------------------------------------------------------------
 */
 Route::prefix('settings')->middleware('auth:admin,merchant,member')->group(function () {
-    Route::get('/', [SettingController::class, 'getSetting'])->middleware('role:admin,merchant,member');
-    Route::post('/', [SettingController::class, 'upsertSetting'])->middleware('role:admin');
-    Route::delete('/', [SettingController::class, 'deleteSetting'])->middleware('role:admin');
+    Route::get('/', [SettingController::class, 'getSetting'])->middleware('role:admin,merchant,member,staff');
+    Route::post('/', [SettingController::class, 'upsertSetting'])->middleware('role:admin,staff');
+    Route::delete('/', [SettingController::class, 'deleteSetting'])->middleware('role:admin,staff');
 });
 
 
@@ -709,43 +709,43 @@ Route::prefix('cp-config')->middleware('auth:admin')->group(function () {
 */
 Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(function () {
     // Create new merchant - only admin can create
-    Route::post('/', [MerchantController::class, 'store'])->middleware('role:admin,member');
+    Route::post('/', [MerchantController::class, 'store'])->middleware('role:admin,member,staff');
 
     // Get all merchants - members, merchants, and admins can view
-    Route::get('/', [MerchantController::class, 'index'])->middleware('role:member,merchant,admin');
+    Route::get('/', [MerchantController::class, 'index'])->middleware('role:member,merchant,admin,staff');
 
     // Locate merchants by state, town, company_address, business_type_id
-    Route::get('/locate-merchants', [MerchantController::class, 'locateMerchants'])->middleware('role:member,merchant,admin');
+    Route::get('/locate-merchants', [MerchantController::class, 'locateMerchants'])->middleware('role:member,merchant,admin,staff');
 
     // Get single merchant by ID - members, merchants, and admins can view
-    Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin');
+    Route::get('/{id}', [MerchantController::class, 'show'])->middleware('role:member,merchant,admin,staff');
 
     // Update merchant - only admin or merchant can update
-    Route::post('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant');
+    Route::post('/{id}', [MerchantController::class, 'update'])->middleware('role:admin,merchant,staff');
 
     // Delete merchant - only admin can delete
-    Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin');
+    Route::delete('/{id}', [MerchantController::class, 'destroy'])->middleware('role:admin,staff');
 
     // Suspend/Activate merchant - only admin can suspend
     // Route::post('/suspend', [MerchantController::class, 'suspendMerchant'])->middleware('role:admin');
 
     // Get merchant by unique number - members, merchants, and admins can view
-    Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin');
+    Route::get('/unique/{uniqueNumber}', [MerchantController::class, 'getByUniqueNumber'])->middleware('role:member,merchant,admin,staff');
 
     // Get all purchases by merchant ID
-    Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant');
+    Route::get('/{id}/purchases', [MerchantController::class, 'getPurchases'])->middleware('role:merchant,staff');
 
     // Get all daily purchases by merchant ID
-    Route::get('/{id}/purchases/daily', [MerchantController::class, 'getDailyPurchases'])->middleware('role:merchant');
+    Route::get('/{id}/purchases/daily', [MerchantController::class, 'getDailyPurchases'])->middleware('role:merchant,staff');
 
     // Get all pending purchases by merchant ID
-    Route::get('/{id}/pending/purchases', [MerchantController::class, 'getPendingPurchases'])->middleware('role:merchant');
+    Route::get('/{id}/pending/purchases', [MerchantController::class, 'getPendingPurchases'])->middleware('role:merchant,staff');
 
     // Approve purchase
-    Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant');
+    Route::post('/{id}/approve/purchase', [MerchantController::class, 'approvePurchase'])->middleware('role:merchant,staff');
 
     // Reject purchase
-    Route::post('/rejected/purchase', [MerchantController::class, 'rejectedPurchase'])->middleware('role:merchant');
+    Route::post('/rejected/purchase', [MerchantController::class, 'rejectedPurchase'])->middleware('role:merchant,staff');
 
 });
 
@@ -757,22 +757,22 @@ Route::prefix('merchants')->middleware('auth:member,merchant,admin')->group(func
 */
 Route::prefix('staffs')->middleware('auth:merchant,admin')->group(function () {
     // Create new staff
-    Route::post('/', [MerchantStaffController::class, 'store'])->middleware('role:merchant');
+    Route::post('/', [MerchantStaffController::class, 'store'])->middleware('role:merchant,staff');
 
     // Get all staffs (with optional filters)
-    Route::get('/', [MerchantStaffController::class, 'index'])->middleware('role:merchant,admin');
+    Route::get('/', [MerchantStaffController::class, 'index'])->middleware('role:merchant,admin,staff');
 
     // Get single staff by ID
-    Route::get('/{id}', [MerchantStaffController::class, 'show'])->middleware('role:merchant,admin');
+    Route::get('/{id}', [MerchantStaffController::class, 'show'])->middleware('role:merchant,admin,staff');
 
     // Update staff information
-    Route::patch('/{id}', [MerchantStaffController::class, 'update'])->middleware('role:merchant');
+    Route::patch('/{id}', [MerchantStaffController::class, 'update'])->middleware('role:merchant,staff');
 
     // Delete staff
-    Route::delete('/{id}', [MerchantStaffController::class, 'destroy'])->middleware('role:merchant');
+    Route::delete('/{id}', [MerchantStaffController::class, 'destroy'])->middleware('role:merchant,staff');
 
     // Get all staffs by merchant ID
-    Route::get('/merchant/{merchantId}', [MerchantStaffController::class, 'getByMerchant'])->middleware('role:merchant,admin');
+    Route::get('/merchant/{merchantId}', [MerchantStaffController::class, 'getByMerchant'])->middleware('role:merchant,admin,staff');
 });
 
 
@@ -783,44 +783,44 @@ Route::prefix('staffs')->middleware('auth:merchant,admin')->group(function () {
 */
 Route::prefix('members')->middleware('auth:member,admin,merchant')->group(function () {
     // Get all members (with optional filters)
-    Route::get('/', [MemberController::class, 'index'])->middleware('role:admin');
+    Route::get('/', [MemberController::class, 'index'])->middleware('role:admin,staff');
 
     // Get only general members
-    Route::get('/general', [MemberController::class, 'getGeneralMembers'])->middleware('role:admin');
+    Route::get('/general', [MemberController::class, 'getGeneralMembers'])->middleware('role:admin,staff');
 
     // Get only corporate members
-    Route::get('/corporate', [MemberController::class, 'getCorporateMembers'])->middleware('role:admin');
+    Route::get('/corporate', [MemberController::class, 'getCorporateMembers'])->middleware('role:admin,staff');
 
     // Get single member by ID
-    Route::get('/{id}', [MemberController::class, 'show'])->middleware('role:admin,member');
+    Route::get('/{id}', [MemberController::class, 'show'])->middleware('role:admin,member,staff');
 
     // Get single members referrals list
-    Route::get('/{id}/referrals', [MemberController::class, 'getReferrals'])->middleware('role:admin,member,merchant');
+    Route::get('/{id}/referrals', [MemberController::class, 'getReferrals'])->middleware('role:admin,member,merchant,staff');
 
     // Get single member community tree
-    Route::get('/{id}/community-tree', [MemberController::class, 'getCommunityTree'])->middleware('role:admin,member');
+    Route::get('/{id}/community-tree', [MemberController::class, 'getCommunityTree'])->middleware('role:admin,member,staff');
 
     // Get member by username
-    Route::get('/username/{username}', [MemberController::class, 'getByUsername'])->middleware('role:admin,member');
+    Route::get('/username/{username}', [MemberController::class, 'getByUsername'])->middleware('role:admin,member,staff');
 
     // Get member by referral code
-    Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode'])->middleware('role:admin,member');
+    Route::get('/referral/{referralCode}', [MemberController::class, 'getByReferralCode'])->middleware('role:admin,member,staff');
 
     // Update member information
-    Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member');
+    Route::patch('/{id}', [MemberController::class, 'update'])->middleware('role:admin,member,staff');
 
     // Status update
-    Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin');
+    Route::post('/status/{id}', [MemberController::class, 'updateStatus'])->middleware('role:admin,staff');
 
     // Redeem amount
-    Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin');
+    Route::post('/check-redeem-amount', [MemberController::class, 'checkRedeemAmount'])->middleware('role:member,admin,staff');
     
-    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:admin');
+    Route::get('/bulk/approve-suspend', [MemberController::class, 'bulkApproveSuspend'])->middleware('role:admin,staff');
 
     // Route::post('/status/block-suspend', [MemberController::class, 'statusBlockSuspend'])->middleware('role:admin');
 
     // Get all purchases by member ID
-    Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin');
+    Route::get('/{id}/purchases', [MemberController::class, 'getPurchases'])->middleware('role:member,admin,staff');
 
     // Make purchase
     Route::post('/make-purchase', [MemberController::class, 'makePurchase'])->middleware('role:member');
@@ -843,7 +843,7 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     Route::get('/sponsored-members', [ReferralController::class, 'getMySponsoredMembers'])->middleware('role:member');
 
     // Get upline members (up to 30 levels) for a specific member
-    Route::get('/{memberId}/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:admin');
+    Route::get('/{memberId}/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:admin,staff');
 
     // Get upline members (up to 30 levels) for a authenticated member
     Route::get('/upline', [ReferralController::class, 'getUplineMembers'])->middleware('role:member');
@@ -853,13 +853,13 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     /////////////////////////////////////////////////////////////////
 
     // Voucher routes
-    Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant');
+    Route::post('/voucher/create', [VoucherController::class, 'createVoucher'])->middleware('role:member,merchant,staff');
 
     // Get member all vouchers
-    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member,merchant');
+    Route::get('/vouchers', [VoucherController::class, 'getMemberVouchers'])->middleware('role:member,merchant,staff');
 
     // Get single voucher by ID
-    Route::get('/{id}/vouchers', [VoucherController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant');
+    Route::get('/{id}/vouchers', [VoucherController::class, 'getSingleVoucher'])->middleware('role:member,admin,merchant,staff');
 
     // Verify online payment after Stripe checkout
     Route::post('/verify-payment/voucher', [VoucherController::class, 'verifyPayment']);
@@ -874,7 +874,7 @@ Route::prefix('member')->middleware(['auth:admin,member,merchant'])->group(funct
     Route::get('/vouchers/statistics', [VoucherController::class, 'getVoucherStats']);
 
     // Get maxreward corporate member
-    Route::get('/maxreward-corporate-{id}', [MemberController::class, 'getMaxrewardCorporateMember'])->middleware('role:admin,member');
+    Route::get('/maxreward-corporate-{id}', [MemberController::class, 'getMaxrewardCorporateMember'])->middleware('role:admin,member,staff');
 });
 
 
