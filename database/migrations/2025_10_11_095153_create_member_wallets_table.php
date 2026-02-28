@@ -26,6 +26,7 @@ return new class extends Migration
             $table->double('total_rp', 15, 2)->default(0)->comment('Referral points balance');
             $table->double('total_pp', 15, 2)->default(0)->comment('Personal points balance');
             $table->double('total_cp', 15, 2)->default(0)->comment('Community points balance');
+            $table->double('redeemed_balance', 15, 2)->default(0)->comment('Get all redeemed balance as a merchant');
             
             $table->timestamps();
             $table->softDeletes();

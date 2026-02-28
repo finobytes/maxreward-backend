@@ -1387,6 +1387,7 @@ class MerchantController extends Controller
             if ($purchase->merchant && $purchase->merchant->corporateMember->wallet) {
                 $purchase->merchant->corporateMember->wallet->increment('available_points', $purchase->redeem_amount);
                 $purchase->merchant->corporateMember->wallet->increment('total_points', $purchase->redeem_amount);
+                $purchase->merchant->corporateMember->wallet->increment('redeemed_balance', $purchase->redeem_amount);
             }
 
             // Step 11: Transaction history - Merchant corporate member points credited

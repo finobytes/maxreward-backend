@@ -815,31 +815,32 @@ class OrderController extends Controller
 
             Log::info("✅ Step 1: Add total points {$totalPoints} to merchant wallet");
 
-            // Step 1: Add total points to merchant wallet
-            $merchant->wallet->increment('total_points', $totalPoints);
+            // Step 1: Add orderTotalPoints to merchant wallet
+            $merchant->wallet->increment('total_points', $orderTotalPoints);
 
            Log::info("✅ Step 2: Transaction for merchant wallet increment {$totalPoints} points");    
 
             Transaction::create([
                 'merchant_id' => $merchant->id,
-                'transaction_points' => $totalPoints,
+                'transaction_points' => $orderTotalPoints,
                 'transaction_type' => Transaction::TYPE_AP,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Order {$order->order_number} completed. Points released.",
                 'merchant_balance' => $merchant->wallet->total_points
             ]);
 
-            Log::info("✅ Step 3: Add total points {$totalPoints} to merchant corporate member wallet");
+            Log::info("✅ Step 3: Add orderTotalPoints {$orderTotalPoints} to merchant corporate member wallet");
 
             // Step 3: Add total points to merchant corporate member wallet
-            $merchant->corporateMember->wallet->increment('available_points', $totalPoints);
-            $merchant->corporateMember->wallet->increment('total_points', $totalPoints);
+            $merchant->corporateMember->wallet->increment('available_points', $orderTotalPoints);
+            $merchant->corporateMember->wallet->increment('total_points', $orderTotalPoints);
+            $merchant->corporateMember->wallet->increment('redeemed_balance', $orderTotalPoints);
 
-            Log::info("✅ Step 4: Transaction  for merchant corporate member wallet {$totalPoints} points");
+            Log::info("✅ Step 4: Transaction  for merchant corporate member wallet {$orderTotalPoints} points");
 
             Transaction::create([
                 'member_id' => $merchant->corporateMember->id,
-                'transaction_points' => $totalPoints,
+                'transaction_points' => $orderTotalPoints,
                 'transaction_type' => Transaction::TYPE_AP,
                 'points_type' => Transaction::POINTS_CREDITED,
                 'transaction_reason' => "Order {$order->order_number} completed.",
@@ -848,7 +849,7 @@ class OrderController extends Controller
                 'brp' => $merchant->corporateMember->wallet->total_rp
             ]);
 
-            Log::info("✅ Step 5: Deduct reward budget points {$totalPoints} from from Merchant wallet");
+            Log::info("✅ Step 5: Deduct reward budget points {$totalPoints} from Merchant wallet");
 
             // Step 5: Deduct reward budget points from Merchant wallet
             $merchant->wallet->decrement('total_points', $totalPoints);

@@ -22,6 +22,7 @@ class MemberWallet extends Model
         'total_rp',
         'total_pp',
         'total_cp',
+        'redeemed_balance'
     ];
 
     protected $casts = [
