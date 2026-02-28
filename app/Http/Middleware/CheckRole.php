@@ -19,8 +19,8 @@ class CheckRole
         $authenticatedUser = null;
         
         // Check which guard has authenticated user
-        foreach (['admin', 'member', 'merchant'] as $guard) {
-            if (auth($guard)->check()) {
+        foreach (['admin', 'member', 'merchant', 'staff'] as $guard) {
+            if (auth($guard)->check()) { 
                 $authenticatedUser = auth($guard)->user();
                 break;
             }
